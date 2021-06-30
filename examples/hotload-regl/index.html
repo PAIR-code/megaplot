@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+<title>Megaplot Demo</title>
+</head>
+<body>
+<!--
+  This example demonstrates using the UMD library from the dist directory.
+  This file does NOT include dependencies (REGL), so those need to be side-loaded.
+-->
+<script src="https://npmcdn.com/regl/dist/regl.min.js"></script>
+<script src="../../dist/megaplot-v0.1.0.es2015.js"></script>
+<script>
+'use strict';
+
+const scene = new megaplot.Scene();
+
+const selection = scene.createSelection();
+
+selection.onBind(s => {
+  s.PositionWorldX = 0;
+  s.PositionWorldY = 0;
+
+  s.SizeWorldWidth = 1;
+  s.SizeWorldHeight = 1;
+
+  s.BorderColorR = 0;
+  s.BorderColorG = 0;
+  s.BorderColorB = 255;
+  s.BorderColorOpacity = 1;
+
+  s.BorderRadiusWorld = 0.25;
+
+  s.Sides = 1;
+
+  s.FillColorR = 255;
+  s.FillColorG = 255;
+  s.FillColorB = 0;
+  s.FillColorOpacity = 1;
+});
+
+selection.bind([null]);
+
+</script>
+</body>
+</html>

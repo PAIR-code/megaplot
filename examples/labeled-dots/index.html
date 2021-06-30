@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+<title>Labeled Dots</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+}
+.vis {
+  border: 1px solid purple;
+  flex-grow: 1;
+}
+</style>
+</head>
+<body>
+<h1>Labeled Dots</h1>
+<div class="vis"></div>
+<div>
+  <p>
+    This simple example shows how to render four purple dots, one at each corner
+    of a unit square centered at the origin, each with a label glyph over top.
+  </p>
+</div>
+<script src="../../dist/megaplot-v0.1.0.bundle.es2015.js"></script>
+<script>
+
+const DOT_COLOR = [128, 0, 128, 1];
+const TEXT_COLOR = [255, 255, 255, 1];
+
+const corners = [
+  {x: .5, y: -.5, label: 'br'},
+  {x: .5, y: .5, label: 'tr'},
+  {x: -.5, y: .5, label: 'tl'},
+  {x: -.5, y: -.5, label: 'bl'},
+];
+
+const container = document.querySelector('.vis');
+const scene = new megaplot.Scene({container, desiredSpriteCapacity: 100});
+
+scene.scale.x /= 2;
+scene.scale.y /= 2;
+
+const selection = scene.createSelection();
+
+selection.onBind((s, corner) => {
+  s.Sides = 1;
+  s.SizeWorld = .5;
+  s.PositionWorld = corner;
+  s.FillColor = DOT_COLOR;
+});
+
+selection.bind(corners);
+
+const textSelection = scene.createTextSelection();
+
+textSelection.text(({label}) => label);
+textSelection.align(() => 'center');
+
+textSelection.onBind((s, corner) => {
+  s.SizeWorld = .2;
+  s.PositionWorld = corner;
+  s.FillColor = TEXT_COLOR;
+});
+
+textSelection.bind(corners);
+
+</script>
+</body>
+</html>

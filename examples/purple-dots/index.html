@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+<title>Purple Dots</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+}
+.vis {
+  border: 1px solid purple;
+  flex-grow: 1;
+}
+</style>
+</head>
+<body>
+<h1>Purple Dots</h1>
+<div class="vis"></div>
+<div>
+  <p>
+    This simple example shows how to render four purple dots, one at each corner
+    of a unit square centered at the origin.
+  </p>
+  </p>
+    They disappear again after two seconds.
+  </p>
+</div>
+<script src="../../dist/megaplot-v0.1.0.bundle.es2015.js"></script>
+<script>
+
+const DOT_COLOR = [128, 0, 128, 1];
+
+const corners = [
+  {x: .5, y: -.5},
+  {x: .5, y: .5},
+  {x: -.5, y: .5},
+  {x: -.5, y: -.5},
+];
+
+const container = document.querySelector('.vis');
+const scene = new megaplot.Scene({container});
+
+scene.scale.x /= 2;
+scene.scale.y /= 2;
+
+const selection = scene.createSelection();
+
+selection.onBind((s, corner) => {
+  s.Sides = 1;
+  s.SizeWorld = .5;
+  s.PositionWorld = corner;
+  s.FillColor = DOT_COLOR;
+});
+
+selection.onInit((s, corner) => {
+  s.FillColorOpacity = 0;  // Initialize to 0 opacity (transparent).
+});
+
+selection.onExit((s, corner) => {
+  s.FillColorOpacity = 0;  // Fade out to 0 opacity.
+});
+
+setTimeout(() => selection.bind(corners), 1000);
+
+// After 2 seconds, remove the dots by binding an empty array.
+setTimeout(() => selection.bind([]), 3000);
+
+</script>
+</body>
+</html>
