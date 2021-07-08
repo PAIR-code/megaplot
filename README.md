@@ -57,3 +57,4 @@ In addition to those benefits, Megaplot offers these features:
   texture for rendering glyphs efficiently at scale, commingled with other
   visual elements.
 
+This is not an officially supported Google product.
