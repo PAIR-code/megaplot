@@ -34,9 +34,11 @@ module.exports = {
   entry,
   devtool: 'inline-source-map',
   devServer: {
-    contentBase: './data',
-    disableHostCheck: true,
+    allowedHosts: 'all',
     host: '0.0.0.0',
+    static: {
+      directory: './data',
+    },
   },
   module: {
     rules: [

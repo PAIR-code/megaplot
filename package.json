@@ -20,7 +20,6 @@
   },
   "author": "People + AI Research",
   "license": "Apache-2.0",
-  "peerDependencies": {},
   "prettier": {
     "printWidth": 80,
     "semi": true,
@@ -44,11 +43,11 @@
     "css-loader": "5.1.3",
     "d3": "6.6.0",
     "d3-simple-slider": "1.10.4",
-    "dat.gui": "0.7.7",
+    "dat.gui": "0.7.9",
     "html-webpack-plugin": "5.3.1",
-    "http-server": "0.12.3",
+    "http-server": "14.1.0",
     "jasmine-core": "3.7.1",
-    "karma": "6.2.0",
+    "karma": "6.3.17",
     "karma-chrome-launcher": "3.1.0",
     "karma-jasmine": "4.0.1",
     "karma-webpack": "5.0.0",
@@ -64,6 +63,6 @@
     "us-atlas": "3.0.0",
     "webpack": "5.27.2",
     "webpack-cli": "4.5.0",
-    "webpack-dev-server": "3.11.2"
+    "webpack-dev-server": "4.7.4"
   }
 }
