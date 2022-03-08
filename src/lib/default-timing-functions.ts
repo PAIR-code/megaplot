@@ -23,14 +23,6 @@
  * Casting setTimeout() here to satisfy obscure TypeScript compiler complaint
  * about missing '__promisify__' property.
  */
-export type SetTimeoutType =
-    (this: {}|void, callback: Function, delay: number, ...args: Array<{}>) =>
-        number;
-
-/**
- * Casting setTimeout() here to satisfy obscure TypeScript compiler complaint
- * about missing '__promisify__' property.
- */
 export type ClearTimeoutType = (this: {}|void, id: number) => void;
 
 /**
@@ -41,7 +33,9 @@ export type ClearTimeoutType = (this: {}|void, id: number) => void;
 export const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
   requestAnimationFrame: window.requestAnimationFrame.bind(window),
   cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
-  setTimeout: window.setTimeout.bind(window) as SetTimeoutType,
+  setTimeout: (callbackFn: () => void, delay = 0, ...args: unknown[]) => {
+    return window.setTimeout(callbackFn, delay, ...args);
+  },
   clearTimeout: window.clearTimeout.bind(window) as ClearTimeoutType,
   now: Date.now.bind(Date),
 });

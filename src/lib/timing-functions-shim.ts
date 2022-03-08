@@ -60,7 +60,7 @@ interface TimeoutCallback {
   /**
    * Array of additional arguments to pass to the method.
    */
-  args: Array<{}>;
+  args: unknown[];
 }
 
 /**
@@ -152,7 +152,7 @@ export class TimingFunctionsShim implements TimingFunctionsType {
 
     function setTimeout(
         this: {}, callback: Function, delay: number,
-        ...args: Array<{}>): number {
+        ...args: unknown[]): number {
       checkThis(this);
       return prototype.setTimeout.apply(self, [callback, delay, ...args]);
     }
@@ -223,7 +223,7 @@ export class TimingFunctionsShim implements TimingFunctionsType {
   /**
    * Emulate window.setTimeout().
    */
-  setTimeout(callback: Function, delay = 0, ...args: Array<{}>): number {
+  setTimeout(callback: Function, delay = 0, ...args: unknown[]): number {
     if (!(callback instanceof Function)) {
       // Upstream setTimout() doesn't throw, but since this class is for
       // testing, we'll check it anyway.

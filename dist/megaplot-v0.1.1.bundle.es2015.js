@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12000,7 +12000,9 @@ void main () {
     const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
         requestAnimationFrame: window.requestAnimationFrame.bind(window),
         cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
-        setTimeout: window.setTimeout.bind(window),
+        setTimeout: (callbackFn, delay = 0, ...args) => {
+            return window.setTimeout(callbackFn, delay, ...args);
+        },
         clearTimeout: window.clearTimeout.bind(window),
         now: Date.now.bind(Date),
     });
@@ -15624,7 +15626,6 @@ void main () {
             this.drawCommand = setupDrawCommand(this);
             this.rebaseCommand = setupRebaseCommand(this);
             this.hitTestCommand = setupHitTestCommand(this);
-            // TODO(jimbo): Remove once drawing is automatic based on end times.
             this.queueDraw();
         }
         /**
@@ -16033,4 +16034,4 @@ void main () {
     Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-//# sourceMappingURL=megaplot-v0.1.0.bundle.es2015.js.map
+//# sourceMappingURL=megaplot-v0.1.1.bundle.es2015.js.map
