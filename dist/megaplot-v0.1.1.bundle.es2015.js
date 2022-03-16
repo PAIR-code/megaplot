@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -769,6 +769,8 @@
     var VARIABLE_COUNTER = 0;
 
     var DYN_FUNC = 0;
+    var DYN_CONSTANT = 5;
+    var DYN_ARRAY = 6;
 
     function DynamicVariable (type, data) {
       this.id = (VARIABLE_COUNTER++);
@@ -824,15 +826,20 @@
     }
 
     function isDynamic (x) {
-      return (typeof x === 'function' && !x._reglType) ||
-             x instanceof DynamicVariable
+      return (typeof x === 'function' && !x._reglType) || (x instanceof DynamicVariable)
     }
 
     function unbox (x, path) {
       if (typeof x === 'function') {
         return new DynamicVariable(DYN_FUNC, x)
+      } else if (typeof x === 'number' || typeof x === 'boolean') {
+        return new DynamicVariable(DYN_CONSTANT, x)
+      } else if (Array.isArray(x)) {
+        return new DynamicVariable(DYN_ARRAY, x.map(function (y, i) { return unbox(y, path + '[' + i + ']') }))
+      } else if (x instanceof DynamicVariable) {
+        return x
       }
-      return x
+      check$1(false, 'invalid option type in uniform ' + path);
     }
 
     var dynamic = {
@@ -886,7 +893,9 @@
         margin: 0,
         padding: 0,
         top: 0,
-        left: 0
+        left: 0,
+        width: '100%',
+        height: '100%'
       });
       element.appendChild(canvas);
 
@@ -902,22 +911,33 @@
         var w = window.innerWidth;
         var h = window.innerHeight;
         if (element !== document.body) {
-          var bounds = element.getBoundingClientRect();
+          var bounds = canvas.getBoundingClientRect();
           w = bounds.right - bounds.left;
           h = bounds.bottom - bounds.top;
         }
         canvas.width = pixelRatio * w;
         canvas.height = pixelRatio * h;
-        extend(canvas.style, {
-          width: w + 'px',
-          height: h + 'px'
-        });
       }
 
-      window.addEventListener('resize', resize, false);
+      var resizeObserver;
+      if (element !== document.body && typeof ResizeObserver === 'function') {
+        // ignore 'ResizeObserver' is not defined
+        // eslint-disable-next-line
+        resizeObserver = new ResizeObserver(function () {
+          // setTimeout to avoid flicker
+          setTimeout(resize);
+        });
+        resizeObserver.observe(element);
+      } else {
+        window.addEventListener('resize', resize, false);
+      }
 
       function onDestroy () {
-        window.removeEventListener('resize', resize);
+        if (resizeObserver) {
+          resizeObserver.disconnect();
+        } else {
+          window.removeEventListener('resize', resize);
+        }
         element.removeChild(canvas);
       }
 
@@ -1059,7 +1079,7 @@
           onDestroy = result.onDestroy;
         }
         // workaround for chromium bug, premultiplied alpha value is platform dependent
-        contextAttributes.premultipliedAlpha = contextAttributes.premultipliedAlpha || false;
+        if (contextAttributes.premultipliedAlpha === undefined) contextAttributes.premultipliedAlpha = true;
         gl = createContext(canvas, contextAttributes);
       }
 
@@ -3702,10 +3722,11 @@
           }
 
           copyFlags(texture, faces[0]);
-
-          if (!limits.npotTextureCube) {
-            check$1(isPow2$1(texture.width) && isPow2$1(texture.height), 'your browser does not support non power or two texture dimensions');
-          }
+          check$1.optional(function () {
+            if (!limits.npotTextureCube) {
+              check$1(isPow2$1(texture.width) && isPow2$1(texture.height), 'your browser does not support non power or two texture dimensions');
+            }
+          });
 
           if (texInfo.genMipmaps) {
             texture.mipmask = (faces[0].width << 1) - 1;
@@ -3918,6 +3939,20 @@
         });
       }
 
+      function refreshTextures () {
+        for (var i = 0; i < numTexUnits; ++i) {
+          var tex = textureUnits[i];
+          if (tex) {
+            tex.bindCount = 0;
+            tex.unit = -1;
+            textureUnits[i] = null;
+          }
+          gl.activeTexture(GL_TEXTURE0$1 + i);
+          gl.bindTexture(GL_TEXTURE_2D$1, null);
+          gl.bindTexture(GL_TEXTURE_CUBE_MAP$1, null);
+        }
+      }
+
       return {
         create2D: createTexture2D,
         createCube: createTextureCube,
@@ -3925,7 +3960,8 @@
         getTexture: function (wrapper) {
           return null
         },
-        restore: restoreTextures
+        restore: restoreTextures,
+        refresh: refreshTextures
       }
     }
 
@@ -4635,15 +4671,17 @@
                 } else if (colorRenderbufferFormats.indexOf(colorFormat) >= 0) {
                   colorTexture = false;
                 } else {
-                  if (colorTexture) {
-                    check$1.oneOf(
-                      options.colorFormat, colorTextureFormats,
-                      'invalid color format for texture');
-                  } else {
-                    check$1.oneOf(
-                      options.colorFormat, colorRenderbufferFormats,
-                      'invalid color format for renderbuffer');
-                  }
+                  check$1.optional(function () {
+                    if (colorTexture) {
+                      check$1.oneOf(
+                        options.colorFormat, colorTextureFormats,
+                        'invalid color format for texture');
+                    } else {
+                      check$1.oneOf(
+                        options.colorFormat, colorRenderbufferFormats,
+                        'invalid color format for renderbuffer');
+                    }
+                  });
                 }
               }
             }
@@ -5097,6 +5135,16 @@
 
     var GL_FLOAT$6 = 5126;
     var GL_ARRAY_BUFFER$1 = 34962;
+    var GL_ELEMENT_ARRAY_BUFFER$1 = 34963;
+
+    var VAO_OPTIONS = [
+      'attributes',
+      'elements',
+      'offset',
+      'count',
+      'primitive',
+      'instances'
+    ];
 
     function AttributeRecord () {
       this.state = 0;
@@ -5120,7 +5168,9 @@
       extensions,
       limits,
       stats,
-      bufferState) {
+      bufferState,
+      elementState,
+      drawState) {
       var NUM_ATTRIBUTES = limits.maxAttributes;
       var attributeBindings = new Array(NUM_ATTRIBUTES);
       for (var i = 0; i < NUM_ATTRIBUTES; ++i) {
@@ -5189,12 +5239,13 @@
           vao.bindAttrs();
         } else {
           var exti = extInstanced();
-          for (let i = 0; i < attributeBindings.length; ++i) {
+          for (var i = 0; i < attributeBindings.length; ++i) {
             var binding = attributeBindings[i];
             if (binding.buffer) {
               gl.enableVertexAttribArray(i);
+              binding.buffer.bind();
               gl.vertexAttribPointer(i, binding.size, binding.type, binding.normalized, binding.stride, binding.offfset);
-              if (exti) {
+              if (exti && binding.divisor) {
                 exti.vertexAttribDivisorANGLE(i, binding.divisor);
               }
             } else {
@@ -5202,12 +5253,17 @@
               gl.vertexAttrib4f(i, binding.x, binding.y, binding.z, binding.w);
             }
           }
+          if (drawState.elements) {
+            gl.bindBuffer(GL_ELEMENT_ARRAY_BUFFER$1, drawState.elements.buffer.buffer);
+          } else {
+            gl.bindBuffer(GL_ELEMENT_ARRAY_BUFFER$1, null);
+          }
         }
         state.currentVAO = vao;
       }
 
-      function destroyVAOEXT (vao) {
-        values(vaoSet).forEach((vao) => {
+      function destroyVAOEXT () {
+        values(vaoSet).forEach(function (vao) {
           vao.destroy();
         });
       }
@@ -5215,6 +5271,12 @@
       function REGLVAO () {
         this.id = ++vaoCount;
         this.attributes = [];
+        this.elements = null;
+        this.ownsElements = false;
+        this.count = 0;
+        this.offset = 0;
+        this.instances = -1;
+        this.primitive = 4;
         var extension = extVAO();
         if (extension) {
           this.vao = extension.createVertexArrayOES();
@@ -5234,7 +5296,7 @@
             gl.enableVertexAttribArray(i);
             gl.bindBuffer(GL_ARRAY_BUFFER$1, attr.buffer.buffer);
             gl.vertexAttribPointer(i, attr.size, attr.type, attr.normalized, attr.stride, attr.offset);
-            if (exti) {
+            if (exti && attr.divisor) {
               exti.vertexAttribDivisorANGLE(i, attr.divisor);
             }
           } else {
@@ -5245,6 +5307,12 @@
         for (var j = attributes.length; j < NUM_ATTRIBUTES; ++j) {
           gl.disableVertexAttribArray(j);
         }
+        var elements = elementState.getElements(this.elements);
+        if (elements) {
+          gl.bindBuffer(GL_ELEMENT_ARRAY_BUFFER$1, elements.buffer.buffer);
+        } else {
+          gl.bindBuffer(GL_ELEMENT_ARRAY_BUFFER$1, null);
+        }
       };
 
       REGLVAO.prototype.refresh = function () {
@@ -5252,7 +5320,8 @@
         if (ext) {
           ext.bindVertexArrayOES(this.vao);
           this.bindAttrs();
-          state.currentVAO = this;
+          state.currentVAO = null;
+          ext.bindVertexArrayOES(null);
         }
       };
 
@@ -5265,6 +5334,11 @@
           }
           extension.deleteVertexArrayOES(this.vao);
           this.vao = null;
+        }
+        if (this.ownsElements) {
+          this.elements.destroy();
+          this.elements = null;
+          this.ownsElements = false;
         }
         if (vaoSet[this.id]) {
           delete vaoSet[this.id];
@@ -5285,23 +5359,104 @@
         var vao = new REGLVAO();
         stats.vaoCount += 1;
 
-        function updateVAO (attributes) {
-          check$1(Array.isArray(attributes), 'arguments to vertex array constructor must be an array');
+        function updateVAO (options) {
+          var attributes;
+          if (Array.isArray(options)) {
+            attributes = options;
+            if (vao.elements && vao.ownsElements) {
+              vao.elements.destroy();
+            }
+            vao.elements = null;
+            vao.ownsElements = false;
+            vao.offset = 0;
+            vao.count = 0;
+            vao.instances = -1;
+            vao.primitive = 4;
+          } else {
+            check$1(typeof options === 'object', 'invalid arguments for create vao');
+            check$1('attributes' in options, 'must specify attributes for vao');
+            if (options.elements) {
+              var elements = options.elements;
+              if (vao.ownsElements) {
+                if (typeof elements === 'function' && elements._reglType === 'elements') {
+                  vao.elements.destroy();
+                  vao.ownsElements = false;
+                } else {
+                  vao.elements(elements);
+                  vao.ownsElements = false;
+                }
+              } else if (elementState.getElements(options.elements)) {
+                vao.elements = options.elements;
+                vao.ownsElements = false;
+              } else {
+                vao.elements = elementState.create(options.elements);
+                vao.ownsElements = true;
+              }
+            } else {
+              vao.elements = null;
+              vao.ownsElements = false;
+            }
+            attributes = options.attributes;
+
+            // set default vao
+            vao.offset = 0;
+            vao.count = -1;
+            vao.instances = -1;
+            vao.primitive = 4;
+
+            // copy element properties
+            if (vao.elements) {
+              vao.count = vao.elements._elements.vertCount;
+              vao.primitive = vao.elements._elements.primType;
+            }
+
+            if ('offset' in options) {
+              vao.offset = options.offset | 0;
+            }
+            if ('count' in options) {
+              vao.count = options.count | 0;
+            }
+            if ('instances' in options) {
+              vao.instances = options.instances | 0;
+            }
+            if ('primitive' in options) {
+              check$1(options.primitive in primTypes, 'bad primitive type: ' + options.primitive);
+              vao.primitive = primTypes[options.primitive];
+            }
+
+            check$1.optional(() => {
+              var keys = Object.keys(options);
+              for (var i = 0; i < keys.length; ++i) {
+                check$1(VAO_OPTIONS.indexOf(keys[i]) >= 0, 'invalid option for vao: "' + keys[i] + '" valid options are ' + VAO_OPTIONS);
+              }
+            });
+            check$1(Array.isArray(attributes), 'attributes must be an array');
+          }
+
           check$1(attributes.length < NUM_ATTRIBUTES, 'too many attributes');
           check$1(attributes.length > 0, 'must specify at least one attribute');
 
-          for (var j = 0; j < vao.buffers.length; ++j) {
-            vao.buffers[j].destroy();
-          }
-          vao.buffers.length = 0;
-
+          var bufUpdated = {};
           var nattributes = vao.attributes;
           nattributes.length = attributes.length;
           for (var i = 0; i < attributes.length; ++i) {
             var spec = attributes[i];
             var rec = nattributes[i] = new AttributeRecord();
-            if (Array.isArray(spec) || isTypedArray(spec) || isNDArrayLike(spec)) {
-              var buf = bufferState.create(spec, GL_ARRAY_BUFFER$1, false, true);
+            var data = spec.data || spec;
+            if (Array.isArray(data) || isTypedArray(data) || isNDArrayLike(data)) {
+              var buf;
+              if (vao.buffers[i]) {
+                buf = vao.buffers[i];
+                if (isTypedArray(data) && buf._buffer.byteLength >= data.byteLength) {
+                  buf.subdata(data);
+                } else {
+                  buf.destroy();
+                  vao.buffers[i] = null;
+                }
+              }
+              if (!vao.buffers[i]) {
+                buf = vao.buffers[i] = bufferState.create(spec, GL_ARRAY_BUFFER$1, false, true);
+              }
               rec.buffer = bufferState.getBuffer(buf);
               rec.size = rec.buffer.dimension | 0;
               rec.normalized = false;
@@ -5310,7 +5465,7 @@
               rec.stride = 0;
               rec.divisor = 0;
               rec.state = 1;
-              vao.buffers.push(buf);
+              bufUpdated[i] = 1;
             } else if (bufferState.getBuffer(spec)) {
               rec.buffer = bufferState.getBuffer(spec);
               rec.size = rec.buffer.dimension | 0;
@@ -5352,11 +5507,32 @@
             }
           }
 
+          // retire unused buffers
+          for (var j = 0; j < vao.buffers.length; ++j) {
+            if (!bufUpdated[j] && vao.buffers[j]) {
+              vao.buffers[j].destroy();
+              vao.buffers[j] = null;
+            }
+          }
+
           vao.refresh();
           return updateVAO
         }
 
         updateVAO.destroy = function () {
+          for (var j = 0; j < vao.buffers.length; ++j) {
+            if (vao.buffers[j]) {
+              vao.buffers[j].destroy();
+            }
+          }
+          vao.buffers.length = 0;
+
+          if (vao.ownsElements) {
+            vao.elements.destroy();
+            vao.elements = null;
+            vao.ownsElements = false;
+          }
+
           vao.destroy();
         };
 
@@ -5430,6 +5606,7 @@
         this.program = null;
         this.uniforms = [];
         this.attributes = [];
+        this.refCount = 1;
 
         if (config.profile) {
           this.stats = {
@@ -5452,7 +5629,7 @@
         gl.attachShader(program, fragShader);
         gl.attachShader(program, vertShader);
         if (attributeLocations) {
-          for (let i = 0; i < attributeLocations.length; ++i) {
+          for (i = 0; i < attributeLocations.length; ++i) {
             var binding = attributeLocations[i];
             gl.bindAttribLocation(program, binding[0], binding[1]);
           }
@@ -5486,13 +5663,16 @@
                   gl.getUniformLocation(program, name),
                   info));
               }
-            } else {
-              insertActiveInfo(uniforms, new ActiveInfo(
-                info.name,
-                stringStore.id(info.name),
-                gl.getUniformLocation(program, info.name),
-                info));
             }
+            var uniName = info.name;
+            if (info.size > 1) {
+              uniName = uniName.replace('[0]', '');
+            }
+            insertActiveInfo(uniforms, new ActiveInfo(
+              uniName,
+              stringStore.id(uniName),
+              gl.getUniformLocation(program, uniName),
+              info));
           }
         }
 
@@ -5575,8 +5755,11 @@
             cache = programCache[fragId] = {};
           }
           var prevProgram = cache[vertId];
-          if (prevProgram && !attribLocations) {
-            return prevProgram
+          if (prevProgram) {
+            prevProgram.refCount++;
+            if (!attribLocations) {
+              return prevProgram
+            }
           }
           var program = new REGLProgram(fragId, vertId);
           stats.shaderCount++;
@@ -5585,7 +5768,29 @@
             cache[vertId] = program;
           }
           programList.push(program);
-          return program
+          return extend(program, {
+            destroy: function () {
+              program.refCount--;
+              if (program.refCount <= 0) {
+                gl.deleteProgram(program.program);
+                var idx = programList.indexOf(program);
+                programList.splice(idx, 1);
+                stats.shaderCount--;
+              }
+              // no program is linked to this vert anymore
+              if (cache[program.vertId].refCount <= 0) {
+                gl.deleteShader(vertShaders[program.vertId]);
+                delete vertShaders[program.vertId];
+                delete programCache[program.fragId][program.vertId];
+              }
+              // no program is linked to this frag anymore
+              if (!Object.keys(programCache[program.fragId]).length) {
+                gl.deleteShader(fragShaders[program.fragId]);
+                delete fragShaders[program.fragId];
+                delete programCache[program.fragId];
+              }
+            }
+          })
         },
 
         restore: restoreShaders,
@@ -5623,19 +5828,21 @@
             'You cannot read from a renderbuffer');
           type = framebufferState.next.colorAttachments[0].texture._texture.type;
 
-          if (extensions.oes_texture_float) {
-            check$1(
-              type === GL_UNSIGNED_BYTE$7 || type === GL_FLOAT$7,
-              'Reading from a framebuffer is only allowed for the types \'uint8\' and \'float\'');
+          check$1.optional(function () {
+            if (extensions.oes_texture_float) {
+              check$1(
+                type === GL_UNSIGNED_BYTE$7 || type === GL_FLOAT$7,
+                'Reading from a framebuffer is only allowed for the types \'uint8\' and \'float\'');
 
-            if (type === GL_FLOAT$7) {
-              check$1(limits.readFloat, 'Reading \'float\' values is not permitted in your browser. For a fallback, please see: https://www.npmjs.com/package/glsl-read-float');
+              if (type === GL_FLOAT$7) {
+                check$1(limits.readFloat, 'Reading \'float\' values is not permitted in your browser. For a fallback, please see: https://www.npmjs.com/package/glsl-read-float');
+              }
+            } else {
+              check$1(
+                type === GL_UNSIGNED_BYTE$7,
+                'Reading from a framebuffer is only allowed for the type \'uint8\'');
             }
-          } else {
-            check$1(
-              type === GL_UNSIGNED_BYTE$7,
-              'Reading from a framebuffer is only allowed for the type \'uint8\'');
-          }
+          });
         }
 
         var x = 0;
@@ -5924,6 +6131,8 @@
     var DYN_CONTEXT$1 = 2;
     var DYN_STATE$1 = 3;
     var DYN_THUNK = 4;
+    var DYN_CONSTANT$1 = 5;
+    var DYN_ARRAY$1 = 6;
 
     var S_DITHER = 'dither';
     var S_BLEND_ENABLE = 'blend.enable';
@@ -5989,7 +6198,7 @@
     ];
 
     var GL_ARRAY_BUFFER$2 = 34962;
-    var GL_ELEMENT_ARRAY_BUFFER$1 = 34963;
+    var GL_ELEMENT_ARRAY_BUFFER$2 = 34963;
 
     var GL_FRAGMENT_SHADER$1 = 35632;
     var GL_VERTEX_SHADER$1 = 35633;
@@ -6168,6 +6377,44 @@
           data.contextDep,
           data.propDep,
           append)
+      } else if (type === DYN_CONSTANT$1) {
+        return new Declaration(
+          false,
+          false,
+          false,
+          append)
+      } else if (type === DYN_ARRAY$1) {
+        var thisDep = false;
+        var contextDep = false;
+        var propDep = false;
+        for (var i = 0; i < dyn.data.length; ++i) {
+          var subDyn = dyn.data[i];
+          if (subDyn.type === DYN_PROP$1) {
+            propDep = true;
+          } else if (subDyn.type === DYN_CONTEXT$1) {
+            contextDep = true;
+          } else if (subDyn.type === DYN_STATE$1) {
+            thisDep = true;
+          } else if (subDyn.type === DYN_FUNC$1) {
+            thisDep = true;
+            var subArgs = subDyn.data;
+            if (subArgs >= 1) {
+              contextDep = true;
+            }
+            if (subArgs >= 2) {
+              propDep = true;
+            }
+          } else if (subDyn.type === DYN_THUNK) {
+            thisDep = thisDep || subDyn.data.thisDep;
+            contextDep = contextDep || subDyn.data.contextDep;
+            propDep = propDep || subDyn.data.propDep;
+          }
+        }
+        return new Declaration(
+          thisDep,
+          contextDep,
+          propDep,
+          append)
       } else {
         return new Declaration(
           type === DYN_STATE$1,
@@ -6209,6 +6456,7 @@
 
       var extInstancing = extensions.angle_instanced_arrays;
       var extDrawBuffers = extensions.webgl_draw_buffers;
+      var extVertexArrays = extensions.oes_vertex_array_object;
 
       // ===================================================
       // ===================================================
@@ -6426,6 +6674,12 @@
             case DYN_THUNK:
               x.data.append(env, block);
               return x.data.ref
+            case DYN_CONSTANT$1:
+              return x.data.toString()
+            case DYN_ARRAY$1:
+              return x.data.map(function (y) {
+                return env.invoke(block, y)
+              })
           }
         };
 
@@ -6787,15 +7041,59 @@
         var staticOptions = options.static;
         var dynamicOptions = options.dynamic;
 
+        // TODO: should use VAO to get default values for offset properties
+        // should move vao parse into here and out of the old stuff
+
+        var staticDraw = {};
+        var vaoActive = false;
+
+        function parseVAO () {
+          if (S_VAO in staticOptions) {
+            var vao = staticOptions[S_VAO];
+            if (vao !== null && attributeState.getVAO(vao) === null) {
+              vao = attributeState.createVAO(vao);
+            }
+
+            vaoActive = true;
+            staticDraw.vao = vao;
+
+            return createStaticDecl(function (env) {
+              var vaoRef = attributeState.getVAO(vao);
+              if (vaoRef) {
+                return env.link(vaoRef)
+              } else {
+                return 'null'
+              }
+            })
+          } else if (S_VAO in dynamicOptions) {
+            vaoActive = true;
+            var dyn = dynamicOptions[S_VAO];
+            return createDynamicDecl(dyn, function (env, scope) {
+              var vaoRef = env.invoke(scope, dyn);
+              return scope.def(env.shared.vao + '.getVAO(' + vaoRef + ')')
+            })
+          }
+          return null
+        }
+
+        var vao = parseVAO();
+
+        var elementsActive = false;
+
         function parseElements () {
           if (S_ELEMENTS in staticOptions) {
             var elements = staticOptions[S_ELEMENTS];
+            staticDraw.elements = elements;
             if (isBufferArgs(elements)) {
-              elements = elementState.getElements(elementState.create(elements, true));
+              var e = staticDraw.elements = elementState.create(elements, true);
+              elements = elementState.getElements(e);
+              elementsActive = true;
             } else if (elements) {
               elements = elementState.getElements(elements);
+              elementsActive = true;
               check$1.command(elements, 'invalid elements', env.commandStr);
             }
+
             var result = createStaticDecl(function (env, scope) {
               if (elements) {
                 var result = env.link(elements);
@@ -6808,6 +7106,8 @@
             result.value = elements;
             return result
           } else if (S_ELEMENTS in dynamicOptions) {
+            elementsActive = true;
+
             var dyn = dynamicOptions[S_ELEMENTS];
             return createDynamicDecl(dyn, function (env, scope) {
               var shared = env.shared;
@@ -6838,8 +7138,15 @@
 
               return elements
             })
+          } else if (vaoActive) {
+            return new Declaration(
+              vao.thisDep,
+              vao.contextDep,
+              vao.propDep,
+              function (env, scope) {
+                return scope.def(env.shared.vao + '.currentVAO?' + env.shared.elements + '.getElements(' + env.shared.vao + '.currentVAO.elements):null')
+              })
           }
-
           return null
         }
 
@@ -6848,6 +7155,7 @@
         function parsePrimitive () {
           if (S_PRIMITIVE in staticOptions) {
             var primitive = staticOptions[S_PRIMITIVE];
+            staticDraw.primitive = primitive;
             check$1.commandParameter(primitive, primTypes, 'invalid primitve', env.commandStr);
             return createStaticDecl(function (env, scope) {
               return primTypes[primitive]
@@ -6864,7 +7172,7 @@
               });
               return scope.def(PRIM_TYPES, '[', prim, ']')
             })
-          } else if (elements) {
+          } else if (elementsActive) {
             if (isStatic(elements)) {
               if (elements.value) {
                 return createStaticDecl(function (env, scope) {
@@ -6885,6 +7193,14 @@
                   return scope.def(elements, '?', elements, '.primType:', GL_TRIANGLES$1)
                 })
             }
+          } else if (vaoActive) {
+            return new Declaration(
+              vao.thisDep,
+              vao.contextDep,
+              vao.propDep,
+              function (env, scope) {
+                return scope.def(env.shared.vao + '.currentVAO?' + env.shared.vao + '.currentVAO.primitive:' + GL_TRIANGLES$1)
+              })
           }
           return null
         }
@@ -6892,6 +7208,11 @@
         function parseParam (param, isOffset) {
           if (param in staticOptions) {
             var value = staticOptions[param] | 0;
+            if (isOffset) {
+              staticDraw.offset = value;
+            } else {
+              staticDraw.instances = value;
+            }
             check$1.command(!isOffset || value >= 0, 'invalid ' + param, env.commandStr);
             return createStaticDecl(function (env, scope) {
               if (isOffset) {
@@ -6913,11 +7234,29 @@
               }
               return result
             })
-          } else if (isOffset && elements) {
-            return createStaticDecl(function (env, scope) {
-              env.OFFSET = '0';
-              return 0
-            })
+          } else if (isOffset) {
+            if (elementsActive) {
+              return createStaticDecl(function (env, scope) {
+                env.OFFSET = 0;
+                return 0
+              })
+            } else if (vaoActive) {
+              return new Declaration(
+                vao.thisDep,
+                vao.contextDep,
+                vao.propDep,
+                function (env, scope) {
+                  return scope.def(env.shared.vao + '.currentVAO?' + env.shared.vao + '.currentVAO.offset:0')
+                })
+            }
+          } else if (vaoActive) {
+            return new Declaration(
+              vao.thisDep,
+              vao.contextDep,
+              vao.propDep,
+              function (env, scope) {
+                return scope.def(env.shared.vao + '.currentVAO?' + env.shared.vao + '.currentVAO.instances:-1')
+              })
           }
           return null
         }
@@ -6927,6 +7266,7 @@
         function parseVertCount () {
           if (S_COUNT in staticOptions) {
             var count = staticOptions[S_COUNT] | 0;
+            staticDraw.count = count;
             check$1.command(
               typeof count === 'number' && count >= 0, 'invalid vertex count', env.commandStr);
             return createStaticDecl(function () {
@@ -6945,7 +7285,7 @@
               });
               return result
             })
-          } else if (elements) {
+          } else if (elementsActive) {
             if (isStatic(elements)) {
               if (elements) {
                 if (OFFSET) {
@@ -6997,16 +7337,36 @@
               });
               return variable
             }
+          } else if (vaoActive) {
+            var countVariable = new Declaration(
+              vao.thisDep,
+              vao.contextDep,
+              vao.propDep,
+              function (env, scope) {
+                return scope.def(env.shared.vao, '.currentVAO?', env.shared.vao, '.currentVAO.count:-1')
+              });
+            return countVariable
           }
           return null
         }
 
+        var primitive = parsePrimitive();
+        var count = parseVertCount();
+        var instances = parseParam(S_INSTANCES, false);
+
         return {
           elements: elements,
-          primitive: parsePrimitive(),
-          count: parseVertCount(),
-          instances: parseParam(S_INSTANCES, false),
-          offset: OFFSET
+          primitive: primitive,
+          count: count,
+          instances: instances,
+          offset: OFFSET,
+          vao: vao,
+
+          vaoActive: vaoActive,
+          elementsActive: elementsActive,
+
+          // static draw props
+          static: staticDraw
         }
       }
 
@@ -7622,14 +7982,14 @@
                 }
 
                 var divisor = value.divisor | 0;
-                if ('divisor' in value) {
-                  check$1.command(divisor === 0 || extInstancing,
-                    'cannot specify divisor for attribute "' + attribute + '", instancing not supported', env.commandStr);
-                  check$1.command(divisor >= 0,
-                    'invalid divisor for attribute "' + attribute + '"', env.commandStr);
-                }
-
                 check$1.optional(function () {
+                  if ('divisor' in value) {
+                    check$1.command(divisor === 0 || extInstancing,
+                      'cannot specify divisor for attribute "' + attribute + '", instancing not supported', env.commandStr);
+                    check$1.command(divisor >= 0,
+                      'invalid divisor for attribute "' + attribute + '"', env.commandStr);
+                  }
+
                   var command = env.commandStr;
 
                   var VALID_KEYS = [
@@ -7777,27 +8137,6 @@
         return attributeDefs
       }
 
-      function parseVAO (options, env) {
-        var staticOptions = options.static;
-        var dynamicOptions = options.dynamic;
-        if (S_VAO in staticOptions) {
-          var vao = staticOptions[S_VAO];
-          if (vao !== null && attributeState.getVAO(vao) === null) {
-            vao = attributeState.createVAO(vao);
-          }
-          return createStaticDecl(function (env) {
-            return env.link(attributeState.getVAO(vao))
-          })
-        } else if (S_VAO in dynamicOptions) {
-          var dyn = dynamicOptions[S_VAO];
-          return createDynamicDecl(dyn, function (env, scope) {
-            var vaoRef = env.invoke(scope, dyn);
-            return scope.def(env.shared.vao + '.getVAO(' + vaoRef + ')')
-          })
-        }
-        return null
-      }
-
       function parseContext (context) {
         var staticContext = context.static;
         var dynamicContext = context.dynamic;
@@ -7888,9 +8227,13 @@
 
         result.profile = parseProfile(options);
         result.uniforms = parseUniforms(uniforms, env);
-        result.drawVAO = result.scopeVAO = parseVAO(options);
+        result.drawVAO = result.scopeVAO = draw.vao;
         // special case: check if we can statically allocate a vertex array object for this program
-        if (!result.drawVAO && shader.program && !attribLocations && extensions.angle_instanced_arrays) {
+        if (!result.drawVAO &&
+          shader.program &&
+          !attribLocations &&
+          extensions.angle_instanced_arrays &&
+          draw.static.elements) {
           var useVAO = true;
           var staticBindings = shader.program.attributes.map(function (attr) {
             var binding = attributes.static[attr];
@@ -7898,7 +8241,10 @@
             return binding
           });
           if (useVAO && staticBindings.length > 0) {
-            var vao = attributeState.getVAO(attributeState.createVAO(staticBindings));
+            var vao = attributeState.getVAO(attributeState.createVAO({
+              attributes: staticBindings,
+              elements: draw.static.elements
+            }));
             result.drawVAO = new Declaration(null, null, null, function (env, scope) {
               return env.link(vao)
             });
@@ -7928,7 +8274,12 @@
         Object.keys(context).forEach(function (name) {
           scope.save(CONTEXT, '.' + name);
           var defn = context[name];
-          contextEnter(CONTEXT, '.', name, '=', defn.append(env, scope), ';');
+          var value = defn.append(env, scope);
+          if (Array.isArray(value)) {
+            contextEnter(CONTEXT, '.', name, '=[', value.join(), '];');
+          } else {
+            contextEnter(CONTEXT, '.', name, '=', value, ';');
+          }
         });
 
         scope(contextEnter);
@@ -8313,16 +8664,29 @@
         });
       }
 
-      function emitUniforms (env, scope, args, uniforms, filter) {
+      function emitUniforms (env, scope, args, uniforms, filter, isBatchInnerLoop) {
         var shared = env.shared;
         var GL = shared.gl;
 
+        var definedArrUniforms = {};
         var infix;
         for (var i = 0; i < uniforms.length; ++i) {
           var uniform = uniforms[i];
           var name = uniform.name;
           var type = uniform.info.type;
+          var size = uniform.info.size;
           var arg = args.uniforms[name];
+          if (size > 1) {
+            // either foo[n] or foos, avoid define both
+            if (!arg) {
+              continue
+            }
+            var arrUniformName = name.replace('[0]', '');
+            if (definedArrUniforms[arrUniformName]) {
+              continue
+            }
+            definedArrUniforms[arrUniformName] = 1;
+          }
           var UNIFORM = env.link(uniform);
           var LOCATION = UNIFORM + '.location';
 
@@ -8376,74 +8740,99 @@
               } else {
                 switch (type) {
                   case GL_FLOAT$8:
-                    check$1.commandType(value, 'number', 'uniform ' + name, env.commandStr);
+                    if (size === 1) {
+                      check$1.commandType(value, 'number', 'uniform ' + name, env.commandStr);
+                    } else {
+                      check$1.command(
+                        isArrayLike(value) && (value.length === size),
+                        'uniform ' + name, env.commandStr);
+                    }
                     infix = '1f';
                     break
                   case GL_FLOAT_VEC2:
                     check$1.command(
-                      isArrayLike(value) && value.length === 2,
+                      isArrayLike(value) && (value.length && value.length % 2 === 0 && value.length <= size * 2),
                       'uniform ' + name, env.commandStr);
                     infix = '2f';
                     break
                   case GL_FLOAT_VEC3:
                     check$1.command(
-                      isArrayLike(value) && value.length === 3,
+                      isArrayLike(value) && (value.length && value.length % 3 === 0 && value.length <= size * 3),
                       'uniform ' + name, env.commandStr);
                     infix = '3f';
                     break
                   case GL_FLOAT_VEC4:
                     check$1.command(
-                      isArrayLike(value) && value.length === 4,
+                      isArrayLike(value) && (value.length && value.length % 4 === 0 && value.length <= size * 4),
                       'uniform ' + name, env.commandStr);
                     infix = '4f';
                     break
                   case GL_BOOL:
-                    check$1.commandType(value, 'boolean', 'uniform ' + name, env.commandStr);
+                    if (size === 1) {
+                      check$1.commandType(value, 'boolean', 'uniform ' + name, env.commandStr);
+                    } else {
+                      check$1.command(
+                        isArrayLike(value) && (value.length === size),
+                        'uniform ' + name, env.commandStr);
+                    }
                     infix = '1i';
                     break
                   case GL_INT$3:
-                    check$1.commandType(value, 'number', 'uniform ' + name, env.commandStr);
+                    if (size === 1) {
+                      check$1.commandType(value, 'number', 'uniform ' + name, env.commandStr);
+                    } else {
+                      check$1.command(
+                        isArrayLike(value) && (value.length === size),
+                        'uniform ' + name, env.commandStr);
+                    }
                     infix = '1i';
                     break
                   case GL_BOOL_VEC2:
                     check$1.command(
-                      isArrayLike(value) && value.length === 2,
+                      isArrayLike(value) && (value.length && value.length % 2 === 0 && value.length <= size * 2),
                       'uniform ' + name, env.commandStr);
                     infix = '2i';
                     break
                   case GL_INT_VEC2:
                     check$1.command(
-                      isArrayLike(value) && value.length === 2,
+                      isArrayLike(value) && (value.length && value.length % 2 === 0 && value.length <= size * 2),
                       'uniform ' + name, env.commandStr);
                     infix = '2i';
                     break
                   case GL_BOOL_VEC3:
                     check$1.command(
-                      isArrayLike(value) && value.length === 3,
+                      isArrayLike(value) && (value.length && value.length % 3 === 0 && value.length <= size * 3),
                       'uniform ' + name, env.commandStr);
                     infix = '3i';
                     break
                   case GL_INT_VEC3:
                     check$1.command(
-                      isArrayLike(value) && value.length === 3,
+                      isArrayLike(value) && (value.length && value.length % 3 === 0 && value.length <= size * 3),
                       'uniform ' + name, env.commandStr);
                     infix = '3i';
                     break
                   case GL_BOOL_VEC4:
                     check$1.command(
-                      isArrayLike(value) && value.length === 4,
+                      isArrayLike(value) && (value.length && value.length % 4 === 0 && value.length <= size * 4),
                       'uniform ' + name, env.commandStr);
                     infix = '4i';
                     break
                   case GL_INT_VEC4:
                     check$1.command(
-                      isArrayLike(value) && value.length === 4,
+                      isArrayLike(value) && (value.length && value.length % 4 === 0 && value.length <= size * 4),
                       'uniform ' + name, env.commandStr);
                     infix = '4i';
                     break
                 }
+                if (size > 1) {
+                  infix += 'v';
+                  value = env.global.def('[' +
+                  Array.prototype.slice.call(value) + ']');
+                } else {
+                  value = isArrayLike(value) ? Array.prototype.slice.call(value) : value;
+                }
                 scope(GL, '.uniform', infix, '(', LOCATION, ',',
-                  isArrayLike(value) ? Array.prototype.slice.call(value) : value,
+                  value,
                   ');');
               }
               continue
@@ -8458,11 +8847,13 @@
           }
 
           if (type === GL_SAMPLER_2D) {
+            check$1(!Array.isArray(VALUE), 'must specify a scalar prop for textures');
             scope(
               'if(', VALUE, '&&', VALUE, '._reglType==="framebuffer"){',
               VALUE, '=', VALUE, '.color[0];',
               '}');
           } else if (type === GL_SAMPLER_CUBE) {
+            check$1(!Array.isArray(VALUE), 'must specify a scalar prop for cube maps');
             scope(
               'if(', VALUE, '&&', VALUE, '._reglType==="framebufferCube"){',
               VALUE, '=', VALUE, '.color[0];',
@@ -8471,25 +8862,35 @@
 
           // perform type validation
           check$1.optional(function () {
-            function check (pred, message) {
+            function emitCheck (pred, message) {
               env.assert(scope, pred,
                 'bad data or missing for uniform "' + name + '".  ' + message);
             }
 
-            function checkType (type) {
-              check(
-                'typeof ' + VALUE + '==="' + type + '"',
+            function checkType (type, size) {
+              if (size === 1) {
+                check$1(!Array.isArray(VALUE), 'must not specify an array type for uniform');
+              }
+              emitCheck(
+                'Array.isArray(' + VALUE + ') && typeof ' + VALUE + '[0]===" ' + type + '"' +
+                ' || typeof ' + VALUE + '==="' + type + '"',
                 'invalid type, expected ' + type);
             }
 
-            function checkVector (n, type) {
-              check(
-                shared.isArrayLike + '(' + VALUE + ')&&' + VALUE + '.length===' + n,
-                'invalid vector, should have length ' + n, env.commandStr);
+            function checkVector (n, type, size) {
+              if (Array.isArray(VALUE)) {
+                check$1(VALUE.length && VALUE.length % n === 0 && VALUE.length <= n * size, 'must have length of ' + (size === 1 ? '' : 'n * ') + n);
+              } else {
+                emitCheck(
+                  shared.isArrayLike + '(' + VALUE + ')&&' + VALUE + '.length && ' + VALUE + '.length % ' + n + ' === 0' +
+                  ' && ' + VALUE + '.length<=' + n * size,
+                  'invalid vector, should have length of ' + (size === 1 ? '' : 'n * ') + n, env.commandStr);
+              }
             }
 
             function checkTexture (target) {
-              check(
+              check$1(!Array.isArray(VALUE), 'must not specify a value type');
+              emitCheck(
                 'typeof ' + VALUE + '==="function"&&' +
                 VALUE + '._reglType==="texture' +
                 (target === GL_TEXTURE_2D$3 ? '2d' : 'Cube') + '"',
@@ -8498,49 +8899,49 @@
 
             switch (type) {
               case GL_INT$3:
-                checkType('number');
+                checkType('number', size);
                 break
               case GL_INT_VEC2:
-                checkVector(2);
+                checkVector(2, 'number', size);
                 break
               case GL_INT_VEC3:
-                checkVector(3);
+                checkVector(3, 'number', size);
                 break
               case GL_INT_VEC4:
-                checkVector(4);
+                checkVector(4, 'number', size);
                 break
               case GL_FLOAT$8:
-                checkType('number');
+                checkType('number', size);
                 break
               case GL_FLOAT_VEC2:
-                checkVector(2);
+                checkVector(2, 'number', size);
                 break
               case GL_FLOAT_VEC3:
-                checkVector(3);
+                checkVector(3, 'number', size);
                 break
               case GL_FLOAT_VEC4:
-                checkVector(4);
+                checkVector(4, 'number', size);
                 break
               case GL_BOOL:
-                checkType('boolean');
+                checkType('boolean', size);
                 break
               case GL_BOOL_VEC2:
-                checkVector(2);
+                checkVector(2, 'boolean', size);
                 break
               case GL_BOOL_VEC3:
-                checkVector(3);
+                checkVector(3, 'boolean', size);
                 break
               case GL_BOOL_VEC4:
-                checkVector(4);
+                checkVector(4, 'boolean', size);
                 break
               case GL_FLOAT_MAT2:
-                checkVector(4);
+                checkVector(4, 'number', size);
                 break
               case GL_FLOAT_MAT3:
-                checkVector(9);
+                checkVector(9, 'number', size);
                 break
               case GL_FLOAT_MAT4:
-                checkVector(16);
+                checkVector(16, 'number', size);
                 break
               case GL_SAMPLER_2D:
                 checkTexture(GL_TEXTURE_2D$3);
@@ -8615,23 +9016,65 @@
               break
           }
 
-          scope(GL, '.uniform', infix, '(', LOCATION, ',');
+          if (infix.indexOf('Matrix') === -1 && size > 1) {
+            infix += 'v';
+            unroll = 1;
+          }
+
           if (infix.charAt(0) === 'M') {
+            scope(GL, '.uniform', infix, '(', LOCATION, ',');
             var matSize = Math.pow(type - GL_FLOAT_MAT2 + 2, 2);
             var STORAGE = env.global.def('new Float32Array(', matSize, ')');
-            scope(
-              'false,(Array.isArray(', VALUE, ')||', VALUE, ' instanceof Float32Array)?', VALUE, ':(',
-              loop(matSize, function (i) {
-                return STORAGE + '[' + i + ']=' + VALUE + '[' + i + ']'
-              }), ',', STORAGE, ')');
+            if (Array.isArray(VALUE)) {
+              scope(
+                'false,(',
+                loop(matSize, function (i) {
+                  return STORAGE + '[' + i + ']=' + VALUE[i]
+                }), ',', STORAGE, ')');
+            } else {
+              scope(
+                'false,(Array.isArray(', VALUE, ')||', VALUE, ' instanceof Float32Array)?', VALUE, ':(',
+                loop(matSize, function (i) {
+                  return STORAGE + '[' + i + ']=' + VALUE + '[' + i + ']'
+                }), ',', STORAGE, ')');
+            }
+            scope(');');
           } else if (unroll > 1) {
-            scope(loop(unroll, function (i) {
-              return VALUE + '[' + i + ']'
-            }));
+            var prev = [];
+            var cur = [];
+            for (var j = 0; j < unroll; ++j) {
+              if (Array.isArray(VALUE)) {
+                cur.push(VALUE[j]);
+              } else {
+                cur.push(scope.def(VALUE + '[' + j + ']'));
+              }
+              if (isBatchInnerLoop) {
+                prev.push(scope.def());
+              }
+            }
+            if (isBatchInnerLoop) {
+              scope('if(!', env.batchId, '||', prev.map(function (p, i) {
+                return p + '!==' + cur[i]
+              }).join('||'), '){', prev.map(function (p, i) {
+                return p + '=' + cur[i] + ';'
+              }).join(''));
+            }
+            scope(GL, '.uniform', infix, '(', LOCATION, ',', cur.join(','), ');');
+            if (isBatchInnerLoop) {
+              scope('}');
+            }
           } else {
-            scope(VALUE);
+            check$1(!Array.isArray(VALUE), 'uniform value must not be an array');
+            if (isBatchInnerLoop) {
+              var prevS = scope.def();
+              scope('if(!', env.batchId, '||', prevS, '!==', VALUE, '){',
+                prevS, '=', VALUE, ';');
+            }
+            scope(GL, '.uniform', infix, '(', LOCATION, ',', VALUE, ');');
+            if (isBatchInnerLoop) {
+              scope('}');
+            }
           }
-          scope(');');
         }
       }
 
@@ -8651,13 +9094,21 @@
               scope = inner;
             }
             ELEMENTS = defn.append(env, scope);
+            if (drawOptions.elementsActive) {
+              scope(
+                'if(' + ELEMENTS + ')' +
+                GL + '.bindBuffer(' + GL_ELEMENT_ARRAY_BUFFER$2 + ',' + ELEMENTS + '.buffer.buffer);');
+            }
           } else {
-            ELEMENTS = scope.def(DRAW_STATE, '.', S_ELEMENTS);
-          }
-          if (ELEMENTS) {
+            ELEMENTS = scope.def();
             scope(
-              'if(' + ELEMENTS + ')' +
-              GL + '.bindBuffer(' + GL_ELEMENT_ARRAY_BUFFER$1 + ',' + ELEMENTS + '.buffer.buffer);');
+              ELEMENTS, '=', DRAW_STATE, '.', S_ELEMENTS, ';',
+              'if(', ELEMENTS, '){',
+              GL, '.bindBuffer(', GL_ELEMENT_ARRAY_BUFFER$2, ',', ELEMENTS, '.buffer.buffer);}',
+              'else if(', shared.vao, '.currentVAO){',
+              ELEMENTS, '=', env.shared.elements + '.getElements(' + shared.vao, '.currentVAO.elements);',
+              (!extVertexArrays ? 'if(' + ELEMENTS + ')' + GL + '.bindBuffer(' + GL_ELEMENT_ARRAY_BUFFER$2 + ',' + ELEMENTS + '.buffer.buffer);' : ''),
+              '}');
           }
           return ELEMENTS
         }
@@ -8723,7 +9174,7 @@
 
         var ELEMENT_TYPE = ELEMENTS + '.type';
 
-        var elementsStatic = drawOptions.elements && isStatic(drawOptions.elements);
+        var elementsStatic = drawOptions.elements && isStatic(drawOptions.elements) && !drawOptions.vaoActive;
 
         function emitInstancing () {
           function drawElements () {
@@ -8741,7 +9192,7 @@
               [PRIMITIVE, OFFSET, COUNT, INSTANCES], ');');
           }
 
-          if (ELEMENTS) {
+          if (ELEMENTS && ELEMENTS !== 'null') {
             if (!elementsStatic) {
               inner('if(', ELEMENTS, '){');
               drawElements();
@@ -8770,7 +9221,7 @@
             inner(GL + '.drawArrays(' + [PRIMITIVE, OFFSET, COUNT] + ');');
           }
 
-          if (ELEMENTS) {
+          if (ELEMENTS && ELEMENTS !== 'null') {
             if (!elementsStatic) {
               inner('if(', ELEMENTS, '){');
               drawElements();
@@ -8836,7 +9287,7 @@
         }
         emitUniforms(env, draw, args, program.uniforms, function () {
           return true
-        });
+        }, false);
         emitDraw(env, draw, draw, args);
       }
 
@@ -8877,6 +9328,9 @@
         if (Object.keys(args.state).length > 0) {
           draw(env.shared.current, '.dirty=true;');
         }
+        if (env.shared.vao) {
+          draw(env.shared.vao, '.setVAO(null);');
+        }
       }
 
       // ===================================================
@@ -8895,7 +9349,7 @@
         }
 
         emitAttributes(env, scope, args, program.attributes, all);
-        emitUniforms(env, scope, args, program.uniforms, all);
+        emitUniforms(env, scope, args, program.uniforms, all, false);
         emitDraw(env, scope, scope, args);
       }
 
@@ -8975,8 +9429,8 @@
             emitAttributes(env, outer, args, program.attributes, isOuterDefn);
             emitAttributes(env, inner, args, program.attributes, isInnerDefn);
           }
-          emitUniforms(env, outer, args, program.uniforms, isOuterDefn);
-          emitUniforms(env, inner, args, program.uniforms, isInnerDefn);
+          emitUniforms(env, outer, args, program.uniforms, isOuterDefn, false);
+          emitUniforms(env, inner, args, program.uniforms, isInnerDefn, true);
           emitDraw(env, outer, inner, args);
         }
       }
@@ -9075,6 +9529,10 @@
         if (Object.keys(args.state).length > 0) {
           batch(env.shared.current, '.dirty=true;');
         }
+
+        if (env.shared.vao) {
+          batch(env.shared.vao, '.setVAO(null);');
+        }
       }
 
       // ===================================================
@@ -9119,10 +9577,14 @@
           });
 
         Object.keys(args.uniforms).forEach(function (opt) {
+          var value = args.uniforms[opt].append(env, scope);
+          if (Array.isArray(value)) {
+            value = '[' + value.join() + ']';
+          }
           scope.set(
             shared.uniforms,
             '[' + stringStore.id(opt) + ']',
-            args.uniforms[opt].append(env, scope));
+            value);
         });
 
         Object.keys(args.attributes).forEach(function (name) {
@@ -9257,7 +9719,11 @@
         emitScopeProc(env, args);
         emitBatchProc(env, args);
 
-        return env.compile()
+        return extend(env.compile(), {
+          destroy: function () {
+            args.shader.program.destroy();
+          }
+        })
       }
 
       // ===========================================================================
@@ -9613,16 +10079,18 @@
         stats$$1,
         config,
         destroyBuffer);
+      var elementState = wrapElementsState(gl, extensions, bufferState, stats$$1);
       var attributeState = wrapAttributeState(
         gl,
         extensions,
         limits,
         stats$$1,
-        bufferState);
+        bufferState,
+        elementState,
+        drawState);
       function destroyBuffer (buffer) {
         return attributeState.destroyBuffer(buffer)
       }
-      var elementState = wrapElementsState(gl, extensions, bufferState, stats$$1);
       var shaderState = wrapShaderState(gl, stringStore, stats$$1, config);
       var textureState = createTextureSet(
         gl,
@@ -9780,10 +10248,10 @@
         shaderState.clear();
         framebufferState.clear();
         renderbufferState.clear();
+        attributeState.clear();
         textureState.clear();
         elementState.clear();
         bufferState.clear();
-        attributeState.clear();
 
         if (timer) {
           timer.clear();
@@ -9834,16 +10302,23 @@
           return result
         }
 
-        function separateDynamic (object) {
+        function separateDynamic (object, useArrays) {
           var staticItems = {};
           var dynamicItems = {};
           Object.keys(object).forEach(function (option) {
             var value = object[option];
             if (dynamic.isDynamic(value)) {
               dynamicItems[option] = dynamic.unbox(value, option);
-            } else {
-              staticItems[option] = value;
+              return
+            } else if (useArrays && Array.isArray(value)) {
+              for (var i = 0; i < value.length; ++i) {
+                if (dynamic.isDynamic(value[i])) {
+                  dynamicItems[option] = dynamic.unbox(value, option);
+                  return
+                }
+              }
             }
+            staticItems[option] = value;
           });
           return {
             dynamic: dynamicItems,
@@ -9852,10 +10327,10 @@
         }
 
         // Treat context variables separate from other dynamic variables
-        var context = separateDynamic(options.context || {});
-        var uniforms = separateDynamic(options.uniforms || {});
-        var attributes = separateDynamic(options.attributes || {});
-        var opts = separateDynamic(flattenNestedOptions(options));
+        var context = separateDynamic(options.context || {}, true);
+        var uniforms = separateDynamic(options.uniforms || {}, true);
+        var attributes = separateDynamic(options.attributes || {}, false);
+        var opts = separateDynamic(flattenNestedOptions(options), false);
 
         var stats$$1 = {
           gpuTime: 0.0,
@@ -9912,7 +10387,10 @@
         }
 
         return extend(REGLCommand, {
-          stats: stats$$1
+          stats: stats$$1,
+          destroy: function () {
+            compiled.destroy();
+          }
         })
       }
 
@@ -10015,6 +10493,7 @@
       }
 
       function refresh () {
+        textureState.refresh();
         pollViewport();
         core.procs.refresh();
         if (timer) {
@@ -12000,7 +12479,9 @@ void main () {
     const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
         requestAnimationFrame: window.requestAnimationFrame.bind(window),
         cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
-        setTimeout: window.setTimeout.bind(window),
+        setTimeout: (callbackFn, delay = 0, ...args) => {
+            return window.setTimeout(callbackFn, delay, ...args);
+        },
         clearTimeout: window.clearTimeout.bind(window),
         now: Date.now.bind(Date),
     });
@@ -15624,7 +16105,6 @@ void main () {
             this.drawCommand = setupDrawCommand(this);
             this.rebaseCommand = setupRebaseCommand(this);
             this.hitTestCommand = setupHitTestCommand(this);
-            // TODO(jimbo): Remove once drawing is automatic based on end times.
             this.queueDraw();
         }
         /**
@@ -16033,4 +16513,4 @@ void main () {
     Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-//# sourceMappingURL=megaplot-v0.1.0.bundle.es2015.js.map
+//# sourceMappingURL=megaplot-v0.1.1.bundle.es2015.js.map

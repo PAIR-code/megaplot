@@ -64,15 +64,20 @@ function createSection(title: string): HTMLElement {
  * The copy will have the same size and styled size. Return the copy and its 2d
  * context.
  */
-function copyCanvas(canvas: HTMLCanvasElement):
-    [HTMLCanvasElement, CanvasRenderingContext2D] {
+function copyCanvasAndContainer(canvas: HTMLCanvasElement):
+    [HTMLCanvasElement, CanvasRenderingContext2D, HTMLElement] {
+  const parent = canvas.parentElement!;
+  const div = document.createElement('div');
+  div.style.width = parent.style.width;
+  div.style.height = parent.style.height;
   const copy = document.createElement('canvas');
   copy.width = canvas.width;
   copy.height = canvas.height;
   copy.style.width = canvas.style.width;
   copy.style.height = canvas.style.height;
   const ctx = copy.getContext('2d')!;
-  return [copy, ctx];
+  div.appendChild(copy);
+  return [copy, ctx, div];
 }
 
 /**
@@ -194,8 +199,8 @@ describe('Sprite', () => {
       // has been rendered. Start my making a copy of the canvas and for
       // inspection.
       const {canvas} = scene;
-      const [copy, ctx] = copyCanvas(canvas);
-      content.appendChild(copy);
+      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+      content.appendChild(copyContainer);
 
       // Grap a snapshot of the Scene's rendered pixels and draw them to
       // the canvas copy.
@@ -379,10 +384,11 @@ describe('Sprite', () => {
 
         // Create duplicate canvas.
 
-        const result = copyCanvas(canvas);
+        const result = copyCanvasAndContainer(canvas);
         copy = result[0];
         ctx = result[1];
-        content.appendChild(copy);
+        const copyContainer = result[2];
+        content.appendChild(copyContainer);
 
         // Grab a snapshot and draw it to the duplicate canvas.
         const blob = await scene[SceneInternalSymbol].snapshot();
@@ -531,8 +537,8 @@ describe('Sprite', () => {
       // Convenience method for recording a snapshot.
       async function recordSnapshot() {
         // Duplicate the canvas and add it to the content area.
-        const [copy, ctx] = copyCanvas(canvas);
-        content.appendChild(copy);
+        const [_, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+        content.appendChild(copyContainer);
 
         // Grab a snapshot and draw it to the duplicate.
         const blob = await scene[SceneInternalSymbol].snapshot();
