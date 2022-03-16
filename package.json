@@ -27,7 +27,7 @@
     "trailingComma": "es5"
   },
   "dependencies": {
-    "regl": "1.4.2"
+    "regl": "2.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "17.1.0",
