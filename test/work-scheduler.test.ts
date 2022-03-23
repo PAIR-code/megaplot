@@ -228,8 +228,6 @@ describe('WorkScheduler', () => {
         // thinks that it is not visible.
         const workScheduler = new WorkScheduler({maxWorkTimeMs: 10});
 
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
         let counter = 0;
         const incrementCounter = () => ++counter;
 
@@ -329,8 +327,6 @@ describe('WorkScheduler', () => {
       it('should run callbacks using native timeouts', async () => {
         const workScheduler = new WorkScheduler({maxWorkTimeMs: 10});
 
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
         let counter = 0;
         const incrementCounter = () => ++counter;
 
@@ -419,8 +415,6 @@ describe('WorkScheduler', () => {
           maxWorkTimeMs: 10,
         });
 
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
         let counter = 0;
         const incrementCounter = async () => ++counter;
 
@@ -441,245 +435,6 @@ describe('WorkScheduler', () => {
         expect(counter).toBe(1);
       });
     });
-
-    describe('generator', () => {
-      it('should allow scheduling a generator', () => {
-        const timingFunctionsShim = new TimingFunctionsShim();
-
-        timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-        const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
-          maxWorkTimeMs: 10,
-        });
-
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
-        let counter = 0;
-        function* generate() {
-          // Explicitly reset the counter.
-          counter = 0;
-
-          while (counter < 100) {
-            timingFunctionsShim.totalElapsedTimeMs += 1;
-            counter++;
-            yield(counter / 100);  // Yields 0.01, 0.02, ... 1.0.
-          }
-
-          return 1;
-        }
-
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
-        const workTask = workScheduler.scheduleTask(generate);
-        expect(workTask.callback).toBe(generate);
-        expect(workTask.id).toBe(generate);
-        expect(workTask.iterator).not.toBeDefined();
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Advance by one frame. Should work on generator up to 10 ms.
-        // 10 ms should have elapsed.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counter).toBe(10);
-
-        // Find the matching work task. It should now be a different object,
-        // with an iterator.
-        const iteratorWorkTask = workScheduler.getTask(generate)!;
-        expect(iteratorWorkTask).not.toBe(workTask);
-        expect(iteratorWorkTask.iterator).toBeDefined();
-
-        // Run timeout callbacks. Since the generator was scheduled without
-        // explicitly setting animationOnly to be false, it should not run.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counter).toBe(10);
-
-        // Advance by one frame. Should work on generator for another 10 ms.
-        // 20 ms should have elapsed.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1020);
-        expect(counter).toBe(20);
-
-        // Advance by enough frames to finish the task (eight more frames).
-        for (let i = 0; i < 8; i++) {
-          timingFunctionsShim.runAnimationFrameCallbacks();
-        }
-
-        // 100 ms should have elapsed.
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1100);
-        expect(counter).toBe(100);
-
-        // Since the generator finished, running frames any more should have no
-        // effect on the counter or the elapsed time.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1100);
-        expect(counter).toBe(100);
-      });
-
-      it('should allow scheduling multiple generators', () => {
-        const timingFunctionsShim = new TimingFunctionsShim();
-
-        timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-        const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
-          maxWorkTimeMs: 10,
-        });
-
-        // Define generators which takes 100 iterations to complete, and yield
-        // a value after one ms each pass.
-        let counterA = 0;
-        function* generateA() {
-          counterA = 0;
-          while (counterA < 100) {
-            timingFunctionsShim.totalElapsedTimeMs += 1;
-            counterA++;
-            yield(counterA / 100);
-          }
-          return 1;
-        }
-
-        let counterB = 0;
-        function* generateB() {
-          counterB = 0;
-          while (counterB < 100) {
-            timingFunctionsShim.totalElapsedTimeMs += 1;
-            counterB++;
-            yield(counterB / 100);
-          }
-          return 1;
-        }
-
-        // By scheduling the raw functions, these are presumed to run on
-        // animation frames only.
-        workScheduler.scheduleTask(generateA);
-        workScheduler.scheduleTask(generateB);
-
-        // Nothing has been run yet, so we expect the counters to be zero.
-        expect(counterA).toBe(0);
-        expect(counterB).toBe(0);
-
-        // Advance by one frame. Should work on generator A up to 10 ms.
-        // 10 ms should have elapsed. Counter B should still be at zero.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counterA).toBe(10);
-        expect(counterB).toBe(0);
-
-        // Run timeout callbacks. Since the generators were scheduled without
-        // explicitly setting animationOnly to be false, they should not run.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counterA).toBe(10);
-        expect(counterB).toBe(0);
-
-        // Advance by one frame. Should work on generator B for 10 ms.
-        // 20 ms should have elapsed. Counter A should be unchanged.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1020);
-        expect(counterA).toBe(10);
-        expect(counterB).toBe(10);
-
-        // Advance by enough frames to finish both tasks (18 more frames).
-        for (let i = 0; i < 18; i++) {
-          timingFunctionsShim.runAnimationFrameCallbacks();
-        }
-
-        // 200 ms should have elapsed. Both counters should have accumulated
-        // 100 ticks each.
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1200);
-        expect(counterA).toBe(100);
-        expect(counterB).toBe(100);
-
-        // Since both generator finished, running frames any more should have no
-        // effect on the counter or the elapsed time.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1200);
-        expect(counterA).toBe(100);
-        expect(counterB).toBe(100);
-      });
-    });
-  });
-
-  describe('enable/disable', () => {
-    describe('generator', () => {
-      it('disabling should suspend scheduled generators', () => {
-        const timingFunctionsShim = new TimingFunctionsShim();
-
-        timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-        const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
-          maxWorkTimeMs: 10,
-        });
-
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
-        let counter = 0;
-        function* generate() {
-          // Explicitly reset the counter.
-          counter = 0;
-
-          while (counter < 100) {
-            timingFunctionsShim.totalElapsedTimeMs += 1;
-            counter++;
-            yield(counter / 100);  // Yields 0.01, 0.02, ... 1.0.
-          }
-
-          return 1;
-        }
-
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
-        workScheduler.scheduleTask(generate);
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Preemptively disable the WorkScheduler.
-        workScheduler.disable();
-
-        // Advance by one frame. Since the WorkScheduler is disabled, no work
-        // should have been done on the generator.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1000);
-        expect(counter).toBe(0);
-
-        // Re-enable the WorkScheduler.
-        workScheduler.enable();
-
-        // Advance by one frame. Now should work on generator up to 10 ms.
-        // 10 ms should have elapsed.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counter).toBe(10);
-
-        // Disable the WorkScheduler again.
-        workScheduler.disable();
-
-        // Advance by one frame. Since the WorkScheduler is disabled, no work
-        // should have been done on the generator.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1010);
-        expect(counter).toBe(10);
-
-        // Re-enable the WorkScheduler.
-        workScheduler.enable();
-
-        // Advance by one frame. Now should work on generator should resume and
-        // progress 10 ms. 20 ms total should have elapsed.
-        timingFunctionsShim.runAnimationFrameCallbacks();
-        expect(timingFunctionsShim.totalElapsedTimeMs).toBe(1020);
-        expect(counter).toBe(20);
-      });
-    });
   });
 
   describe('unscheduleTask', () => {
@@ -695,8 +450,6 @@ describe('WorkScheduler', () => {
           maxWorkTimeMs: 10,
         });
 
-        // Define a generator which takes 100 iterations to complete, and yields
-        // a value after one ms each pass.
         let counter = 0;
         const incrementCounter = () => ++counter;
 
@@ -723,9 +476,4 @@ describe('WorkScheduler', () => {
       });
     });
   });
-
-  // TODO(jimbo): Add test for unscheduling a doubly-scheduled task run once.
-  // By unsetting the id in the queue's idSet on dequeue during performWork, it
-  // may be possible to enter a condition where a task is in the queue but its
-  // id is no longer in the idSet.
 });

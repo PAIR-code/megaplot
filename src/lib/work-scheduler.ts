@@ -32,15 +32,6 @@
  *
  * The job of the WorkScheduler is to keep track of outstanding tasks and run
  * them as opportunity warrants.
- *
- * Initially, the plan was to use generator functions as the main mechanism for
- * scheduling long-running tasks. A generator function can yield control to the
- * event loop and then resume later. This seemed to be a good design fit.
- *
- * Unfortunately, performance analysis revealed that generator functions are
- * 2-20 times slower than generic callback functions depending on the browser
- * under test. For this reason, nothing in Megaplot makes use of generator
- * functions (other than perhaps tests of WorkScheduler functionality).
  */
 
 import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
@@ -48,13 +39,6 @@ import {WorkQueue} from './work-queue';
 import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskWithId} from './work-task';
 
 export {RemainingTimeFn} from './work-task';
-
-/**
- * Grab a reference to the JavaScript generator function constructor class.
- * While the Function class is available in the global/window scope, neither
- * GeneratorFunction nor AsyncFunction are available.
- */
-const GeneratorFunction = (function*() {}).constructor;
 
 /**
  * Default settings to control the WorkScheduler's behavior. These can be
@@ -396,62 +380,27 @@ export class WorkScheduler {
           continue;
         }
 
-        // Immediately following this line, either the callback function will be
-        // called, or a previously created iterator will be invoked.
         tasksRan++;
+        const result = task.callback.call(null, remaining);
 
-        if (!task.iterator) {
-          const result = task.callback.call(null, remaining);
-
-          // Check to see if this was anything other than a generator.
-          if (task.callback.constructor !== GeneratorFunction) {
-            if (!task.runUntilDone || result) {
-              // Task was a simple callback function, nothing left to do.
-              continue;
-            }
-
-            // Task is not finished, so keep running it until either it finishes
-            // or we run out of time.
-            let done = result;
-            while (!done && remaining() > 0) {
-              done = task.callback.call(null, remaining);
-            }
-
-            if (!done) {
-              // The task did not finish! Schedule the task to continue.
-              this.futureWorkQueue.enqueueTask(task);
-            }
-            continue;
-          }
-
-          // Sanity check. At this point, the result value must be an iterator
-          // produced by a generator function. Had the callback been a non-
-          // generator function, then the loop would have been escaped already
-          // from within the preceding block.
-          if (!result || typeof result !== 'object' || result === null ||
-              !(result.constructor instanceof Function) ||
-              result.constructor.constructor !== GeneratorFunction) {
-            throw new Error('Generator function did not return an iterator.');
-          }
-
-          // Replace the task with a copy but including the iterator for future
-          // invocation.
-          const iterator = result as {} as Iterator<{}, any, undefined>;
-          task = Object.freeze({...task, iterator});
+        if (!task.runUntilDone || result) {
+          // Task was a simple callback function, nothing left to do.
+          continue;
         }
 
-        // Start running down the iterator until it finishes or time runs out.
-        let done: unknown = false;
-        while (!done) {
-          done = task.iterator!.next().done;
-          if (remaining() <= 0) {
-            break;
-          }
+        // Task is not finished, so keep running it until either it finishes
+        // or we run out of time.
+        let done = result;
+        while (!done && remaining() > 0) {
+          done = task.callback.call(null, remaining);
         }
 
         if (!done) {
-          // The iterator did not finish! Schedule the task for further work.
+          // The task did not finish! Schedule the task to continue later.
           this.futureWorkQueue.enqueueTask(task);
+
+          // Since the task didn't finish, we must have run out of time.
+          break;
         }
       }
 
