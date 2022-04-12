@@ -29,6 +29,8 @@ const TEXT_DEMO = './src/demo/text-demo.ts';
 const DEBUG_DEMO = './src/demo/debugging-demo.ts';
 const entry = process.env.MEGAPLOT_DEMO === 'text' ? TEXT_DEMO : DEBUG_DEMO;
 
+process.traceDeprecation = true;
+
 module.exports = {
   mode: 'development',
   entry,
