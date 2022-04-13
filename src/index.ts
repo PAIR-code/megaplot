@@ -21,10 +21,17 @@
 import {HitTestPromise, HitTestResult} from './lib/hit-test-types';
 import {Scene} from './lib/scene';
 import {Sprite} from './lib/sprite';
+import {SpriteView} from './lib/generated/sprite-view';
+import {Selection, SelectionCallback} from './lib/selection-types';
+import {TextSelection} from './lib/text-selection-types';
 
 export {
   HitTestPromise,
   HitTestResult,
   Scene,
   Sprite,
+  SpriteView,
+  Selection,
+  SelectionCallback,
+  TextSelection,
 };

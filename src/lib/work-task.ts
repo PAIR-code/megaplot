@@ -35,8 +35,8 @@ export type WorkTaskCallbackFn = (remainingFn: RemainingTimeFn) => unknown;
 
 /**
  * Characteristics of work tasks:
- *  - May be long running. If so, then it should either yield a generator or
- *    make use of the RemaitingTimeFn to yield control when its time is up.
+ *  - May be long running. If so, then it should make use of the RemaitingTimeFn
+ *    to yield control when its time is up.
  *  - May be frame or time iterable. Some tasks only make sense if the screen is
  *    visible to the user. These tasks are runnable on an animation frame only.
  *    Other tasks may be runnable when the screen is not visible. These tasks
@@ -54,13 +54,6 @@ export interface WorkTask {
    * The callback to invoke to make progress on this task. (Required)
    */
   callback: WorkTaskCallbackFn;
-
-  /**
-   * If the callback was a generator function, then it may not have completed on
-   * a single pass of work progress. In that case, the incomplete iterator is
-   * stored in this property.
-   */
-  iterator?: Iterator<{}>;
 
   /**
    * Unique identifier for this task. When a new task is added, if there is
@@ -90,11 +83,8 @@ export interface WorkTask {
 
   /**
    * Whether the callback function should be re-run until it returns something
-   * truthy, much like an iterator's done property will be true when finished.
-   * In practice, repeatable functions like this run faster than a generator
-   * function's iterator by 2-20x depending on the browser.
-   *
-   * Setting this to true has no effect if the callback is a generator function.
+   * truthy, much like an iterator value's done property will be true when it
+   * has finished.
    */
   runUntilDone?: boolean;
 }

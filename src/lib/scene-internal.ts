@@ -388,7 +388,7 @@ export class SceneInternal implements Renderer {
     // supported. The latter is for hot-loading the standalone Regl JS file.
     const win = window as {} as {[key: string]: unknown};
     const createREGL =
-        (win['REGL'] || win['createREGL'])! as typeof REGL || REGL;
+        win['createREGL']! as (...args: unknown[]) => REGL.Regl || REGL;
 
     if (!createREGL) {
       throw new Error('Could not find REGL.');

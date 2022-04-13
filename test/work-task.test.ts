@@ -30,18 +30,12 @@ describe('isWorkTaskOrFunction', () => {
     expect(isWorkTaskOrFunction(function() {})).toBe(true);
     expect(isWorkTaskOrFunction(() => {})).toBe(true);
     expect(isWorkTaskOrFunction(async () => {})).toBe(true);
-
-    function* generatorFn() {}
-    expect(isWorkTaskOrFunction(generatorFn)).toBe(true);
   });
 
   it('should return true for objects with callback functions.', () => {
     expect(isWorkTaskOrFunction({callback: function() {}})).toBe(true);
     expect(isWorkTaskOrFunction({callback: () => {}})).toBe(true);
     expect(isWorkTaskOrFunction({callback: async () => {}})).toBe(true);
-
-    function* generatorFn() {}
-    expect(isWorkTaskOrFunction({callback: generatorFn})).toBe(true);
   });
 
   it('should return false for falsey arguments.', () => {
@@ -95,9 +89,6 @@ describe('getWorkTaskId', () => {
 
     const asyncFn = async () => {};
     expect(getWorkTaskId(asyncFn)).toBe(asyncFn);
-
-    function* generatorFn() {}
-    expect(getWorkTaskId(generatorFn)).toBe(generatorFn);
   });
 
   it('should return callback for objects with callback functions.', () => {
@@ -109,9 +100,6 @@ describe('getWorkTaskId', () => {
 
     const asyncFn = async () => {};
     expect(getWorkTaskId({callback: asyncFn})).toBe(asyncFn);
-
-    function* generatorFn() {}
-    expect(getWorkTaskId({callback: generatorFn})).toBe(generatorFn);
   });
 
   it('should return id object for tasks with ids.', () => {
@@ -167,12 +155,6 @@ describe('ensureOrCreateWorkTask', () => {
     expect(typeof asyncFnTask).toBe('object');
     expect(asyncFnTask.callback).toBe(asyncFn);
     expect(asyncFnTask.id).toBe(asyncFn);
-
-    function* generatorFn() {}
-    const generatorFnTask = ensureOrCreateWorkTask(generatorFn);
-    expect(typeof generatorFnTask).toBe('object');
-    expect(generatorFnTask.callback).toBe(generatorFn);
-    expect(generatorFnTask.id).toBe(generatorFn);
   });
 
   it('should copy properties of an object with a callback property.', () => {
