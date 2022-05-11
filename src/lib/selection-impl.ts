@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Implements the Selection API for SceneImpl.
+ * @fileoverview Implements the Selection API.
  */
 
 import {Renderer} from './renderer-types';
