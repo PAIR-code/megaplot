@@ -83,6 +83,7 @@ async function main() {
     facet: 'type',
     borderColor: '#000000',
     fillColor: '#ffffff',
+    clearBeforeUpdate: false,
   };
 
   // As a synthetic data set, use the properties on the Window object.
@@ -120,6 +121,10 @@ async function main() {
 
   // Function to call when GUI options are changed.
   function update() {
+    if (settings.clearBeforeUpdate) {
+      textSelection.clear();
+    }
+
     const facets = new Map<string, Label[]>();
 
     for (const label of labels) {
@@ -220,6 +225,7 @@ async function main() {
   gui.add(settings, 'facet', ['type', 'alpha']).onChange(update);
   gui.addColor(settings, 'borderColor').onChange(update);
   gui.addColor(settings, 'fillColor').onChange(update);
+  gui.add(settings, 'clearBeforeUpdate');
   update();
   container.appendChild(gui.domElement);
 

@@ -120,7 +120,7 @@ export class SelectionImpl<T> implements Selection<T> {
     if (this.clearingTask) {
       this.workScheduler.scheduleUniqueTask({
         id: this.bindingTaskId,
-        callback: () => this.bind(data),
+        callback: () => this.bind(data, keyFn),
       });
       return this;
     }
@@ -384,15 +384,8 @@ export class SelectionImpl<T> implements Selection<T> {
       this.boundData.splice(0, index);
       this.sprites.splice(0, index);
 
-      if (!this.boundData.length) {
-        // Finally finished clearing data, so we no longer need the
-        // clearingTask.
-        delete this.clearingTask;
-        return true;
-      }
-
-      // Still more clearing to do.
-      return false;
+      // Return whether there's more data to clear.
+      return !this.boundData.length;
     };
 
     // Define a clearing task which will be invoked by the WorkScheduler to

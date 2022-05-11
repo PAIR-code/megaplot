@@ -23,6 +23,7 @@ import {Renderer} from './renderer-types';
 import {Selection, SelectionCallback} from './selection-types';
 import {TextSelection} from './text-selection-types';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
+import {WorkTaskWithId} from './work-task';
 
 /**
  * Text can be horizontally aligned left, right or center. Default is center.
@@ -54,6 +55,14 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   private selections: Selection<TextGlyph<T>>[] = [];
 
   private boundData: T[] = [];
+
+  // Unique objects to identify this instance's bind() and clear() tasks.
+  private bindingTaskId = Symbol('bindingTask');
+  private clearingTaskId = Symbol('clearingTask');
+
+  // Binding or clearing task, if scheduled.
+  private bindingTask?: WorkTaskWithId;
+  private clearingTask?: WorkTaskWithId;
 
   private textCallback?: ((datum: T) => string) = ((datum: T) => `${datum}`);
 
@@ -158,7 +167,22 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
     return glyphs;
   }
 
-  bind(data: T[]) {
+  bind(data: T[], keyFn?: (datum: T) => string) {
+    // TODO(jimbo): Implement keyFn for non-index binding.
+    if (keyFn) {
+      throw new Error('keyFn mapping is not yet supported');
+    }
+
+    // If there's a clearingTask already in flight, then short-circuit here and
+    // schedule a future attempt using the bindingTaskId.
+    if (this.clearingTask) {
+      this.workScheduler.scheduleUniqueTask({
+        id: this.bindingTaskId,
+        callback: () => this.bind(data, keyFn),
+      });
+      return this;
+    }
+
     // Keep track of number of steps taken during this task to break up the
     // number of times we check how much time is remaining.
     let step = 0;
@@ -217,7 +241,7 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
         selection.bind(this.datumToGlyphs(datum));
 
         if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-          return false;
+          break;
         }
       }
 
@@ -251,28 +275,57 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
     // Performs exit data binding while there's time remaining, then returns
     // whether there's more work to do.
     const exitTask = (remaining: RemainingTimeFn) => {
-      // TODO(jimbo): Instead, iterate forward through the list.
-      while (dataLength < this.boundData.length) {
+      let index = dataLength;
+
+      while (index < this.boundData.length) {
         step++;
 
-        this.boundData.pop();
-        const selection = this.selections.pop()!;
+        const selection = this.selections[index];
+
+        index++;
 
         selection.bind([]);
 
         if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-          return false;
+          break;
         }
       }
 
+      this.boundData.splice(dataLength, index - dataLength);
+      this.selections.splice(dataLength, index - dataLength);
+
       return dataLength >= this.boundData.length;
     };
+    /*
+    const exitTask = (remaining: RemainingTimeFn) => {
+      let index = dataLength;
+
+      while (index < this.boundData.length) {
+        step++;
+
+        const selection = this.selections[index];
+
+        index++;
+
+        selection.bind([]);
+
+        if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
+          break;
+        }
+      }
+
+      this.boundData.splice(dataLength, index - dataLength);
+      this.selections.splice(dataLength, index - dataLength);
+
+      return index < this.boundData.length;
+    };
+    */
 
     // Perform one unit of work, starting with any exit tasks, then updates,
     // then enter tasks. This way, previously used texture memory can be
     // recycled more quickly, keeping the area of used texture memory more
     // compact.
-    const bindingTask = {
+    this.bindingTask = {
       id: this,
       callback: (remaining: RemainingTimeFn) => {
         step = 0;
@@ -282,13 +335,86 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
       runUntilDone: true,
     };
 
-    this.workScheduler.scheduleUniqueTask(bindingTask);
+    this.workScheduler.scheduleUniqueTask(this.bindingTask);
 
     return this;
   }
 
+  /**
+   * Clear any previously bound data and Sprites. Previously bound Sprites will
+   * still have their callbacks invoked. This is equivalent to calling bind()
+   * with an empty array, except that it is guaranteed to drop expsting data and
+   * Sprites, whereas calling bind([]) may be interrupted by a later call to
+   * bind().
+   */
   clear() {
-    throw new Error('clear() not yet implemented');
+    let step = 0;
+
+    // Performs exit data binding while there's time remaining, then returns
+    // whether there's more work to do.
+    const exitTask = (remaining: RemainingTimeFn) => {
+      let index = 0;
+
+      while (index < this.boundData.length) {
+        step++;
+
+        const selection = this.selections[index];
+
+        index++;
+
+        selection.clear();
+
+        if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
+          break;
+        }
+      }
+
+      this.boundData.splice(0, index);
+      this.selections.splice(0, index);
+
+      return !this.boundData.length;
+    };
+
+
+    // Define a clearing task which will be invoked by the WorkScheduler to
+    // incrementally clear all data.
+    this.clearingTask = {
+      // Setting id to this ensures that there will be only one bindingTask
+      // associated with this object at a time. If the API user calls bind()
+      // again before the previous task finishes, whatever work it had been
+      // doing will be dropped for the new parameters.
+      id: this.clearingTaskId,
+
+      // Perform as much of the clearing work as time allows. When finished,
+      // remove the clearingTask member. This will unblock the bindingTask, if
+      // there is one.
+      callback: (remaining: RemainingTimeFn) => {
+        step = 0;
+        const result = exitTask(remaining);
+        if (result) {
+          delete this.clearingTask;
+        }
+        return result;
+      },
+
+      // The return value of the callback indicates whether there's more to do.
+      // Setting runUntilDone to true here signals that if the task cannot run
+      // to completion due to time, the WorkScheduler should push it back onto
+      // the end of the queue.
+      runUntilDone: true,
+    };
+
+    // If a binding task was previously scheduled, unschedule it since clear
+    // must take precedence.
+    if (this.bindingTask) {
+      this.workScheduler.unscheduleTask(this.bindingTask);
+      delete this.bindingTask;
+    }
+
+    // Use the provided WorkScheduler to schedule the task.
+    this.workScheduler.scheduleUniqueTask(this.clearingTask);
+
+    // Allow method call chaining.
     return this;
   }
 }
