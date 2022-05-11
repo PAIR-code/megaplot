@@ -24,10 +24,42 @@ import {Sprite} from './sprite';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
 import {WorkTaskWithId} from './work-task';
 
+/**
+ * Since binding may take some time, this enum lists the various states the
+ * binding operation could be in.
+ */
+enum BindingState {
+  /**
+   * Default state, no bind is waiting to occur or in flight.
+   */
+  None,
+
+  /**
+   * If a call to bind() followed a call to clear(), then the bind() may be
+   * blocked waiting for the clear to finish.
+   */
+  Blocked,
+
+  /**
+   * Once a call to bind() occurs, the various tasks may not begin until the
+   * a later animation frame. In this case, the bind is scheduled.
+   */
+  Scheduled,
+
+  /**
+   * Binding tasks have started being performed, but not finished.
+   */
+  Started,
+}
+
 export class SelectionImpl<T> implements Selection<T> {
   private sprites: Sprite[] = [];
 
   private boundData: T[] = [];
+
+  private bindingState = BindingState.None;
+
+  private hasWarned = false;
 
   // Unique objects to identify this instance's bind() and clear() tasks.
   private bindingTaskId = Symbol('bindingTask');
@@ -115,12 +147,23 @@ export class SelectionImpl<T> implements Selection<T> {
       throw new Error('keyFn mapping is not yet supported');
     }
 
+    // If a previous call to bind() has been scheduled but not started, it
+    // probably indicates a bug in the API user's code.
+    if (!this.hasWarned && this.bindingState === BindingState.Scheduled) {
+      console.warn('Possibly conflicting .bind() invocations detected.');
+      this.hasWarned = true;
+    }
+
     // If there's a clearingTask already in flight, then short-circuit here and
     // schedule a future attempt using the bindingTaskId.
     if (this.clearingTask) {
+      this.bindingState = BindingState.Blocked;
       this.workScheduler.scheduleUniqueTask({
         id: this.bindingTaskId,
-        callback: () => this.bind(data, keyFn),
+        callback: () => {
+          this.bindingState = BindingState.None;
+          this.bind(data, keyFn);
+        },
       });
       return this;
     }
@@ -298,11 +341,13 @@ export class SelectionImpl<T> implements Selection<T> {
       // it more likely that Sprite memory will be freed by the time we need it
       // for entering data points.
       callback: (remaining: RemainingTimeFn) => {
+        this.bindingState = BindingState.Started;
         step = 0;
         const result = exitTask(remaining) && updateTask(remaining) &&
             enterTask(remaining);
         if (result) {
           delete this.bindingTask;
+          this.bindingState = BindingState.None;
         }
         return result;
       },
@@ -316,6 +361,7 @@ export class SelectionImpl<T> implements Selection<T> {
 
     // Use the provided WorkScheduler to schedule bindingTask.
     this.workScheduler.scheduleUniqueTask(this.bindingTask);
+    this.bindingState = BindingState.Scheduled;
 
     // Allow method call chaining.
     return this;
@@ -425,6 +471,7 @@ export class SelectionImpl<T> implements Selection<T> {
 
     // Use the provided WorkScheduler to schedule the task.
     this.workScheduler.scheduleUniqueTask(this.clearingTask);
+    this.bindingState = BindingState.None;
 
     // Allow method call chaining.
     return this;
