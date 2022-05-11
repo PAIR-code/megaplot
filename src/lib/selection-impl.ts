@@ -22,11 +22,20 @@ import {Renderer} from './renderer-types';
 import {Selection, SelectionCallback} from './selection-types';
 import {Sprite} from './sprite';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
+import {WorkTaskWithId} from './work-task';
 
 export class SelectionImpl<T> implements Selection<T> {
   private sprites: Sprite[] = [];
 
   private boundData: T[] = [];
+
+  // Unique objects to identify this instance's bind() and clear() tasks.
+  private bindingTaskId = Symbol('bindingTask');
+  private clearingTaskId = Symbol('clearingTask');
+
+  // Binding or clearing task, if scheduled.
+  private bindingTask?: WorkTaskWithId;
+  private clearingTask?: WorkTaskWithId;
 
   private bindCallback?: SelectionCallback<T>;
   private initCallback?: SelectionCallback<T>;
@@ -100,9 +109,21 @@ export class SelectionImpl<T> implements Selection<T> {
    *
    * @param data Array of data to bind to the internal Sprites list.
    */
-  bind(data: T[]) {
+  bind(data: T[], keyFn?: (datum: T) => string) {
     // TODO(jimbo): Implement keyFn for non-index binding.
-    // Key function signature: keyFn?: (datum: T) => string.
+    if (keyFn) {
+      throw new Error('keyFn mapping is not yet supported');
+    }
+
+    // If there's a clearingTask already in flight, then short-circuit here and
+    // schedule a future attempt using the bindingTaskId.
+    if (this.clearingTask) {
+      this.workScheduler.scheduleUniqueTask({
+        id: this.bindingTaskId,
+        callback: () => this.bind(data),
+      });
+      return this;
+    }
 
     // Keep track of number of steps taken during this task to break up the
     // number of times we check how much time is remaining.
@@ -231,20 +252,18 @@ export class SelectionImpl<T> implements Selection<T> {
         } else {
           const {exitCallback, bindCallback} = this;
 
-          if (exitCallback || bindCallback) {
-            // Schedule the Sprite's exit() callback to run. This will invoke
-            // the bindCallback and/or the exitCallback, in that order.
-            sprite.exit(spriteView => {
-              if (bindCallback) {
-                // The bindCallback, if present is always invoked when binding
-                // data, immediately before more specific callbacks if present.
-                bindCallback(spriteView, datum);
-              }
-              if (exitCallback) {
-                exitCallback(spriteView, datum);
-              }
-            });
-          }
+          // Schedule the Sprite's exit() callback to run. This will invoke
+          // the bindCallback and/or the exitCallback, in that order.
+          sprite.exit(spriteView => {
+            if (bindCallback) {
+              // The bindCallback, if present is always invoked when binding
+              // data, immediately before more specific callbacks if present.
+              bindCallback(spriteView, datum);
+            }
+            if (exitCallback) {
+              exitCallback(spriteView, datum);
+            }
+          });
         }
 
         if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
@@ -267,19 +286,25 @@ export class SelectionImpl<T> implements Selection<T> {
 
     // Define a binding task which will be invoked by the WorkScheduler to
     // incrementally carry out the prevously defined tasks.
-    const bindingTask = {
+    this.bindingTask = {
       // Setting id to this ensures that there will be only one bindingTask
       // associated with this object at a time. If the API user calls bind()
       // again before the previous task finishes, whatever work it had been
       // doing will be dropped for the new parameters.
-      id: this,
+      id: this.bindingTaskId,
 
-      // Perform one unit of work, starting with the enter data binding tasks,
-      // then the updates, then the exits.
+      // Perform at least one unit of work, starting with the exit data binding
+      // tasks, then the updates, then the enters. Doing the exits first makes
+      // it more likely that Sprite memory will be freed by the time we need it
+      // for entering data points.
       callback: (remaining: RemainingTimeFn) => {
         step = 0;
-        return exitTask(remaining) && updateTask(remaining) &&
+        const result = exitTask(remaining) && updateTask(remaining) &&
             enterTask(remaining);
+        if (result) {
+          delete this.bindingTask;
+        }
+        return result;
       },
 
       // The return value of the callback indicates whether there's more to do.
@@ -289,8 +314,124 @@ export class SelectionImpl<T> implements Selection<T> {
       runUntilDone: true,
     };
 
+    // Use the provided WorkScheduler to schedule bindingTask.
+    this.workScheduler.scheduleUniqueTask(this.bindingTask);
+
+    // Allow method call chaining.
+    return this;
+  }
+
+  /**
+   * Clear any previously bound data and Sprites. Previously bound Sprites will
+   * still have their callbacks invoked. This is equivalent to calling bind()
+   * with an empty array, except that it is guaranteed to drop expsting data and
+   * Sprites, whereas calling bind([]) may be interrupted by a later call to
+   * bind().
+   */
+  clear() {
+    let step = 0;
+
+    // Get a reference to the currently specified exitCallback and bindCallback,
+    // if any. We do this now to ensure that later changes do not affect the way
+    // thate the previously bound sprites leave.
+    const {exitCallback, bindCallback} = this;
+
+    // Performs exit data binding while there's time remaining, then returns
+    // whether there's more work to do.
+    const exitTask = (remaining: RemainingTimeFn) => {
+      let index = 0;
+
+      while (index < this.boundData.length) {
+        step++;
+
+        const datum = this.boundData[index];
+        const sprite = this.sprites[index];
+
+        // Increment index here, so that it's always one more than the last
+        // index visited, even if we break early below due to time check.
+        index++;
+
+        if (!sprite.isAbandoned && !sprite.isActive && !sprite.isRemoved) {
+          // It may be that the exiting sprite was never rendered, for example
+          // if there was insufficient capacity in the data texture when an
+          // earlier call to bind() created it. In such a case, the appropriate
+          // thing to do is to just abandon it.
+          sprite.abandon();
+        } else {
+          // Schedule the Sprite's exit() callback to run. This will invoke
+          // the bindCallback and/or the exitCallback, in that order. Even if
+          // neither bindCallback nor exitCallback are specified, we still need
+          // to call .exit() to mark the Sprite for removal.
+          sprite.exit(spriteView => {
+            if (bindCallback) {
+              // The bindCallback, if present is always invoked when binding
+              // data, immediately before more specific callbacks if present.
+              bindCallback(spriteView, datum);
+            }
+            if (exitCallback) {
+              exitCallback(spriteView, datum);
+            }
+          });
+        }
+
+        if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
+          break;
+        }
+      }
+
+      // Remove those data and sprites for which we've successfully established
+      // exit callbacks.
+      this.boundData.splice(0, index);
+      this.sprites.splice(0, index);
+
+      if (!this.boundData.length) {
+        // Finally finished clearing data, so we no longer need the
+        // clearingTask.
+        delete this.clearingTask;
+        return true;
+      }
+
+      // Still more clearing to do.
+      return false;
+    };
+
+    // Define a clearing task which will be invoked by the WorkScheduler to
+    // incrementally clear all data.
+    this.clearingTask = {
+      // Setting id to this ensures that there will be only one bindingTask
+      // associated with this object at a time. If the API user calls bind()
+      // again before the previous task finishes, whatever work it had been
+      // doing will be dropped for the new parameters.
+      id: this.clearingTaskId,
+
+      // Perform as much of the clearing work as time allows. When finished,
+      // remove the clearingTask member. This will unblock the bindingTask, if
+      // there is one.
+      callback: (remaining: RemainingTimeFn) => {
+        step = 0;
+        const result = exitTask(remaining);
+        if (result) {
+          delete this.clearingTask;
+        }
+        return result;
+      },
+
+      // The return value of the callback indicates whether there's more to do.
+      // Setting runUntilDone to true here signals that if the task cannot run
+      // to completion due to time, the WorkScheduler should push it back onto
+      // the end of the queue.
+      runUntilDone: true,
+    };
+
+    // If a binding task was previously scheduled, unschedule it since clear
+    // must take precedence.
+    if (this.bindingTask) {
+      this.workScheduler.unscheduleTask(this.bindingTask);
+      delete this.bindingTask;
+    }
+
     // Use the provided WorkScheduler to schedule the task.
-    this.workScheduler.scheduleUniqueTask(bindingTask);
+    this.workScheduler.scheduleUniqueTask(this.clearingTask);
 
     // Allow method call chaining.
     return this;

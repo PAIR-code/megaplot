@@ -71,4 +71,13 @@ export interface Selection<T> {
    * key string produced.
    */
   bind: (data: T[], keyFn?: (datum: T) => string) => Selection<T>;
+
+  /**
+   * Clear any previously bound data and Sprites. Previously bound Sprites will
+   * still have their callbacks invoked. This is equivalent to calling bind()
+   * with an empty array, except that it is guaranteed to drop expsting data and
+   * Sprites, whereas calling bind([]) may be interrupted by a later call to
+   * bind().
+   */
+  clear: () => Selection<T>;
 }

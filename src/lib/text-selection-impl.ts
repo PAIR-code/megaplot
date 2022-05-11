@@ -286,4 +286,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
     return this;
   }
+
+  clear() {
+    throw new Error('clear() not yet implemented');
+    return this;
+  }
 }
