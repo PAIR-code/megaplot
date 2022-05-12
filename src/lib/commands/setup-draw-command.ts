@@ -66,8 +66,9 @@ export function setupDrawCommand(
       },
       equation: {
         rgb: 'add',
-        alpha: 'max',
+        alpha: 'add',
       },
+      color: [0, 0, 0, 0]
     },
 
     frag: fragmentShader(),

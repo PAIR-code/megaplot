@@ -387,8 +387,8 @@ export class SceneInternal implements Renderer {
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
     const win = window as {} as {[key: string]: unknown};
-    const createREGL =
-        win['createREGL']! as (...args: unknown[]) => REGL.Regl || REGL;
+    const createREGL = win['createREGL']! as (...args: unknown[]) =>
+                           REGL.Regl || REGL;
 
     if (!createREGL) {
       throw new Error('Could not find REGL.');
@@ -398,7 +398,6 @@ export class SceneInternal implements Renderer {
       container: this.container,
       extensions: [
         'angle_instanced_arrays',
-        'EXT_blend_minmax',
         'OES_texture_float',
         'OES_texture_float_linear',
       ],

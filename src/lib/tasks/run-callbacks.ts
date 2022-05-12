@@ -26,7 +26,7 @@ import {SpriteViewCallback} from '../sprite';
 import {SpriteImpl} from '../sprite-impl';
 import {SpriteImplProperties} from '../sprite-impl-properties';
 import {DataViewSymbol, InternalPropertiesSymbol} from '../symbols';
-import {RemainingTimeFn} from '../work-scheduler';
+import {RemainingTimeFn, WorkScheduler} from '../work-scheduler';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -45,6 +45,7 @@ interface CoordinatorAPI {
   queueTextureSync: () => void;
   sprites: SpriteImpl[];
   toDrawTsRange: NumericRange;
+  workScheduler: WorkScheduler;
 }
 
 /**
@@ -103,8 +104,13 @@ export function runCallbacks(
     const spriteView = properties.spriteView!;
     spriteView.TransitionTimeMs += currentTimeMs;
 
-    // Make sure the the draw Ts range includes the current transition time.
-    coordinator.toDrawTsRange.expandToInclude(spriteView.TransitionTimeMs);
+    // Make sure that the draw Ts range includes the current transition time
+    // plus a buffer to account for time taken by work tasks. Without the
+    // buffer, it can happen that the last drawn frame does not include the
+    // final resting state of the Sprite, especially when the user-specified
+    // transition time is near or below one frame (about 17ms).
+    coordinator.toDrawTsRange.expandToInclude(
+        spriteView.TransitionTimeMs + coordinator.workScheduler.maxWorkTimeMs);
 
     if (spriteView.TransitionTimeMs > currentTimeMs) {
       // If the callback set a future arrival time (Ts), then this sprite

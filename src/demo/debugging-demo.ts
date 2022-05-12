@@ -107,6 +107,7 @@ async function main() {
     randomize: false,
     showText: false,
     mouseover: false,
+    clearBeforeUpdate: false,
   };
 
   const colors = d3.schemeCategory10;
@@ -123,6 +124,10 @@ async function main() {
 
   // Function to call when GUI options are changed.
   function update() {
+    if (settings.clearBeforeUpdate) {
+      selection.clear();
+    }
+
     const count = settings.count;
     settings.total = count * count;
 
@@ -222,6 +227,7 @@ async function main() {
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
   gui.add(settings, 'mouseover');
+  gui.add(settings, 'clearBeforeUpdate');
   update();
   container.appendChild(gui.domElement);
 

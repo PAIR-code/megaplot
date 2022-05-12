@@ -59,7 +59,9 @@ function createSection(title: string): HTMLElement {
 /**
  * Dummy data interface for testing.
  */
-interface TestDatum {}
+interface TestDatum {
+  id?: string;  // Optional id to make tests easier to follow.
+}
 
 describe('Selection', () => {
   const section = createSection('Selection');
@@ -389,25 +391,25 @@ describe('Selection', () => {
     });
   });
 
-  describe('join', () => {
+  describe('bind', () => {
     it('should invoke callback asynchronously after bind', async () => {
       const selection = scene.createSelection<TestDatum>();
 
-      // Keep track of how many times the join callback is invoked.
-      let joinRunCount = 0;
+      // Keep track of how many times the bind callback is invoked.
+      let bindRunCount = 0;
 
-      // Keep track of the objects with which the join callback is invoked.
-      const joinDataSet = new Set<TestDatum>();
+      // Keep track of the objects with which the bind callback is invoked.
+      const bindDataSet = new Set<TestDatum>();
 
       selection.onBind((_, datum) => {
-        joinRunCount++;
-        joinDataSet.add(datum);
+        bindRunCount++;
+        bindDataSet.add(datum);
       });
 
       // The callback should be invoked until after bind().
-      expect(joinRunCount).toBe(0);
+      expect(bindRunCount).toBe(0);
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(joinRunCount).toBe(0);
+      expect(bindRunCount).toBe(0);
 
       // Initialize data set with two objects.
       const data: TestDatum[] = [{}, {}];
@@ -417,20 +419,20 @@ describe('Selection', () => {
       selection.bind(data);
 
       // The callback should not be invoked immediately.
-      expect(joinRunCount).toBe(0);
+      expect(bindRunCount).toBe(0);
 
-      // This should schedule the sprites' enter callbacks (which run join).
+      // This should schedule the sprites' enter callbacks (which run bind).
       // TODO(jimbo): Using beginImmediately on runEnterCallbacks to shorten.
       timingFunctionsShim.runAnimationFrameCallbacks();
 
-      // This should run the join callbacks to completion since time does not
+      // This should run the bind callbacks to completion since time does not
       // advance during invocations.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(joinRunCount).toBe(2);
-      expect(joinDataSet).toEqual(expectedDataSet);
+      expect(bindRunCount).toBe(2);
+      expect(bindDataSet).toEqual(expectedDataSet);
     });
 
-    it('should invoke join before init', async () => {
+    it('should invoke bind before init', async () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
@@ -441,15 +443,15 @@ describe('Selection', () => {
       });
 
       selection.onBind((_, datum) => {
-        invocationLog.push({action: 'join', datum});
+        invocationLog.push({action: 'bind', datum});
       });
 
       // Initialize data set with two objects.
       const data: TestDatum[] = [{}, {}];
       const expectedLog: (typeof invocationLog) = [
-        {action: 'join', datum: data[0]},
+        {action: 'bind', datum: data[0]},
         {action: 'init', datum: data[0]},
-        {action: 'join', datum: data[1]},
+        {action: 'bind', datum: data[1]},
         {action: 'init', datum: data[1]},
       ];
 
@@ -459,16 +461,225 @@ describe('Selection', () => {
       // The callback should not be invoked immediately.
       expect(invocationLog.length).toBe(0);
 
-      // This should schedule the sprites' enter callbacks (run join,init).
+      // This should schedule the sprites' enter callbacks (run bind,init).
       // TODO(jimbo): Using beginImmediately on runEnterCallbacks to shorten.
       timingFunctionsShim.runAnimationFrameCallbacks();
 
       // This should run the sprites' update callbacks to completion (in turn
-      // running the selection's join, init) since time does not advance during
+      // running the selection's bind, init) since time does not advance during
       // invocations.
       timingFunctionsShim.runAnimationFrameCallbacks();
       expect(invocationLog.length).toBe(4);
       expect(invocationLog).toEqual(expectedLog);
+    });
+  });
+
+  describe('clear', () => {
+    it('should remove data and sprites', async () => {
+      const selection = scene.createSelection<TestDatum>();
+
+      // Keep track of how many times the various callbacks are invoked.
+      const counter = {bind: 0, init: 0, enter: 0, exit: 0};
+      selection.onBind(() => counter.bind++);
+      selection.onInit(() => counter.init++);
+      selection.onEnter(() => counter.enter++);
+      selection.onExit(() => counter.exit++);
+
+      // Bind the selection to an array of one datum.
+      selection.bind([{}]);
+
+      // Nothing should happen immediately.
+      expect(counter).toEqual({bind: 0, init: 0, enter: 0, exit: 0});
+
+      // After one frame, the binding code has run, setting up the Sprite's
+      // enter() and update() callbacks, but neither will have been invoked.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 0, init: 0, enter: 0, exit: 0});
+
+      // After the next frame, the Sprite's enter() callback has run, which
+      // includes running the Selection's onBind() and onInit() callbacks.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 1, init: 1, enter: 0, exit: 0});
+
+      // After the next frame, the Sprite's values have been flashed over to
+      // texture memory, and the Sprite's update() callback is scheduled, but
+      // has not yet been invoked.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 1, init: 1, enter: 0, exit: 0});
+
+      // After the next frame, the Sprite's update() callback has been invoked,
+      // which in turn invokes the Selection's onBind() callback for the second
+      // time and the onEnter() callback.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, exit: 0});
+
+      // After another frame, the Sprite's values are again flashed over to
+      // texture memory, but nothing else should have occurred, so the
+      // invocation counts should still be the same.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, exit: 0});
+
+      // Sanity check! Here we're asserting that after another frame, there was
+      // nothing scheduled. If something had been scheduled then one or more of
+      // the following assertions would fail.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, exit: 0});
+
+      // Now we invoke clear().
+      selection.clear();
+
+      // As before, nothing should happen immediately. Run counts should all
+      // remain unchanged.
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, exit: 0});
+
+      // After one frame, the clearing task code has run, setting up the
+      // Sprite's exit() callback, but not having called it yet.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, exit: 0});
+
+      // After the next frame, the Sprite's exit() callback has been invoked,
+      // which in turn invokes the Selection's onBind() for the third time, and
+      // onExit() for the first time.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, exit: 1});
+
+      // Sanity check! Still no additional changes after yet more frames.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, exit: 1});
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, exit: 1});
+    });
+
+    it('should finish before a subsequent bind', async () => {
+      const selection = scene.createSelection<TestDatum>();
+
+      // Keep track of how many times the various callbacks are invoked.
+      const counter = {bind: 0, init: 0, enter: 0, update: 0, exit: 0};
+      selection.onBind(() => counter.bind++);
+      selection.onInit(() => counter.init++);
+      selection.onEnter(() => counter.enter++);
+      selection.onUpdate(() => counter.update++);
+      selection.onExit(() => counter.exit++);
+
+      // Bind the selection to an array of one datum.
+      selection.bind([{id: 'apple'}]);
+
+      // After six frames, the bind should have entirely finished, calling both
+      // the onInit() and onEnter() callbacks (and onBind() once for each).
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // Now we invoke clear().
+      selection.clear();
+
+      // Nothing should happen immediately. Run counts should remain unchanged.
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // Now we invoke bind() before advancing any frames. If the clear() fails
+      // to finish before this bind, then we'll see increments to
+      // counter.update. If everything goes according to plan, we'll never see
+      // any increments to update because the data will all have been cleared
+      // before this bind occurs.
+      selection.bind([{id: 'blueberry'}]);
+
+      // Nothing should happen immediately. Run counts should remain unchanged.
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // After one frame, the clearing task code has run, setting up the
+      // Sprite's exit() callback, but not having called it yet.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // After the next frame, the Sprite's exit() callback has been invoked,
+      // which in turn invokes the Selection's onBind() for the third time, and
+      // onExit() for the first time.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, update: 0, exit: 1});
+
+      // Next up in the WorkScheduler queue is the Sprite::enter() call which
+      // will invoke the onBind() and onInit() callbacks for the second bind()
+      // invocation (the blueberry).
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 4, init: 2, enter: 1, update: 0, exit: 1});
+
+      // After a frame, values are flashed to textures, and the Sprite::update()
+      // is scheduled.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 4, init: 2, enter: 1, update: 0, exit: 1});
+
+      // After a frame, Sprite::update() runs, which in turn calls the Selection
+      // onBind() and onEnter() callbacks.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 5, init: 2, enter: 2, update: 0, exit: 1});
+
+      // Sanity check! After more frames, no more callbacks have been invoked.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 5, init: 2, enter: 2, update: 0, exit: 1});
+    });
+
+    it('should circumvent a scheduled bind', async () => {
+      const selection = scene.createSelection<TestDatum>();
+
+      // Keep track of how many times the various callbacks are invoked.
+      const counter = {bind: 0, init: 0, enter: 0, update: 0, exit: 0};
+      selection.onBind(() => counter.bind++);
+      selection.onInit(() => counter.init++);
+      selection.onEnter(() => counter.enter++);
+      selection.onUpdate(() => counter.update++);
+      selection.onExit(() => counter.exit++);
+
+      // Bind the selection to an array of one datum.
+      selection.bind([{id: 'apple'}]);
+
+      // After six frames, the bind should have entirely finished, calling both
+      // the onInit() and onEnter() callbacks (and onBind() once for each).
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // Bind the selection again
+      selection.bind([{id: 'blueberry'}]);
+
+      // Nothing should happen immediately. Run counts should remain unchanged.
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // Now we invoke clear(). If this fails to perform as advertized, then the
+      // second bind (blueberry) will end up causing updates. As it is, the
+      // second bind should be unscheduled and never run.
+      selection.clear();
+
+      // Nothing should happen immediately. Run counts should remain unchanged.
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // After one frame, the clearing task code has run, setting up the
+      // Sprite's exit() callback, but not having called it yet.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 2, init: 1, enter: 1, update: 0, exit: 0});
+
+      // After the next frame, the Sprite's exit() callback has been invoked,
+      // which in turn invokes the Selection's onBind() for the third time, and
+      // onExit() for the first time.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, update: 0, exit: 1});
+
+      // Since the clear() should have completely removed the second bind()'s
+      // scheduled task, even after many more frames, no more callbacks should
+      // be invoked.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      timingFunctionsShim.runAnimationFrameCallbacks();
+      expect(counter).toEqual({bind: 3, init: 1, enter: 1, update: 0, exit: 1});
     });
   });
 });
