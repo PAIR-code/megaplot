@@ -296,30 +296,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
       return dataLength >= this.boundData.length;
     };
-    /*
-    const exitTask = (remaining: RemainingTimeFn) => {
-      let index = dataLength;
-
-      while (index < this.boundData.length) {
-        step++;
-
-        const selection = this.selections[index];
-
-        index++;
-
-        selection.bind([]);
-
-        if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-          break;
-        }
-      }
-
-      this.boundData.splice(dataLength, index - dataLength);
-      this.selections.splice(dataLength, index - dataLength);
-
-      return index < this.boundData.length;
-    };
-    */
 
     // Perform one unit of work, starting with any exit tasks, then updates,
     // then enter tasks. This way, previously used texture memory can be

@@ -398,7 +398,6 @@ export class SceneInternal implements Renderer {
       container: this.container,
       extensions: [
         'angle_instanced_arrays',
-        //'EXT_blend_minmax',
         'OES_texture_float',
         'OES_texture_float_linear',
       ],
