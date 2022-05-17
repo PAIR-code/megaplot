@@ -19,8 +19,9 @@
  */
 
 import {GlyphCoordinates, GlyphMapper} from './glyph-mapper';
+import {CancellablePromise} from './promise-types';
 import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback} from './selection-types';
+import {Selection, SelectionCallback, SelectionHitTestResult} from './selection-types';
 import {TextSelection} from './text-selection-types';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
 import {WorkTaskWithId} from './work-task';
@@ -392,5 +393,20 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
     // Allow method call chaining.
     return this;
+  }
+
+  /**
+   * Given target coordinates relative to the drawable container,
+   * determine which data-bound Sprites' bounding boxes intersect the target,
+   * then resolve with a result that includes an array of the bound data. If
+   * none of the Selection's Sprites intersect the target, then the resolved
+   * array will be empty.
+   *
+   * @param hitTestParameters Coordinates of the box/point to test.
+   * @return CancellablePromise Yielding a hit test result including the data.
+   */
+  hitTest(/* hitTestParameters: Partial<HitTestParameters> */):
+      CancellablePromise<SelectionHitTestResult<T>> {
+    throw new Error('Not yet implemented.');
   }
 }

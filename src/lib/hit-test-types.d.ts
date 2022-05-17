@@ -18,6 +18,7 @@
  * @fileoverview Types that contribute to running a hit test.
  */
 
+import {CancellablePromise} from './promise-types';
 import {Sprite} from './sprite';
 
 /**
@@ -71,12 +72,6 @@ export interface HitTestResult {
 
 /**
  * A hit test should return a HitTestPromise, which is a Promise that is
- * cancellable.
+ * cancellable and yields a HitTestResult.
  */
-export interface HitTestPromise extends Promise<HitTestResult> {
-  /**
-   * Cancel method allows cancelling the underlying task. This results in the
-   * promise being rejected.
-   */
-  cancel: () => void;
-}
+export type HitTestPromise = CancellablePromise<HitTestResult>;
