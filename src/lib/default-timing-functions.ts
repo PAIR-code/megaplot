@@ -26,11 +26,11 @@
 export type ClearTimeoutType = (this: {}|void, id: number) => void;
 
 /**
- * To enhance testability, the timing functions are constructor parameters to
- * the WorkScheduler. This is exported for testing purposes, but generally
- * should not be of interest to API consumers.
- */
-export const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
+  * To enhance testability, the timing functions are constructor parameters to
+  * the WorkScheduler. This is exported for testing purposes, but generally
+  * should not be of interest to API consumers.
+  */
+export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
   requestAnimationFrame: window.requestAnimationFrame.bind(window),
   cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
   setTimeout: (callbackFn: () => void, delay = 0, ...args: unknown[]) => {
@@ -40,4 +40,17 @@ export const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
   now: Date.now.bind(Date),
 });
 
-export type TimingFunctionsType = typeof DEFAULT_TIMING_FUNCTIONS;
+/** Timing functions for WorkScheduler. */
+export interface TimingFunctions {
+  /** Function that updates an animation before the browser's next repaint. */
+  readonly requestAnimationFrame: (callback: FrameRequestCallback) => number;
+  /** Function to cancel a scehdule animation frame. */
+  readonly cancelAnimationFrame: (handle: number) => void;
+  /** Sets a timer to execute a function or piece of code when it expires. */
+  readonly setTimeout: (callbackFn: () => void, delay?: number,
+                        ...args: unknown[]) => number;
+  /** Function to clear a scheduled timeout. */
+  readonly clearTimeout: ClearTimeoutType;
+  /** Function to get number of milliseconds elapsed since 1 Jan 1970. */
+  readonly now: () => number;
+}

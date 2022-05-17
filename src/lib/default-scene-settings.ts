@@ -18,8 +18,8 @@
  * @fileoverview Defines the default settings for the Scene constructor.
  */
 
-import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
-import {DEFAULT_GLYPH_MAPPER_SETTINGS} from './glyph-mapper';
+import {DEFAULT_TIMING_FUNCTIONS, TimingFunctions} from './default-timing-functions';
+import {DEFAULT_GLYPH_MAPPER_SETTINGS, GlyphMapperSettings} from './glyph-mapper';
 
 /**
  * Default glyph set is the printible ASCII characters from 33 to 126 (dec).
@@ -33,35 +33,37 @@ export const DEFAULT_GLYPHS =
  * Parameters to configure the Scene.
  */
 export const DEFAULT_SCENE_SETTINGS = Object.freeze({
-  /**
-   * HTML element into which regl will place a drawable canvas.
-   */
   container: document.body,
-
-  /**
-   * Default duration of transitions if not otherwise specified.
-   */
   defaultTransitionTimeMs: 250,
-
-  /**
-   * String of characters to support in glyph mapper.
-   */
   glyphs: DEFAULT_GLYPHS,
-
-  /**
-   * Desired number of sprites to be able to render. As this number could be
-   * arbitrarily large, it may not be possible to satisfy given other system
-   * constraints.
-   */
   desiredSpriteCapacity: 1e6,
-
-  /**
-   * Timing functions for WorkScheduler.
-   */
   timingFunctions: DEFAULT_TIMING_FUNCTIONS,
-
-  /**
-   * Settings for the glyph mapper.
-   */
   glyphMapper: DEFAULT_GLYPH_MAPPER_SETTINGS,
 });
+
+/**
+ * Settings to configure a Scene.
+ *
+ * @param {HTMLElement} container Element into which regl will insert a canvas.
+ * @param {number} defaultTransitionTimeMs Default duration of transitions in
+ *     milliseconds. Defaults to 250ms, but can be made longer or shorter to
+ *     suit your needs. Any value below the duration of an animation frame
+ *     (~17ms) will effectively be instantateous.
+ * @param {number} desiredSpriteCapacity Desired number of sprites to be able to
+ *     render. As this number could be arbitrarily large, it may not be possible
+ *     to satisfy given other system constraints. It is best to provide some
+ *     headroom when setting this value; failure to do so can cause your sprites
+ *     to not render in the Scene even though the .bind(), etc. callbacks may
+ *     fire for the datum and its associated SpriteView.
+ * @param {string} glyphs Characters to support in glyph mapper.
+ * @param {GlyphMapperSettings} glyphMapper Settings for the glyph mapper.
+ * @param {TimingFunctions} timingFunctions Timing functions for WorkScheduler.
+ */
+ export interface SceneSettings {
+  container: HTMLElement;
+  defaultTransitionTimeMs: number;
+  desiredSpriteCapacity: number;
+  glyphs: string;
+  glyphMapper: GlyphMapperSettings;
+  timingFunctions: TimingFunctions;
+}

@@ -18,7 +18,7 @@
  * @fileoverview Scene is the leading interface for API consumers.
  */
 
-import {DEFAULT_SCENE_SETTINGS} from './default-scene-settings';
+import {SceneSettings} from './default-scene-settings';
 import {HitTestPromise} from './hit-test-types';
 import {Renderer} from './renderer-types';
 import {SceneInternal} from './scene-internal';
@@ -29,7 +29,7 @@ import {TextSelection} from './text-selection-types';
 export class Scene implements Renderer {
   private[SceneInternalSymbol]: SceneInternal;
 
-  constructor(params: Partial<typeof DEFAULT_SCENE_SETTINGS> = {}) {
+  constructor(params: Partial<SceneSettings> = {}) {
     this[SceneInternalSymbol] = new SceneInternal(params);
   }
 
