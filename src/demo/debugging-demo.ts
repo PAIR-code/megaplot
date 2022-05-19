@@ -112,7 +112,7 @@ async function main() {
 
   const colors = d3.schemeCategory10;
   const borderColor = d3.color('rgba(255,0,0,0.5)') as d3.RGBColor;
-  // const hoverColor = d3.color('rgba(0,0,0,1.0)') as d3.RGBColor;
+  const hoverColor = d3.color('rgba(0,0,0,1.0)') as d3.RGBColor;
 
   const glyphMapper = scene[SceneInternalSymbol].glyphMapper;
   const glyphs = glyphMapper.glyphs;
@@ -121,6 +121,8 @@ async function main() {
 
   const indices: number[] =
       (new Array(MAX_COUNT * MAX_COUNT)).fill(0).map((_, i) => i);
+
+  let hoveredIndices = new Set<number>();
 
   // Function to call when GUI options are changed.
   function update() {
@@ -156,7 +158,7 @@ async function main() {
       s.BorderRadiusWorld = settings.borderRadiusWorld;
       s.BorderRadiusPixel = settings.borderRadiusPx;
 
-      s.BorderColor = borderColor;
+      s.BorderColor = hoveredIndices.has(index) ? hoverColor : borderColor;
 
       s.BorderPlacement = settings.borderPlacement;
 
@@ -248,15 +250,15 @@ async function main() {
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
-  container.addEventListener('click', (event) => {
+  container.addEventListener('mousemove', (event) => {
     const rect = container.getBoundingClientRect();
     const x = event.x - rect.left;
     const y = event.y - rect.top;
 
-    const results =
-        scene.hitTest({x, y, sprites: scene[SceneInternalSymbol].sprites});
+    const results = selection.hitTest({x, y});
 
-    console.log(results);
+    hoveredIndices = new Set(results);
+    update();
   });
 }
 

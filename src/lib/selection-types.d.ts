@@ -30,7 +30,13 @@ export type SelectionCallback<T> = (spriteView: SpriteView, datum: T) => void;
 /**
  * Parameters to pass to a Selection hit test.
  */
-export type SelectionHitTestParameters = Omit<HitTestParameters, 'sprites'>;
+export interface SelectionHitTestParameters extends
+    Omit<HitTestParameters, 'sprites'> {
+  /**
+   * Whether to sort results so that the topmost Sprites are last. Default=true.
+   */
+  sortResults?: boolean;
+}
 
 /**
  * A Selection maps data points to sprites. This is the primary interface by

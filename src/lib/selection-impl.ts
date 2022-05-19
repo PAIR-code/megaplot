@@ -496,8 +496,41 @@ export class SelectionImpl<T> implements Selection<T> {
    * @return CancellablePromise Yielding a hit test result including the data.
    */
   hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
-    // Determine sprites that could be hit,
-    hitTestParameters;
-    throw new Error('Not yet implemented.');
+    const hitTestResults =
+        this.coordinator.hitTest({...hitTestParameters, sprites: this.sprites});
+
+    // Collect the indices of hitTestResults whose values indicate that the
+    // sprite was hit.
+    const hitIndices = new Uint32Array(hitTestResults.length);
+    let hitCount = 0;
+    for (let i = 0; i < hitTestResults.length; i++) {
+      const result = hitTestResults[i];
+      if (result >= 0) {
+        hitIndices[hitCount++] = i;
+      }
+    }
+
+    // Short-circuit if it was a total miss.
+    if (!hitCount) {
+      return [];
+    }
+
+    if (hitTestParameters.sortResults === undefined ||
+        hitTestParameters.sortResults) {
+      // Sort the hitIndices by the hitTestResult values for them. In most
+      // cases, they'll already be mostly or entirely in order, but after
+      // thrashing (creating and removing sprites aggressively) it could be that
+      // later sprites use earlier swatches and would appear out-of-order in the
+      // hitTestResults.
+      hitIndices.subarray(0, hitCount)
+          .sort((a, b) => hitTestResults[a] - hitTestResults[b]);
+    }
+
+    // Collect bound data for hit sprites.
+    const results = new Array<T>(hitCount);
+    for (let i = 0; i < hitCount; i++) {
+      results[i] = this.boundData[hitIndices[i]];
+    }
+    return results;
   }
 }
