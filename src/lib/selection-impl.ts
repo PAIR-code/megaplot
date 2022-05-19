@@ -18,9 +18,8 @@
  * @fileoverview Implements the Selection API.
  */
 
-import {CancellablePromise} from './promise-types';
 import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback, SelectionHitTestResult} from './selection-types';
+import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
 import {Sprite} from './sprite';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
 import {WorkTaskWithId} from './work-task';
@@ -53,6 +52,15 @@ enum BindingState {
   Started,
 }
 
+/**
+ * To avoid circular imports, this file cannot depend on scene-internal.ts so
+ * here we define the minimum necessary API surface that the task implementation
+ * needs to operate.
+ */
+interface CoordinatorAPI extends Renderer {
+  workScheduler: WorkScheduler;
+}
+
 export class SelectionImpl<T> implements Selection<T> {
   private sprites: Sprite[] = [];
 
@@ -82,8 +90,7 @@ export class SelectionImpl<T> implements Selection<T> {
    */
   constructor(
       private stepsBetweenChecks: number,
-      private renderer: Renderer,
-      private workScheduler: WorkScheduler,
+      private coordinator: CoordinatorAPI,
   ) {}
 
   onBind(bindCallback: SelectionCallback<T>) {
@@ -159,7 +166,7 @@ export class SelectionImpl<T> implements Selection<T> {
     // schedule a future attempt using the bindingTaskId.
     if (this.clearingTask) {
       this.bindingState = BindingState.Blocked;
-      this.workScheduler.scheduleUniqueTask({
+      this.coordinator.workScheduler.scheduleUniqueTask({
         id: this.bindingTaskId,
         callback: () => {
           this.bindingState = BindingState.None;
@@ -184,7 +191,7 @@ export class SelectionImpl<T> implements Selection<T> {
         step++;
         const index = lastEnterIndex++;
         const datum = data[index];
-        const sprite = this.renderer.createSprite();
+        const sprite = this.coordinator.createSprite();
 
         this.boundData[index] = datum;
         this.sprites[index] = sprite;
@@ -361,7 +368,7 @@ export class SelectionImpl<T> implements Selection<T> {
     };
 
     // Use the provided WorkScheduler to schedule bindingTask.
-    this.workScheduler.scheduleUniqueTask(this.bindingTask);
+    this.coordinator.workScheduler.scheduleUniqueTask(this.bindingTask);
     this.bindingState = BindingState.Scheduled;
 
     // Allow method call chaining.
@@ -466,12 +473,12 @@ export class SelectionImpl<T> implements Selection<T> {
     // If a binding task was previously scheduled, unschedule it since clear
     // must take precedence.
     if (this.bindingTask) {
-      this.workScheduler.unscheduleTask(this.bindingTask);
+      this.coordinator.workScheduler.unscheduleTask(this.bindingTask);
       delete this.bindingTask;
     }
 
     // Use the provided WorkScheduler to schedule the task.
-    this.workScheduler.scheduleUniqueTask(this.clearingTask);
+    this.coordinator.workScheduler.scheduleUniqueTask(this.clearingTask);
     this.bindingState = BindingState.None;
 
     // Allow method call chaining.
@@ -488,8 +495,9 @@ export class SelectionImpl<T> implements Selection<T> {
    * @param hitTestParameters Coordinates of the box/point to test.
    * @return CancellablePromise Yielding a hit test result including the data.
    */
-  hitTest(/* hitTestParameters: Partial<HitTestParameters> */):
-      CancellablePromise<SelectionHitTestResult<T>> {
+  hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
+    // Determine sprites that could be hit,
+    hitTestParameters;
     throw new Error('Not yet implemented.');
   }
 }

@@ -18,33 +18,38 @@
  * @fileoverview Types that contribute to running a hit test.
  */
 
-import {CancellablePromise} from './promise-types';
 import {Sprite} from './sprite';
 
 /**
- *
  * Parameters used in specifying a hit test.
  */
 export interface HitTestParameters {
   /**
-   * X coordinate in pixels relative to the renderable area (canvas). 0=left.
+   * List of candidate sprites to test.
+   */
+  sprites: Sprite[];
+
+  /**
+   * X coordinate in pixels relative to the renderable area (canvas) of the
+   * top-left corner of the box/point to test. 0=left.
    */
   x: number;
 
   /**
-   * Y coordinate in pixels relative to the renderable area (canvas). 0=top.
+   * Y coordinate in pixels relative to the renderable area (canvas) of the
+   * top-left corner of the box/point to test. 0=top.
    */
   y: number;
 
   /**
    * Width in pixels of the tested area. Default is 0.
    */
-  width: number;
+  width?: number;
 
   /**
    * Height in pixels of the hit tested area. Default is 0.
    */
-  height: number;
+  height?: number;
 
   /**
    * Whether the test should include sprites that merely intersect the rectangle
@@ -52,26 +57,5 @@ export interface HitTestParameters {
    * bounding box will be included. If false, then only those sprites which
    * are entirely inside the bounding box will be included. Default is true.
    */
-  inclusive: boolean;
+  inclusive?: boolean;
 }
-
-/**
- * Results of performing a hit test.
- */
-export interface HitTestResult {
-  /**
-   * Parameters used to request this hit test.
-   */
-  parameters: HitTestParameters;
-
-  /**
-   * Array of Sprites that intersected the chosen coordinates.
-   */
-  hits: Sprite[];
-}
-
-/**
- * A hit test should return a HitTestPromise, which is a Promise that is
- * cancellable and yields a HitTestResult.
- */
-export type HitTestPromise = CancellablePromise<HitTestResult>;

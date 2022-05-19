@@ -27,7 +27,7 @@ import {DEFAULT_SCENE_SETTINGS, SceneSettings} from './default-scene-settings';
 import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
-import {HitTestParameters, HitTestPromise, HitTestResult} from './hit-test-types';
+import {HitTestParameters} from './hit-test-types';
 import {LifecyclePhase} from './lifecycle-phase';
 import {NumericRange} from './numeric-range';
 import {ReglContext} from './regl-types';
@@ -39,6 +39,7 @@ import {SpriteImpl} from './sprite-impl';
 import {DataViewSymbol, InternalPropertiesSymbol} from './symbols';
 import {runAssignWaiting} from './tasks/run-assign-waiting';
 import {runCallbacks} from './tasks/run-callbacks';
+import {runHitTest} from './tasks/run-hit-test';
 import {runRebase} from './tasks/run-rebase';
 import {runRemoval} from './tasks/run-removal';
 import {runTextureSync} from './tasks/run-texture-sync';
@@ -247,25 +248,89 @@ export class SceneInternal implements Renderer {
   hitTestAttributeMapper: AttributeMapper;
 
   /**
-   * Array of UV values for the locations of instance hit test swatches. These
-   * do not change once initialized.
+   * Array of UV values for sprites being input to a hit test copied from the
+   * instanceSwatchUvValues array. These values will be set just prior to
+   * invoking the hit test command.
+   *
+   * In most cases, only a small portion at the beginning of this array will be
+   * used, but it will be sized to accommodate performing a hit test across all
+   * sprites in the scene at once.
    */
-  private instanceHitTestUvValues: Float32Array;
+  instanceHitTestInputUvValues: Float32Array;
 
   /**
-   * Buffer for instance hit test UVs.
+   * Buffer for instance hit test UVs input. Will be dynamically rebound before
+   * each invocation of the hit test command.
    */
-  instanceHitTestUvBuffer: REGL.Buffer;
+  instanceHitTestInputUvBuffer: REGL.Buffer;
+
+  /**
+   * Array of floats for Sprites about to be hit tested indicating, pairwise,
+   * the index of the Sprite and whether Sprite is active (1) or not (0). The
+   * index is needed in order to determine the z-ordering, and the active value
+   * is needed to handle the case where, for any reason, a Sprite being hit
+   * tested lacks a swatch.
+   *
+   * In most cases, only a small portion at the beginning of this array will be
+   * used, but it will be sized to accommodate performing a hit test across all
+   * sprites in the scene at once.
+   */
+  instanceHitTestInputIndexActiveValues: Float32Array;
+
+  /**
+   * Buffer for instance hit test UVs input. Will be dynamically rebound before
+   * each invocation of the hit test command.
+   */
+  instanceHitTestInputIndexActiveBuffer: REGL.Buffer;
+
+  /**
+   * Array of UV values for outputting the results of a hit test. These values
+   * never change. In effect, they map indices from the HitTestParamaters'
+   * sprites array into the output texture. The array's size will be sufficient
+   * to cover hit testing all sprites in the scene at once.
+   */
+  instanceHitTestOutputUvValues: Float32Array;
+
+  /**
+   * Buffer for instance hit test UVs output. Because the values never change,
+   * this only needs to be bound to the values once.
+   */
+  instanceHitTestOutputUvBuffer: REGL.Buffer;
 
   /**
    * The hit test shader writes to this framebuffer.
    */
-  hitTestValuesFramebuffer: REGL.Framebuffer2D;
+  hitTestOutputValuesFramebuffer: REGL.Framebuffer2D;
 
   /**
-   * A place to flash the hit test values from the framebuffer.
+   * A place to flash the intermediate, packed hit test values from the
+   * framebuffer after the hit test shader runs. Note that these values are not
+   * ready for use as-is. They need to be reinflated to produce results.
    */
-  private hitTestValues: Uint8Array;
+  hitTestOutputValues: Uint8Array;
+
+  /**
+   * After the hit test shader runs, its output is written to the
+   * hitTestOutputValuesFramebuffer and then read into the hitTestOutputValues
+   * Uint8Array. Those values are then decoded into this array. A value of -1
+   * means the hit test was a miss. Any other value will be a non-negative, and
+   * will be approximately equal to the index of the Sprite that was tested. The
+   * value will be only approximate however, as some precision is lost in
+   * operation of normalizing, packing and unpacking values. But the values are
+   * ordinally correct. Higher values mean closer to the camera, further up the
+   * z axis.
+   */
+  hitTestOutputResults: Float32Array;
+
+  /**
+   * Parameters to the latest hit test.
+   */
+  hitTestParameters!: HitTestParameters;
+
+  /**
+   * Number of candidate sprites about to be hit tested.
+   */
+  hitTestCount = 0;
 
   /**
    * A WebGL draw call should not both read from and write to the same texture,
@@ -315,7 +380,7 @@ export class SceneInternal implements Renderer {
   /**
    * Regl command to capture the current hit test values.
    */
-  private hitTestCommand?: REGL.DrawCommand;
+  hitTestCommand?: REGL.DrawCommand;
 
   /**
    * Task id to uniquely identify the removal task.
@@ -337,27 +402,6 @@ export class SceneInternal implements Renderer {
    * Task id to uniquely identify the runCallbacks task.
    */
   private runCallbacksTaskId = Symbol('runCallbacksTask');
-
-  /**
-   * Task id to uniquely identify the hit test task.
-   */
-  private hitTestTaskId = Symbol('hitTestTask');
-
-  /**
-   * Pixel coordinates relative to the container to perform the hit test.
-   */
-  readonly hitTestParameters: HitTestParameters = {
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    inclusive: true,
-  };
-
-  /**
-   * Promise which will eventually yield a HitTestResult.
-   */
-  private hitTestPromise?: HitTestPromise;
 
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
@@ -483,20 +527,31 @@ export class SceneInternal implements Renderer {
         new AttributeMapper({
           maxTextureSize: regl.limits.maxTextureSize,
           desiredSwatchCapacity: attributeMapper.totalSwatches,
-          dataChannelCount: 4,
+          dataChannelCount: 4,  // Must be 4, since these are rendered outputs.
           attributes: [
             {attributeName: 'Hit'},
           ],
         });
 
-    // The instance hit test UVs point to the places in the hit test texture
-    // where the output of the test is written.
-    this.instanceHitTestUvValues =
+    // The instance hit test output UVs point to the places in the hit test
+    // texture where the output of the test is written for each tested sprite.
+    this.instanceHitTestOutputUvValues =
         this.hitTestAttributeMapper.generateInstanceSwatchUvValues();
 
-    // The hitTestValuesFramebuffer is written to by the hit test command and
-    // read from by sampling.
-    this.hitTestValuesFramebuffer = regl.framebuffer({
+    // Just before running a hit test, the specific list of candidate Sprites'
+    // swatch UVs will be copied here, so that when the shader runs, it'll know
+    // where to look for the previous and target values. The output UVs however
+    // do not change. The Nth sprite in the HitTestParameters's sprites array
+    // will always write to the Nth texel of the output framebuffer. Since it's
+    // possible (though unlikely
+    this.instanceHitTestInputUvValues =
+        new Float32Array(this.instanceSwatchUvValues.length);
+
+    this.instanceHitTestInputIndexActiveValues =
+        new Float32Array(attributeMapper.totalSwatches * 2);
+
+    // The hitTestOutputValuesFramebuffer is written to by the hit test command.
+    this.hitTestOutputValuesFramebuffer = regl.framebuffer({
       color: regl.texture({
         width: hitTestAttributeMapper.textureWidth,
         height: hitTestAttributeMapper.textureHeight,
@@ -508,9 +563,14 @@ export class SceneInternal implements Renderer {
       depthStencil: false,
     });
 
-    this.hitTestValues = new Uint8Array(
+
+    // The hit test command writes floating point values encoded as RGBA
+    // components, which we then decode back into floats.
+    this.hitTestOutputValues = new Uint8Array(
         hitTestAttributeMapper.dataChannelCount *
         hitTestAttributeMapper.totalSwatches);
+    this.hitTestOutputResults =
+        new Float32Array(hitTestAttributeMapper.totalSwatches);
 
     this.glyphMapper = new GlyphMapper(settings.glyphMapper);
 
@@ -534,8 +594,14 @@ export class SceneInternal implements Renderer {
 
     this.instanceIndexBuffer = this.regl.buffer(this.instanceIndexValues);
 
-    this.instanceHitTestUvBuffer =
-        this.regl.buffer(this.instanceHitTestUvValues);
+    this.instanceHitTestInputUvBuffer =
+        this.regl.buffer(this.instanceHitTestInputUvValues);
+
+    this.instanceHitTestInputIndexActiveBuffer =
+        this.regl.buffer(this.instanceHitTestInputIndexActiveValues);
+
+    this.instanceHitTestOutputUvBuffer =
+        this.regl.buffer(this.instanceHitTestOutputUvValues);
 
     // Rebase UV array is long enough to accomodate all sprites, but usually it
     // won't have this many.
@@ -556,94 +622,48 @@ export class SceneInternal implements Renderer {
   }
 
   /**
-   * Schedule a hit test (if one is not already scheduled) and return a Promise
-   * that will be resolved with the results. Only one hit test can be scheduled
-   * at a time, so if there is one scheduled already, all we do here is
-   * overwrite the parameters so that when the hit test runs, it reports based
-   * on the most recent coordinates.
+   * A hit test determines which Sprites from a candidate list intersect a
+   * provided box in pixel coordinates relative to the canvas.
    */
-  hitTest(
-      x: number,
-      y: number,
-      width = 0,
-      height = 0,
-      inclusive = true,
-      ): HitTestPromise {
-    this.hitTestParameters.x = x;
-    this.hitTestParameters.y = y;
-    this.hitTestParameters.width = width;
-    this.hitTestParameters.height = height;
-    this.hitTestParameters.inclusive = inclusive;
+  hitTest(hitTestParameters: HitTestParameters): Float32Array {
+    const {sprites, x, y, width, height, inclusive} = hitTestParameters;
 
-    // If a promise already exists, return that. Only the last hitTest's
-    // coordinates will be tested.
-    if (this.hitTestPromise) {
-      return this.hitTestPromise;
+    if (!Array.isArray(sprites)) {
+      throw new Error('Hit testing requires an array of candidate sprites');
     }
 
-    // Set up the hit test promise and capture its callback functions.
-    let hitTestCallbacks: {resolve: Function, reject: Function};
-    this.hitTestPromise = new Promise<HitTestResult>((resolve, reject) => {
-                            hitTestCallbacks = {resolve, reject};
-                          }) as HitTestPromise;
-
-    // Set up the hit test task to be scheduled by WorkScheduler.
-    const hitTestTask = {
-      id: this.hitTestTaskId,
-      callback: () => {
-        try {
-          const result = this.performHitTest();
-          hitTestCallbacks.resolve(result);
-        } catch (err) {
-          hitTestCallbacks.reject(err);
-        } finally {
-          delete this.hitTestPromise;
-        }
-      }
-    };
-
-    // Set up cancellation procedure.
-    this.hitTestPromise.cancel = () => {
-      this.workScheduler.unscheduleTask(hitTestTask);
-      delete this.hitTestPromise;
-      hitTestCallbacks.reject(new Error('HitTest Cancelled.'));
-    };
-
-    // Schedule a hit test which will resolve the promise.
-    this.workScheduler.scheduleUniqueTask(hitTestTask);
-
-    return this.hitTestPromise;
-  }
-
-  protected performHitTest(): HitTestResult {
-    this.hitTestCommand!();
-
-    // TODO(jimbo): This read takes 50+ ms for 200k sprites. Speed up!
-    this.regl.read({
-      x: 0,
-      y: 0,
-      width: this.hitTestAttributeMapper.textureWidth,
-      height: this.hitTestAttributeMapper.textureHeight,
-      data: this.hitTestValues,
-      framebuffer: this.hitTestValuesFramebuffer,
-    });
-
-    const hits: Sprite[] = [];
-
-    for (let index = 0; index < this.instanceCount; index++) {
-      if (this.hitTestValues[index * 4] > 0) {
-        const sprite = this.sprites[index];
-        const properties = sprite[InternalPropertiesSymbol];
-        if (properties.lifecyclePhase !== LifecyclePhase.Removed) {
-          hits.push(this.sprites[index]);
-        }
-      }
+    if (isNaN(x) || isNaN(y)) {
+      throw new Error('Hit testing requires numeric x and y coordinates');
     }
 
-    return {
-      parameters: this.hitTestParameters,
-      hits,
+    if ((width !== undefined && isNaN(width)) ||
+        (height !== undefined && isNaN(height))) {
+      throw new Error('If specified, width and height must be numeric');
+    }
+
+    this.hitTestParameters = {
+      sprites,
+      x,
+      y,
+      width: width || 0,
+      height: height || 0,
+      inclusive: inclusive === undefined || !!inclusive,
     };
+
+    // Short-circuit if there are no candidate sprites to test.
+    if (!sprites.length) {
+      return new Float32Array(0);
+    }
+
+    // Perform the real hit test work.
+    runHitTest(this);
+
+    // Return results. Note that this is a .subarray(), not a .slice(), which
+    // would copy the results. This is faster because it doesn't require a
+    // memory operation, but it means the recipient needs to make use of it
+    // immedatiely before the next hit test overwrites the results.
+    // TODO(jimbo): Consider adding an option to copy results for safety.
+    return this.hitTestOutputResults.subarray(0, sprites.length);
   }
 
   doDraw() {
@@ -923,7 +943,6 @@ export class SceneInternal implements Renderer {
     return new SelectionImpl<T>(
         STEPS_BETWEEN_REMAINING_TIME_CHECKS,
         this,
-        this.workScheduler,
     );
   }
 

@@ -34,11 +34,12 @@ interface CoordinatorAPI {
   getViewMatrix: () => number[];
   getViewMatrixScale: () => number[];
   hitTestAttributeMapper: AttributeMapper;
+  hitTestCount: number;
   hitTestParameters: HitTestParameters;
-  hitTestValuesFramebuffer: REGL.Framebuffer2D;
-  instanceCount: number;
-  instanceSwatchUvBuffer: REGL.Buffer;
-  instanceHitTestUvBuffer: REGL.Buffer;
+  hitTestOutputValuesFramebuffer: REGL.Framebuffer2D;
+  instanceHitTestInputIndexActiveBuffer: REGL.Buffer;
+  instanceHitTestInputUvBuffer: REGL.Buffer;
+  instanceHitTestOutputUvBuffer: REGL.Buffer;
   previousValuesTexture: REGL.Texture2D;
   regl: REGL.Regl;
   targetValuesTexture: REGL.Texture2D;
@@ -70,20 +71,27 @@ export function setupHitTestCommand(
 
       // Swatch UV coordinates for retrieving previous and target texture
       // values.
-      instanceSwatchUv: {
-        buffer: coordinator.instanceSwatchUvBuffer,
+      inputUv: {
+        buffer: () => coordinator.instanceHitTestInputUvBuffer,
         divisor: 1,
       },
 
-      // Instance swatch UV coordinates.
-      instanceHitTestUv: {
-        buffer: coordinator.instanceHitTestUvBuffer,
+      // Index and active flag for each Sprite.
+      indexActive: {
+        buffer: () => coordinator.instanceHitTestInputIndexActiveBuffer,
+        divisor: 1,
+      },
+
+      // Output UVs for where to write the result.
+      outputUv: {
+        buffer: coordinator.instanceHitTestOutputUvBuffer,
         divisor: 1,
       },
     },
 
     uniforms: {
       ts: () => coordinator.elapsedTimeMs(),
+      capacity: () => coordinator.hitTestAttributeMapper.totalSwatches,
       hitTestCoordinates: () => ([
         coordinator.hitTestParameters.x,
         coordinator.hitTestParameters.y,
@@ -98,9 +106,9 @@ export function setupHitTestCommand(
     },
 
     primitive: 'triangle strip',
-    count: 4,                                    // Only four vertices in total.
-    instances: () => coordinator.instanceCount,  // But many sprite instances.
+    count: 4,                                   // Only four vertices in total.
+    instances: () => coordinator.hitTestCount,  // But many sprite instances.
 
-    framebuffer: () => coordinator.hitTestValuesFramebuffer,
+    framebuffer: () => coordinator.hitTestOutputValuesFramebuffer,
   });
 }

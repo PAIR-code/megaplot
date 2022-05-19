@@ -27,17 +27,40 @@ import * as ShaderFunctions from './shader-functions';
 
 /**
  * Generate the fragment (pixel) shader for the hit test command. For each
- * sprite, this shader writes whether the screen pixel of interest intersects it
- * to the RGB color channels of the output texel.
+ * sprite, this shader writes a packed float value in the range 0-1 into the
+ * output Uint8 RGBA channels. To unpack, multiply by capacity+1, then subtract
+ * 1. This will yield a number in the range (-1,capacity - 1), which is either
+ * -1 for a miss, or the index of the SpriteImpl.
+ *
+ * @see http://marcodiiga.github.io/encoding-normalized-floats-to-rgba8-vectors
  */
 export function fragmentShader() {
   return glsl`
 precision lowp float;
 
+// Need to know the maximum possible value for the index of the Sprite to
+// normalize the value for RGBA packing.
+uniform float capacity;
+
 varying float varyingHitTestResult;
 
+vec4 packFloatToVec4i(const float value) {
+  const vec4 bitSh = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);
+  const vec4 bitMsk = vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);
+  vec4 res = fract(value * bitSh);
+  res -= res.xxyz * bitMsk;
+  return res;
+}
+
+float fitToRange(const float result) {
+  // Adding 1 to account for missing values (-1 becomes 0, etc.)
+  return (result + 1.) / (capacity + 1.);
+}
+
 void main () {
-  gl_FragColor = vec4(vec3(varyingHitTestResult), 1.);
+  // Packing requires a number in the range 0-1.
+  float n = fitToRange(varyingHitTestResult);
+  gl_FragColor = packFloatToVec4i(n);
 }
 `;
 }
@@ -45,7 +68,7 @@ void main () {
 /**
  * Generate the vertex shader for the hit test shader program. This positions
  * the coordinates of the rect to exactly cover the single output texel pointed
- * to by instanceHitTestUv.
+ * to by outputUv.
  *
  * @param hitTestAttributeMapper Mapper for hit test output texels.
  * @param attributeMapper Mapper for sprite state attributes.
@@ -79,8 +102,9 @@ uniform sampler2D targetValuesTexture;
 
 attribute vec2 vertexCoordinates;
 
-attribute vec2 instanceSwatchUv;
-attribute vec2 instanceHitTestUv;
+attribute vec2 inputUv;
+attribute vec2 indexActive;
+attribute vec2 outputUv;
 
 #define TEXELS_PER_SWATCH ${hitTestAttributeMapper.texelsPerSwatch}.
 #define TEXTURE_WIDTH ${hitTestAttributeMapper.textureWidth}.
@@ -120,13 +144,13 @@ ${
       attributeMapper.generateTexelReaderGLSL(
           'previousTexelValues',
           'previousValuesTexture',
-          'instanceSwatchUv',
+          'inputUv',
           )}
 ${
       attributeMapper.generateTexelReaderGLSL(
           'targetTexelValues',
           'targetValuesTexture',
-          'instanceSwatchUv',
+          'inputUv',
           )}
 }
 
@@ -205,15 +229,22 @@ void main () {
 
   // Test whether the coordinates of interest are within the sprite quad's
   // bounding box.
-  // TODO (jimbo): Use ZW components to test for area of interest.
-  varyingHitTestResult =
+  // TODO(jimbo): Use width/height/inclusive to support brushing.
+  bool hit =
     bottomLeft.x < hitTestCoordinates.x &&
     bottomLeft.y > hitTestCoordinates.y &&
     topRight.x > hitTestCoordinates.x &&
-    topRight.y < hitTestCoordinates.y ? 1. : 0.;
+    topRight.y < hitTestCoordinates.y;
+
+  // The hit test result will either be -1 if it's a miss (or the Sprite was
+  // inactive), or it will be the index of the Sprite.
+  varyingHitTestResult =
+    indexActive.y <= 0. ? -1. :
+    !hit ? -1. :
+    indexActive.x;
 
   vec2 swatchUv =
-    instanceHitTestUv + (vertexCoordinates.xy + .5) * swatchSize;
+    outputUv + (vertexCoordinates.xy + .5) * swatchSize;
 
   // Position the verts to write into the appropriate data texel.
   gl_Position = vec4(2. * swatchUv - 1., 0., 1.);

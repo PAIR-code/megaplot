@@ -25,7 +25,7 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {HitTestPromise, HitTestResult, Scene, Sprite} from '../index';
+import {Scene} from '../index';
 import {SceneInternalSymbol} from '../lib/symbols';
 
 require('./styles.css');
@@ -112,7 +112,7 @@ async function main() {
 
   const colors = d3.schemeCategory10;
   const borderColor = d3.color('rgba(255,0,0,0.5)') as d3.RGBColor;
-  const hoverColor = d3.color('rgba(0,0,0,1.0)') as d3.RGBColor;
+  // const hoverColor = d3.color('rgba(0,0,0,1.0)') as d3.RGBColor;
 
   const glyphMapper = scene[SceneInternalSymbol].glyphMapper;
   const glyphs = glyphMapper.glyphs;
@@ -248,68 +248,15 @@ async function main() {
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
-  let previouslyHoveredSprites = new Set<Sprite>();
-  function handleHitTestResult(result: HitTestResult) {
-    const newlyHoveredSprites = new Set<Sprite>(result.hits);
-
-    // Perform alterations on newly hovered sprites.
-    result.hits.forEach(sprite => {
-      if (sprite.isRemoved) {
-        // Short-circuit if this sprite is no longer valid.
-        return;
-      }
-      if (previouslyHoveredSprites.has(sprite)) {
-        // Short-circuit if this sprite was previously hovered.
-        return;
-      }
-      sprite.update(s => {
-        s.TransitionTimeMs = settings.transitionTimeMs;
-        s.BorderColor = hoverColor;
-      });
-    });
-
-    // Perform alterations on previously hovered sprites that are not still
-    // hovered.
-    [...previouslyHoveredSprites].forEach(sprite => {
-      if (sprite.isRemoved) {
-        // Short circuit if this sprite is no longer valid.
-        return;
-      }
-      if (newlyHoveredSprites.has(sprite)) {
-        // Short circuit if this sprite is newly hovered.
-        return;
-      }
-      sprite.update(s => {
-        s.TransitionTimeMs = settings.transitionTimeMs;
-        s.BorderColor = borderColor;
-      });
-    });
-
-    previouslyHoveredSprites = newlyHoveredSprites;
-  }
-
-  let hitTestTask: HitTestPromise|undefined = undefined;
-  container.addEventListener('mousemove', async (event) => {
-    if (hitTestTask) {
-      hitTestTask.cancel();
-      hitTestTask = undefined;
-    }
-
-    if (!settings.mouseover) {
-      return;
-    }
-
+  container.addEventListener('click', (event) => {
     const rect = container.getBoundingClientRect();
     const x = event.x - rect.left;
     const y = event.y - rect.top;
 
-    hitTestTask = scene.hitTest(x, y);
-    try {
-      const hitTestResult = await hitTestTask;
-      handleHitTestResult(hitTestResult);
-    } catch (err) {
-      // Ignore cancellation errors.
-    }
+    const results =
+        scene.hitTest({x, y, sprites: scene[SceneInternalSymbol].sprites});
+
+    console.log(results);
   });
 }
 

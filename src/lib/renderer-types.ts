@@ -19,7 +19,7 @@
  * Scene.
  */
 
-import {HitTestPromise} from './hit-test-types';
+import {HitTestParameters} from './hit-test-types';
 import {Selection} from './selection-types';
 import {Sprite} from './sprite';
 import {TextSelection} from './text-selection-types';
@@ -62,13 +62,19 @@ export interface Renderer {
   createSprite: () => Sprite;
 
   /**
-   * Given a pair of mouse coordinates relative to the drawable container,
-   * determine which Sprites' bounding boxes intersect that point and return
-   * them. If multiple hit tests are in flight simultaneously, the same promise
-   * may be returned and only the final specified set of coordinates will be
-   * used.
+   * A hit test determines which Sprites from a candidate list intersect a
+   * provided box in pixel coordinates relative to the canvas. Each tested
+   * Sprite could either hit or not. When a Sprite hits, its corresponding value
+   * in the output array will be positive or zero (non-negative). Sprites that
+   * do NOT hit will yield negative numbers.
+   *
+   * You can interpret the numbers like a floating point z-index. Lower numbers
+   * are further away from the observer, higher numbers are closer.
+   *
+   * @param hitTestParameters Candidate sprites and box in pixels to test.
+   * @return Float32Array Array of hit test results.
    */
-  hitTest: (x: number, y: number) => HitTestPromise;
+  hitTest: (hitTestParameters: HitTestParameters) => Float32Array;
 
   /**
    * Provide a Selection object for mapping data points to sprites.

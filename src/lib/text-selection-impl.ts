@@ -19,9 +19,8 @@
  */
 
 import {GlyphCoordinates, GlyphMapper} from './glyph-mapper';
-import {CancellablePromise} from './promise-types';
 import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback, SelectionHitTestResult} from './selection-types';
+import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
 import {TextSelection} from './text-selection-types';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
 import {WorkTaskWithId} from './work-task';
@@ -405,8 +404,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
    * @param hitTestParameters Coordinates of the box/point to test.
    * @return CancellablePromise Yielding a hit test result including the data.
    */
-  hitTest(/* hitTestParameters: Partial<HitTestParameters> */):
-      CancellablePromise<SelectionHitTestResult<T>> {
+  hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
+    // Determine sprites that could be hit,
+    hitTestParameters;
     throw new Error('Not yet implemented.');
   }
 }

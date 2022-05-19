@@ -20,7 +20,6 @@
 
 import {SpriteView} from './generated/sprite-view';
 import {HitTestParameters} from './hit-test-types';
-import {CancellablePromise} from './promise-types';
 
 /**
  * The enter, update and exit methods of Selections take callbacks of
@@ -29,20 +28,9 @@ import {CancellablePromise} from './promise-types';
 export type SelectionCallback<T> = (spriteView: SpriteView, datum: T) => void;
 
 /**
- * Results of resolving a hitTest() on a Selection.
+ * Parameters to pass to a Selection hit test.
  */
-export interface SelectionHitTestResult<T> {
-  /**
-   * Parameters used to request this hit test.
-   */
-  parameters: HitTestParameters;
-
-  /**
-   * Array of data points bound to Sprites that intersected the chosen
-   * coordinates.
-   */
-  data: T[];
-}
+export type SelectionHitTestParameters = Omit<HitTestParameters, 'sprites'>;
 
 /**
  * A Selection maps data points to sprites. This is the primary interface by
@@ -100,15 +88,14 @@ export interface Selection<T> {
   clear: () => Selection<T>;
 
   /**
-   * Given target coordinates relative to the drawable container,
-   * determine which data-bound Sprites' bounding boxes intersect the target,
-   * then resolve with a result that includes an array of the bound data. If
-   * none of the Selection's Sprites intersect the target, then the resolved
-   * array will be empty.
+   * Given target coordinates relative to the drawable container, determine
+   * which data-bound Sprites' bounding boxes intersect the target, then resolve
+   * with a result that includes an array of the bound data. If none of the
+   * Selection's Sprites intersect the target, then the resolved array will be
+   * empty.
    *
    * @param hitTestParameters Coordinates of the box/point to test.
-   * @return CancellablePromise Yielding a hit test result including the data.
+   * @return T[] Array of data whose bound sprites were hit.
    */
-  hitTest: (hitTestParameters: Partial<HitTestParameters>) =>
-      CancellablePromise<SelectionHitTestResult<T>>;
+  hitTest: (hitTestParameters: SelectionHitTestParameters) => T[];
 }
