@@ -23,7 +23,7 @@ import {AttributeMapper} from './attribute-mapper';
 import {setupDrawCommand} from './commands/setup-draw-command';
 import {setupHitTestCommand} from './commands/setup-hit-test-command';
 import {setupRebaseCommand} from './commands/setup-rebase-command';
-import {DEFAULT_SCENE_SETTINGS} from './default-scene-settings';
+import {DEFAULT_SCENE_SETTINGS, SceneSettings} from './default-scene-settings';
 import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
@@ -359,15 +359,10 @@ export class SceneInternal implements Renderer {
    */
   private hitTestPromise?: HitTestPromise;
 
-  constructor(params: Partial<typeof DEFAULT_SCENE_SETTINGS> = {}) {
+  constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
-    const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params || {});
-
-    const timingFunctions = Object.assign(
-        {},
-        DEFAULT_SCENE_SETTINGS.timingFunctions,
-        settings.timingFunctions || {},
-    );
+    const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
+    const {timingFunctions} = settings;
 
     // Set up the elapsedTimeMs() method.
     const {now} = timingFunctions;

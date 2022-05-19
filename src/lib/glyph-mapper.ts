@@ -32,34 +32,43 @@ export interface GlyphCoordinates {
   height: number;
 }
 
+/** Settings that define the behavior of a GlyphMapper instance. */
+export interface GlyphMapperSettings {
+  /** See https://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE */
+  maxTextureSize: number;
+  /** Font size in texels. Note this is relative to texture size. */
+  fontSize: number;
+  /** Padding around the glyph in texels. */
+  buffer: number;
+  /** Radius around the glyph in texels. */
+  radius: number;
+  /**
+   * Location of the alpha scale from 0 (totally outside) to 1 (totally inside).
+   */
+  cutoff: number;
+  /** Name of the font family to use for glyphs. */
+  fontFamily: string;
+  /** The font weight to use for the glyphs. */
+  fontWeight: string;
+}
+
 const DEFAULT_GLYPH_FONT_SIZE_PX = 32;
 
 /**
  * Default settings for a GlyphMapper instance.
  */
-export const DEFAULT_GLYPH_MAPPER_SETTINGS = Object.freeze({
-  /**
-   * See https://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE
-   */
-  maxTextureSize: 2048,
-
-  // Font size in texels (relative to texture size).
-  fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
-
-  // Padding around the glyph in texels.
-  buffer: Math.ceil(DEFAULT_GLYPH_FONT_SIZE_PX / 4),
-
-  // Radius around the glyph in texels.
-  radius: DEFAULT_GLYPH_FONT_SIZE_PX,
-
-  // How to situate the alpha scale from totally outside (0) to inside (1). This
-  // default value ensures that a distance of zero coincides with the edge of
-  // the glyph.
-  cutoff: 0.5,
-
-  fontFamily: 'monospace',
-  fontWeight: 'normal',
-});
+export const DEFAULT_GLYPH_MAPPER_SETTINGS: GlyphMapperSettings =
+    Object.freeze({
+      maxTextureSize: 2048,
+      fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
+      buffer: Math.ceil(DEFAULT_GLYPH_FONT_SIZE_PX / 4),
+      radius: DEFAULT_GLYPH_FONT_SIZE_PX,
+      // This default value ensures that a distance of zero coincides with the
+      // edge of the glyph.
+      cutoff: 0.5,
+      fontFamily: 'monospace',
+      fontWeight: 'normal',
+    });
 
 /**
  * The GlyphMapper creates and manages a signed distance field (SDF) for
