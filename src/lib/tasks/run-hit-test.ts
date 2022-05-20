@@ -54,14 +54,26 @@ interface CoordinatorAPI {
 export function runHitTest(
     coordinator: CoordinatorAPI,
 ) {
+  // These values are API-user provided, but are already be checked for
+  // correctness upstream in SceneInternal.
+  const {sprites, width, height, inclusive} = coordinator.hitTestParameters;
+
+  coordinator.hitTestCount = sprites.length;
+
+  const results =
+      coordinator.hitTestOutputResults.subarray(0, coordinator.hitTestCount);
+
+  // Short-circuit if the parameters guarantee there will be no hits.
+  if (!inclusive && (!width || !height)) {
+    console.warn('Inclusive hit test on a box with zero size always misses');
+    results.fill(-1);
+    return;
+  }
+
   // Shorthand variables to make code more readable.
   const inputUv = coordinator.instanceHitTestInputUvValues;
   const indexActive = coordinator.instanceHitTestInputIndexActiveValues;
   const swatchUv = coordinator.instanceSwatchUvValues;
-
-  // These values are API-user provided, but are already be checked for
-  // correctness upstream in SceneInternal.
-  const {sprites} = coordinator.hitTestParameters;
 
   // Copy swatch UVs into the input UV values array. This way, when the command
   // runs, it will reference the correct swatches for the candidate sprites.
@@ -75,8 +87,6 @@ export function runHitTest(
     indexActive[i * 2] = swatchIndex;
     indexActive[i * 2 + 1] = sprite.isActive ? 1 : 0;
   }
-
-  coordinator.hitTestCount = sprites.length;
 
   // Re-bind the UV and Index/Active values to their buffers.
   coordinator.instanceHitTestInputUvBuffer(
@@ -122,6 +132,6 @@ export function runHitTest(
     // packing/unpacking. However, misses will be defintely equal to -1, and
     // the values will be ordinally correct, meaning that greater numbers
     // equate to higher up the z-order.
-    coordinator.hitTestOutputResults[i] = n * (totalSwatches + 1) - 1;
+    results[i] = n * (totalSwatches + 1) - 1;
   }
 }
