@@ -54,7 +54,7 @@ interface CoordinatorAPI {
 export function runHitTest(
     coordinator: CoordinatorAPI,
 ) {
-  // Short-hand variables to make code more readable.
+  // Shorthand variables to make code more readable.
   const inputUv = coordinator.instanceHitTestInputUvValues;
   const indexActive = coordinator.instanceHitTestInputIndexActiveValues;
   const swatchUv = coordinator.instanceSwatchUvValues;
@@ -87,10 +87,14 @@ export function runHitTest(
   // Invoke the hit test command.
   coordinator.hitTestCommand!();
 
-  // Read values back from framebuffer.
   const readHeight = Math.ceil(
       coordinator.hitTestCount /
       coordinator.hitTestAttributeMapper.swatchesPerRow);
+
+  // Read values back from framebuffer. This is SLOW! Upwards of 50ms-200ms
+  // depending on the amount of data being read back. It's a blocking and
+  // stalling procedure. Reading from the framebuffer requires that all the
+  // queued GPU actions are finished and flushed.
   coordinator.regl.read({
     x: 0,
     y: 0,
