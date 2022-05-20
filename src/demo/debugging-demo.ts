@@ -107,6 +107,8 @@ async function main() {
     randomize: false,
     showText: false,
     mouseover: false,
+    inclusive: true,
+    brush: false,
     clearBeforeUpdate: false,
   };
 
@@ -229,6 +231,8 @@ async function main() {
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
   gui.add(settings, 'mouseover');
+  gui.add(settings, 'inclusive');
+  gui.add(settings, 'brush');
   gui.add(settings, 'clearBeforeUpdate');
   update();
   container.appendChild(gui.domElement);
@@ -251,11 +255,21 @@ async function main() {
               .scale(scene.scale.x));
 
   container.addEventListener('mousemove', (event) => {
-    const rect = container.getBoundingClientRect();
-    const x = event.x - rect.left;
-    const y = event.y - rect.top;
+    if (!settings.mouseover) {
+      if (hoveredIndices.size) {
+        hoveredIndices = new Set();
+        update();
+      }
+      return;
+    }
 
-    const results = selection.hitTest({x, y});
+    const results = selection.hitTest({
+      x: event.x,
+      y: event.y,
+      width: settings.brush ? 100 : 0,
+      height: settings.brush ? 100 : 0,
+      inclusive: settings.inclusive,
+    });
 
     hoveredIndices = new Set(results);
     update();

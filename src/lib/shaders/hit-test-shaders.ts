@@ -88,6 +88,7 @@ uniform float ts;
  * and height of the bounding box of interest. Currently those are ignored.
  */
 uniform vec4 hitTestCoordinates;
+uniform float inclusive;
 
 uniform mat3 viewMatrix;
 
@@ -156,6 +157,24 @@ ${
 
 const vec2 swatchSize =
   vec2(TEXELS_PER_SWATCH / TEXTURE_WIDTH, 1. / TEXTURE_HEIGHT);
+
+bool spriteOverlapsTest(const vec4 spriteBox, const vec4 testBox) {
+  return (
+    spriteBox.x <= testBox.x + testBox.z &&
+    spriteBox.x + spriteBox.z >= testBox.x &&
+    spriteBox.y >= testBox.y - testBox.w &&
+    spriteBox.y + spriteBox.w <= testBox.y
+  );
+}
+
+bool spriteInsideTest(const vec4 spriteBox, const vec4 testBox) {
+  return (
+    spriteBox.x >= testBox.x &&
+    spriteBox.x + spriteBox.z <= testBox.x + testBox.z &&
+    spriteBox.y <= testBox.y &&
+    spriteBox.y + spriteBox.w >= testBox.y - testBox.w
+  );
+}
 
 void main () {
   readInputTexels();
@@ -226,15 +245,17 @@ void main () {
       vec2(.5, .5),
       viewMatrix
   ) * .25;
+  vec4 spriteBox = vec4(bottomLeft.xy, topRight.xy - bottomLeft.xy);
+
+  // Hit test coordinates are presented based on the top-left corner, so to
+  // orient it from the bottom left we need to subtract the height.
+  vec4 testBox = hitTestCoordinates + vec4(0., hitTestCoordinates.w, 0., 0.);
 
   // Test whether the coordinates of interest are within the sprite quad's
   // bounding box.
-  // TODO(jimbo): Use width/height/inclusive to support brushing.
-  bool hit =
-    bottomLeft.x < hitTestCoordinates.x &&
-    bottomLeft.y > hitTestCoordinates.y &&
-    topRight.x > hitTestCoordinates.x &&
-    topRight.y < hitTestCoordinates.y;
+  bool hit = inclusive > 0. ?
+    spriteOverlapsTest(spriteBox, testBox) :
+    spriteInsideTest(spriteBox, testBox);
 
   // The hit test result will either be -1 if it's a miss (or the Sprite was
   // inactive), or it will be the index of the Sprite.
