@@ -671,10 +671,11 @@ export class SceneInternal implements Renderer {
     try {
       this.drawCommand!();
     } finally {
-      this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
-      if (this.toDrawTsRange.isDefined) {
-        this.queueDraw(false);
+      if (!this.toDrawTsRange.isDefined) {
+        return;
       }
+      this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
+      this.queueDraw(false);
     }
   }
 
