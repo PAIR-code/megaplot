@@ -37,7 +37,7 @@ interface CoordinatorAPI {
   instanceHitTestOutputUvBuffer: REGL.Buffer;
   instanceSwatchUvValues: Float32Array;
   hitTestAttributeMapper: AttributeMapper;
-  hitTestCommand?: () => void;
+  hitTestCommand: () => void;
   hitTestCount: number;
   hitTestParameters: HitTestParameters;
   hitTestOutputResults: Float32Array;
@@ -95,7 +95,7 @@ export function runHitTest(
       indexActive.subarray(0, coordinator.hitTestCount * 2));
 
   // Invoke the hit test command.
-  coordinator.hitTestCommand!();
+  coordinator.hitTestCommand();
 
   const readHeight = Math.ceil(
       coordinator.hitTestCount /

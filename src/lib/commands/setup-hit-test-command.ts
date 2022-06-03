@@ -35,8 +35,8 @@ interface CoordinatorAPI {
   getViewMatrixScale: () => number[];
   hitTestAttributeMapper: AttributeMapper;
   hitTestCount: number;
-  hitTestParameters: HitTestParameters;
   hitTestOutputValuesFramebuffer: REGL.Framebuffer2D;
+  hitTestParameters: HitTestParameters;
   instanceHitTestInputIndexActiveBuffer: REGL.Buffer;
   instanceHitTestInputUvBuffer: REGL.Buffer;
   instanceHitTestOutputUvBuffer: REGL.Buffer;
@@ -98,7 +98,7 @@ export function setupHitTestCommand(
         coordinator.hitTestParameters.width,
         coordinator.hitTestParameters.height,
       ]),
-      inclusive: () => coordinator.hitTestParameters.inclusive ? 1 : 0,
+      inclusive: () => !!coordinator.hitTestParameters.inclusive,
       viewMatrix: () => coordinator.getViewMatrix(),
       viewMatrixScale: () => coordinator.getViewMatrixScale(),
       targetValuesTexture: coordinator.targetValuesTexture,

@@ -106,7 +106,7 @@ async function main() {
     minSizePxHeight: 0,
     randomize: false,
     showText: false,
-    mouseover: false,
+    hitTestOnMove: false,
     inclusive: true,
     brush: false,
     clearBeforeUpdate: false,
@@ -230,7 +230,7 @@ async function main() {
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
-  gui.add(settings, 'mouseover');
+  gui.add(settings, 'hitTestOnMove');
   gui.add(settings, 'inclusive');
   gui.add(settings, 'brush');
   gui.add(settings, 'clearBeforeUpdate');
@@ -255,7 +255,7 @@ async function main() {
               .scale(scene.scale.x));
 
   container.addEventListener('mousemove', (event) => {
-    if (!settings.mouseover) {
+    if (!settings.hitTestOnMove) {
       if (hoveredIndices.size) {
         hoveredIndices = new Set();
         update();

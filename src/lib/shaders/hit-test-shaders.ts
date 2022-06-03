@@ -45,8 +45,8 @@ uniform float capacity;
 varying float varyingHitTestResult;
 
 vec4 packFloatToVec4i(const float value) {
-  const vec4 bitSh = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);
-  const vec4 bitMsk = vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);
+  const vec4 bitSh = vec4(256. * 256. * 256., 256. * 256., 256., 1.);
+  const vec4 bitMsk = vec4(0., 1./256., 1./256., 1./256.);
   vec4 res = fract(value * bitSh);
   res -= res.xxyz * bitMsk;
   return res;
@@ -88,7 +88,7 @@ uniform float ts;
  * and height of the bounding box of interest. Currently those are ignored.
  */
 uniform vec4 hitTestCoordinates;
-uniform float inclusive;
+uniform bool inclusive;
 
 uniform mat3 viewMatrix;
 
@@ -253,7 +253,7 @@ void main () {
 
   // Test whether the coordinates of interest are within the sprite quad's
   // bounding box.
-  bool hit = inclusive > 0. ?
+  bool hit = inclusive ?
     spriteOverlapsTest(spriteBox, testBox) :
     spriteInsideTest(spriteBox, testBox);
 

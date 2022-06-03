@@ -243,33 +243,50 @@ export class SceneInternal implements Renderer {
   readonly attributeMapper: AttributeMapper;
 
   /**
-   * Attribute mapper for the output of the hit test shader.
+   * Attribute mapper for the OUTPUT of the hit test shaders.
+   *
+   * The inputs to the hit test use the same attributeMapper instance as
+   * everything else to read sprite values from the previous/target textures.
    */
   hitTestAttributeMapper: AttributeMapper;
 
   /**
-   * Array of UV values for sprites being input to a hit test copied from the
-   * instanceSwatchUvValues array. These values will be set just prior to
-   * invoking the hit test command.
+   * Array of UV values for sprites being input to a hit test. The values are
+   * always copied from the instanceSwatchUvValues array, and will be set just
+   * prior to invoking the hit test command.
    *
    * In most cases, only a small portion at the beginning of this array will be
-   * used, but it will be sized to accommodate performing a hit test across all
-   * sprites in the scene at once.
+   * used by the hit test shaders. However, to accommodate the possibility of
+   * performing a hit test across all sprites in the scene at once, it will be
+   * sized large enough to hold a full copy of all the sprites'
+   * instanceSwatchUvValues.
    */
   instanceHitTestInputUvValues: Float32Array;
 
   /**
-   * Buffer for instance hit test UVs input. Will be dynamically rebound before
-   * each invocation of the hit test command.
+   * REGL Buffer for instance hit test UVs input. Will be re-bound to the
+   * instanceHitTestInputUvValues array before each invocation of the hit test
+   * command. This ensures that when the hit test command runs, the correct,
+   * latest values are used by the shaders to compute which candidate sprites
+   * were hit. See instanceHitTestInputUvValues for more detail.
    */
   instanceHitTestInputUvBuffer: REGL.Buffer;
 
   /**
    * Array of floats for Sprites about to be hit tested indicating, pairwise,
-   * the index of the Sprite and whether Sprite is active (1) or not (0). The
-   * index is needed in order to determine the z-ordering, and the active value
-   * is needed to handle the case where, for any reason, a Sprite being hit
-   * tested lacks a swatch.
+   * the index of the Sprite and whether the Sprite is active (1) or not (0).
+   *
+   * The index is needed in order to determine the z-ordering. A directionally
+   * correct approximation (due to Float32 precision) of this value is what's
+   * returned eventually in the output values.
+   *
+   * The active value is needed to handle the case where, for any reason, a
+   * Sprite being hit tested lacks a swatch. The alternative would be to omit
+   * these Sprites from being sent into the hit test command at all, but then
+   * the resulting output would lack an entry for the sprite. By passing in an
+   * active flag, we avoid having to reorder the output of the hit test command.
+   * This causes slightly more data to be sent into the shader and pulled back,
+   * but the overall latency of performing a read it all dominates.
    *
    * In most cases, only a small portion at the beginning of this array will be
    * used, but it will be sized to accommodate performing a hit test across all
@@ -278,8 +295,10 @@ export class SceneInternal implements Renderer {
   instanceHitTestInputIndexActiveValues: Float32Array;
 
   /**
-   * Buffer for instance hit test UVs input. Will be dynamically rebound before
-   * each invocation of the hit test command.
+   * REGL Buffer for instance hit test UVs input. Will be re-bound to
+   * instanceHitTestInputIndexActiveValues before each invocation of the hit
+   * test command. This ensures that the latest, correct values are sent to the
+   * hit test shaders.
    */
   instanceHitTestInputIndexActiveBuffer: REGL.Buffer;
 
@@ -310,15 +329,16 @@ export class SceneInternal implements Renderer {
   hitTestOutputValues: Uint8Array;
 
   /**
-   * After the hit test shader runs, its output is written to the
+   * After the hit test fragment shader runs, its output is written to the
    * hitTestOutputValuesFramebuffer and then read into the hitTestOutputValues
-   * Uint8Array. Those values are then decoded into this array. A value of -1
-   * means the hit test was a miss. Any other value will be a non-negative, and
-   * will be approximately equal to the index of the Sprite that was tested. The
-   * value will be only approximate however, as some precision is lost in
-   * operation of normalizing, packing and unpacking values. But the values are
-   * ordinally correct. Higher values mean closer to the camera, further up the
-   * z axis.
+   * Uint8Array. Those values are then decoded, byte-wise into this array.
+   *
+   * A value of -1 means the hit test was a miss. Otherwise, the value will be
+   * non-negative, and will be approximately equal to the index of the Sprite
+   * that was tested. The value will be only approximate because some precision
+   * is lost in the operation of normalizing, packing and unpacking values. But
+   * the values are ordinally correct. Higher values mean closer to the camera,
+   * further up the z axis.
    */
   hitTestOutputResults: Float32Array;
 
@@ -380,7 +400,7 @@ export class SceneInternal implements Renderer {
   /**
    * Regl command to capture the current hit test values.
    */
-  hitTestCommand?: REGL.DrawCommand;
+  hitTestCommand: REGL.DrawCommand;
 
   /**
    * Task id to uniquely identify the removal task.
@@ -542,11 +562,14 @@ export class SceneInternal implements Renderer {
     // swatch UVs will be copied here, so that when the shader runs, it'll know
     // where to look for the previous and target values. The output UVs however
     // do not change. The Nth sprite in the HitTestParameters's sprites array
-    // will always write to the Nth texel of the output framebuffer. Since it's
-    // possible (though unlikely
+    // will always write to the Nth texel of the output framebuffer.
     this.instanceHitTestInputUvValues =
         new Float32Array(this.instanceSwatchUvValues.length);
 
+    // To accommodate the possibility of performing a hit test on all sprites
+    // that have swatches, we allocate enough space for the index and the active
+    // flag of a full complement. In the hit test shader, these values will be
+    // mapped to a vec2 attribute.
     this.instanceHitTestInputIndexActiveValues =
         new Float32Array(attributeMapper.totalSwatches * 2);
 
