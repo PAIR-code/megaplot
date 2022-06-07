@@ -89,8 +89,8 @@ export class SelectionImpl<T> implements Selection<T> {
    * and schedules tasks via the provided WorkScheduler.
    */
   constructor(
-      private stepsBetweenChecks: number,
-      private coordinator: CoordinatorAPI,
+      private readonly stepsBetweenChecks: number,
+      private readonly coordinator: CoordinatorAPI,
   ) {}
 
   onBind(bindCallback: SelectionCallback<T>) {
