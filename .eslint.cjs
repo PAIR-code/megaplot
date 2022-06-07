@@ -18,6 +18,10 @@
  * @fileoverview Configuration for ESLint.
  */
 
+const OFF = 0;
+const WARN = 1;
+const ERROR = 2;
+
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
@@ -36,17 +40,19 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
-    "@typescript-eslint/ban-types" :
-    [
-      'error', {
-        types: {
-          "Object" : "Use {} or 'object' instead.",
-          "String" : "Use 'string' instead.",
-          "Number" : "Use 'number' instead.",
-          "Boolean" : "Use 'boolean' instead.",
-        },
-        extendDefaults: false,
-      }
-    ],
+    'no-unsafe-finally' :OFF,
+    'prefer-const' :OFF,
+    '@typescript-eslint/ban-types' : [ 'off', {types: ['{}']} ],
+    '@typescript-eslint/no-explicit-any' :OFF,
+    '@typescript-eslint/no-non-null-assertion' :OFF,
+    '@typescript-eslint/no-this-alias' :OFF,
+    '@typescript-eslint/no-unsafe-assignment' :OFF,
+    '@typescript-eslint/no-unsafe-call' :OFF,
+    '@typescript-eslint/no-unsafe-member-access' :OFF,
+    '@typescript-eslint/no-unsafe-return' :OFF,
+    '@typescript-eslint/require-await' :OFF,
+    '@typescript-eslint/restrict-plus-operands' :OFF,
+    '@typescript-eslint/restrict-template-expressions' :OFF,
+    '@typescript-eslint/unbound-method' :OFF,
   },
 };
