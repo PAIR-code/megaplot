@@ -15,7 +15,7 @@
     "build": "rollup -c",
     "generate": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node util/generate-code.ts",
     "http": "http-server --port 8081",
-    "lint": "eslint src --ext .ts --config .eslint.cjs",
+    "lint": "eslint src --ext .ts --config eslint.config.js",
     "start": "webpack serve --open",
     "test": "karma start karma.conf.ts"
   },
