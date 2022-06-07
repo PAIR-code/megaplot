@@ -19,7 +19,7 @@
  */
 
 import {SceneSettings} from './default-scene-settings';
-import {HitTestPromise} from './hit-test-types';
+import {HitTestParameters} from './hit-test-types';
 import {Renderer} from './renderer-types';
 import {SceneInternal} from './scene-internal';
 import {Selection} from './selection-types';
@@ -77,21 +77,11 @@ export class Scene implements Renderer {
   }
 
   /**
-   * Given a pair of mouse coordinates relative to the drawable container,
-   * determine which Sprites' bounding boxes intersect that point and return
-   * them. If multiple hit tests are in flight simultaneously, the same promise
-   * may be returned and only the final specified set of coordinates will be
-   * used.
+   * A hit test determines which Sprites from a candidate list intersect a
+   * provided box in pixel coordinates relative to the canvas.
    */
-  hitTest(x: number, y: number, width = 0, height = 0, inclusive = true):
-      HitTestPromise {
-    return this[SceneInternalSymbol].hitTest(
-        x,
-        y,
-        width,
-        height,
-        inclusive,
-    );
+  hitTest(hitTestParameters: HitTestParameters): Float32Array {
+    return this[SceneInternalSymbol].hitTest(hitTestParameters);
   }
 
   /**

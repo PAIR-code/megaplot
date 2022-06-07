@@ -25,7 +25,7 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {HitTestPromise, HitTestResult, Scene, Sprite} from '../index';
+import {Scene} from '../index';
 import {SceneInternalSymbol} from '../lib/symbols';
 
 require('./styles.css');
@@ -106,7 +106,9 @@ async function main() {
     minSizePxHeight: 0,
     randomize: false,
     showText: false,
-    mouseover: false,
+    hitTestOnMove: false,
+    inclusive: true,
+    brush: false,
     clearBeforeUpdate: false,
   };
 
@@ -121,6 +123,8 @@ async function main() {
 
   const indices: number[] =
       (new Array(MAX_COUNT * MAX_COUNT)).fill(0).map((_, i) => i);
+
+  let hoveredIndices = new Set<number>();
 
   // Function to call when GUI options are changed.
   function update() {
@@ -156,7 +160,7 @@ async function main() {
       s.BorderRadiusWorld = settings.borderRadiusWorld;
       s.BorderRadiusPixel = settings.borderRadiusPx;
 
-      s.BorderColor = borderColor;
+      s.BorderColor = hoveredIndices.has(index) ? hoverColor : borderColor;
 
       s.BorderPlacement = settings.borderPlacement;
 
@@ -226,7 +230,9 @@ async function main() {
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
-  gui.add(settings, 'mouseover');
+  gui.add(settings, 'hitTestOnMove');
+  gui.add(settings, 'inclusive');
+  gui.add(settings, 'brush');
   gui.add(settings, 'clearBeforeUpdate');
   update();
   container.appendChild(gui.domElement);
@@ -248,68 +254,25 @@ async function main() {
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
-  let previouslyHoveredSprites = new Set<Sprite>();
-  function handleHitTestResult(result: HitTestResult) {
-    const newlyHoveredSprites = new Set<Sprite>(result.hits);
-
-    // Perform alterations on newly hovered sprites.
-    result.hits.forEach(sprite => {
-      if (sprite.isRemoved) {
-        // Short-circuit if this sprite is no longer valid.
-        return;
+  container.addEventListener('mousemove', (event) => {
+    if (!settings.hitTestOnMove) {
+      if (hoveredIndices.size) {
+        hoveredIndices = new Set();
+        update();
       }
-      if (previouslyHoveredSprites.has(sprite)) {
-        // Short-circuit if this sprite was previously hovered.
-        return;
-      }
-      sprite.update(s => {
-        s.TransitionTimeMs = settings.transitionTimeMs;
-        s.BorderColor = hoverColor;
-      });
-    });
-
-    // Perform alterations on previously hovered sprites that are not still
-    // hovered.
-    [...previouslyHoveredSprites].forEach(sprite => {
-      if (sprite.isRemoved) {
-        // Short circuit if this sprite is no longer valid.
-        return;
-      }
-      if (newlyHoveredSprites.has(sprite)) {
-        // Short circuit if this sprite is newly hovered.
-        return;
-      }
-      sprite.update(s => {
-        s.TransitionTimeMs = settings.transitionTimeMs;
-        s.BorderColor = borderColor;
-      });
-    });
-
-    previouslyHoveredSprites = newlyHoveredSprites;
-  }
-
-  let hitTestTask: HitTestPromise|undefined = undefined;
-  container.addEventListener('mousemove', async (event) => {
-    if (hitTestTask) {
-      hitTestTask.cancel();
-      hitTestTask = undefined;
-    }
-
-    if (!settings.mouseover) {
       return;
     }
 
-    const rect = container.getBoundingClientRect();
-    const x = event.x - rect.left;
-    const y = event.y - rect.top;
+    const results = selection.hitTest({
+      x: event.x,
+      y: event.y,
+      width: settings.brush ? 100 : 0,
+      height: settings.brush ? 100 : 0,
+      inclusive: settings.inclusive,
+    });
 
-    hitTestTask = scene.hitTest(x, y);
-    try {
-      const hitTestResult = await hitTestTask;
-      handleHitTestResult(hitTestResult);
-    } catch (err) {
-      // Ignore cancellation errors.
-    }
+    hoveredIndices = new Set(results);
+    update();
   });
 }
 

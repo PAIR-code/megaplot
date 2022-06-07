@@ -21,7 +21,7 @@
  * requestAnimationFrame() and setTimeout().
  */
 
-import {TimingFunctionsType} from './default-timing-functions';
+import {TimingFunctions} from './default-timing-functions';
 
 /**
  * Object for storing information about an animation frame callback.
@@ -86,7 +86,7 @@ function checkThis(obj: {}) {
  * requestAnimationFrame() and Date.now(). Instead, we'll replace those with
  * methods provided by this class.
  */
-export class TimingFunctionsShim implements TimingFunctionsType {
+export class TimingFunctionsShim implements TimingFunctions {
   /**
    * Internal counter for elapsed time in milliseconds. Should be monotonically
    * increasing.

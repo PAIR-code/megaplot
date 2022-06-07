@@ -19,7 +19,7 @@
  */
 
 import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback} from './selection-types';
+import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
 import {Sprite} from './sprite';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
 import {WorkTaskWithId} from './work-task';
@@ -52,6 +52,15 @@ enum BindingState {
   Started,
 }
 
+/**
+ * To avoid circular imports, this file cannot depend on scene-internal.ts so
+ * here we define the minimum necessary API surface that the task implementation
+ * needs to operate.
+ */
+interface CoordinatorAPI extends Renderer {
+  workScheduler: WorkScheduler;
+}
+
 export class SelectionImpl<T> implements Selection<T> {
   private sprites: Sprite[] = [];
 
@@ -80,9 +89,8 @@ export class SelectionImpl<T> implements Selection<T> {
    * and schedules tasks via the provided WorkScheduler.
    */
   constructor(
-      private stepsBetweenChecks: number,
-      private renderer: Renderer,
-      private workScheduler: WorkScheduler,
+      private readonly stepsBetweenChecks: number,
+      private readonly coordinator: CoordinatorAPI,
   ) {}
 
   onBind(bindCallback: SelectionCallback<T>) {
@@ -158,7 +166,7 @@ export class SelectionImpl<T> implements Selection<T> {
     // schedule a future attempt using the bindingTaskId.
     if (this.clearingTask) {
       this.bindingState = BindingState.Blocked;
-      this.workScheduler.scheduleUniqueTask({
+      this.coordinator.workScheduler.scheduleUniqueTask({
         id: this.bindingTaskId,
         callback: () => {
           this.bindingState = BindingState.None;
@@ -183,7 +191,7 @@ export class SelectionImpl<T> implements Selection<T> {
         step++;
         const index = lastEnterIndex++;
         const datum = data[index];
-        const sprite = this.renderer.createSprite();
+        const sprite = this.coordinator.createSprite();
 
         this.boundData[index] = datum;
         this.sprites[index] = sprite;
@@ -360,7 +368,7 @@ export class SelectionImpl<T> implements Selection<T> {
     };
 
     // Use the provided WorkScheduler to schedule bindingTask.
-    this.workScheduler.scheduleUniqueTask(this.bindingTask);
+    this.coordinator.workScheduler.scheduleUniqueTask(this.bindingTask);
     this.bindingState = BindingState.Scheduled;
 
     // Allow method call chaining.
@@ -465,15 +473,64 @@ export class SelectionImpl<T> implements Selection<T> {
     // If a binding task was previously scheduled, unschedule it since clear
     // must take precedence.
     if (this.bindingTask) {
-      this.workScheduler.unscheduleTask(this.bindingTask);
+      this.coordinator.workScheduler.unscheduleTask(this.bindingTask);
       delete this.bindingTask;
     }
 
     // Use the provided WorkScheduler to schedule the task.
-    this.workScheduler.scheduleUniqueTask(this.clearingTask);
+    this.coordinator.workScheduler.scheduleUniqueTask(this.clearingTask);
     this.bindingState = BindingState.None;
 
     // Allow method call chaining.
     return this;
+  }
+
+  /**
+   * Given target coordinates relative to the drawable container,
+   * determine which data-bound Sprites' bounding boxes intersect the target,
+   * then resolve with a result that includes an array of the bound data. If
+   * none of the Selection's Sprites intersect the target, then the resolved
+   * array will be empty.
+   *
+   * @param hitTestParameters Coordinates of the box/point to test.
+   * @return CancellablePromise Yielding a hit test result including the data.
+   */
+  hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
+    const hitTestResults =
+        this.coordinator.hitTest({...hitTestParameters, sprites: this.sprites});
+
+    // Collect the indices of hitTestResults whose values indicate that the
+    // sprite was hit.
+    const hitIndices = new Uint32Array(hitTestResults.length);
+    let hitCount = 0;
+    for (let i = 0; i < hitTestResults.length; i++) {
+      const result = hitTestResults[i];
+      if (result >= 0) {
+        hitIndices[hitCount++] = i;
+      }
+    }
+
+    // Short-circuit if it was a total miss.
+    if (!hitCount) {
+      return [];
+    }
+
+    if (hitTestParameters.sortResults === undefined ||
+        hitTestParameters.sortResults) {
+      // Sort the hitIndices by the hitTestResult values for them. In most
+      // cases, they'll already be mostly or entirely in order, but after
+      // thrashing (creating and removing sprites aggressively) it could be that
+      // later sprites use earlier swatches and would appear out-of-order in the
+      // hitTestResults.
+      hitIndices.subarray(0, hitCount)
+          .sort((a, b) => hitTestResults[a] - hitTestResults[b]);
+    }
+
+    // Collect bound data for hit sprites.
+    const results = new Array<T>(hitCount);
+    for (let i = 0; i < hitCount; i++) {
+      results[i] = this.boundData[hitIndices[i]];
+    }
+    return results;
   }
 }

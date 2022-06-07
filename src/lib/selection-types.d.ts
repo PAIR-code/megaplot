@@ -19,12 +19,24 @@
  */
 
 import {SpriteView} from './generated/sprite-view';
+import {HitTestParameters} from './hit-test-types';
 
 /**
  * The enter, update and exit methods of Selections take callbacks of
  * this form.
  */
 export type SelectionCallback<T> = (spriteView: SpriteView, datum: T) => void;
+
+/**
+ * Parameters to pass to a Selection hit test.
+ */
+export interface SelectionHitTestParameters extends
+    Omit<HitTestParameters, 'sprites'> {
+  /**
+   * Whether to sort results so that the topmost Sprites are last. Default=true.
+   */
+  sortResults?: boolean;
+}
 
 /**
  * A Selection maps data points to sprites. This is the primary interface by
@@ -80,4 +92,16 @@ export interface Selection<T> {
    * bind().
    */
   clear: () => Selection<T>;
+
+  /**
+   * Given target coordinates relative to the drawable container, determine
+   * which data-bound Sprites' bounding boxes intersect the target, then resolve
+   * with a result that includes an array of the bound data. If none of the
+   * Selection's Sprites intersect the target, then the resolved array will be
+   * empty.
+   *
+   * @param hitTestParameters Coordinates of the box/point to test.
+   * @return T[] Array of data whose bound sprites were hit.
+   */
+  hitTest: (hitTestParameters: SelectionHitTestParameters) => T[];
 }
