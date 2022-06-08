@@ -87,7 +87,7 @@ async function main() {
   };
 
   // As a synthetic data set, use the properties on the Window object.
-  const win = window as {} as {[key: string]: unknown};
+  const win = window as unknown as {[key: string]: unknown};
 
   interface Property {
     name: string;

@@ -23,19 +23,25 @@
  * Casting setTimeout() here to satisfy obscure TypeScript compiler complaint
  * about missing '__promisify__' property.
  */
-export type ClearTimeoutType = (this: {}|void, id: number) => void;
+export type ClearTimeoutType = (this: unknown, id: number) => void;
 
 /**
-  * To enhance testability, the timing functions are constructor parameters to
-  * the WorkScheduler. This is exported for testing purposes, but generally
-  * should not be of interest to API consumers.
-  */
+ * Generic Function which can be invoked as a callback.
+ */
+export type CallbackFunctionType = (...args: unknown[]) => unknown;
+
+/**
+ * To enhance testability, the timing functions are constructor parameters to
+ * the WorkScheduler. This is exported for testing purposes, but generally
+ * should not be of interest to API consumers.
+ */
 export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
   requestAnimationFrame: window.requestAnimationFrame.bind(window),
   cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
-  setTimeout: (callbackFn: () => void, delay = 0, ...args: unknown[]) => {
-    return window.setTimeout(callbackFn, delay, ...args);
-  },
+  setTimeout:
+      (callbackFn: CallbackFunctionType, delay = 0, ...args: unknown[]) => {
+        return window.setTimeout(callbackFn, delay, ...args);
+      },
   clearTimeout: window.clearTimeout.bind(window) as ClearTimeoutType,
   now: Date.now.bind(Date),
 });
@@ -47,8 +53,9 @@ export interface TimingFunctions {
   /** Function to cancel a scehdule animation frame. */
   readonly cancelAnimationFrame: (handle: number) => void;
   /** Sets a timer to execute a function or piece of code when it expires. */
-  readonly setTimeout: (callbackFn: () => void, delay?: number,
-                        ...args: unknown[]) => number;
+  readonly setTimeout:
+      (callbackFn: CallbackFunctionType, delay?: number,
+       ...args: unknown[]) => number;
   /** Function to clear a scheduled timeout. */
   readonly clearTimeout: ClearTimeoutType;
   /** Function to get number of milliseconds elapsed since 1 Jan 1970. */

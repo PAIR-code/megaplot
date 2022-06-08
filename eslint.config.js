@@ -42,7 +42,6 @@ module.exports = {
   rules: {
     'no-unsafe-finally' :OFF,
     'prefer-const' :OFF,
-    '@typescript-eslint/ban-types' : [ 'off', {types: ['{}']} ],
     '@typescript-eslint/no-explicit-any' :OFF,
     '@typescript-eslint/no-non-null-assertion' :OFF,
     '@typescript-eslint/no-this-alias' :OFF,

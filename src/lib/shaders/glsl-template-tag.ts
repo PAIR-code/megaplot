@@ -21,7 +21,7 @@
 /**
  * Template tag to mark GLSL code fragments.
  */
-export function glsl(strs: TemplateStringsArray, ...args: Array<{}>) {
+export function glsl(strs: TemplateStringsArray, ...args: unknown[]) {
   const interleaved: string[] = [];
   for (let i = 0; i < args.length; i++) {
     interleaved.push(strs[i], `${args[i]}`);

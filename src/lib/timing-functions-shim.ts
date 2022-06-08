@@ -21,7 +21,7 @@
  * requestAnimationFrame() and setTimeout().
  */
 
-import {TimingFunctions} from './default-timing-functions';
+import {CallbackFunctionType, TimingFunctions} from './default-timing-functions';
 
 /**
  * Object for storing information about an animation frame callback.
@@ -35,7 +35,7 @@ interface AnimationFrameCallback {
   /**
    * Function to be invoked.
    */
-  callback: Function;
+  callback: FrameRequestCallback;
 }
 
 /**
@@ -50,7 +50,7 @@ interface TimeoutCallback {
   /**
    * Function to be invoked.
    */
-  callback: Function;
+  callback: CallbackFunctionType;
 
   /**
    * Earliest time when this timeout is executable.
@@ -69,13 +69,13 @@ interface TimeoutCallback {
  * checking against the global 'this' object (usually the window, or null in
  * strict mode).
  */
-function getThis(this: ({}|null)) {
+function getThis(this: unknown) {
   return this;
 }
 
 const GLOBAL_THIS = getThis.call(null);
 
-function checkThis(obj: {}) {
+function checkThis(obj: unknown) {
   if (obj !== null && obj !== undefined && obj !== GLOBAL_THIS) {
     throw new TypeError('Illegal invocation');
   }
@@ -140,24 +140,25 @@ export class TimingFunctionsShim implements TimingFunctions {
     const self = this;
     const prototype = Object.getPrototypeOf(this);
 
-    function requestAnimationFrame(this: {}, callback: Function): number {
+    function requestAnimationFrame(
+        this: unknown, callback: CallbackFunctionType): number {
       checkThis(this);
       return prototype.requestAnimationFrame.call(self, callback);
     }
 
-    function cancelAnimationFrame(this: {}, id: number): void {
+    function cancelAnimationFrame(this: unknown, id: number): void {
       checkThis(this);
       return prototype.cancelAnimationFrame.call(self, id);
     }
 
     function setTimeout(
-        this: {}, callback: Function, delay: number,
+        this: unknown, callback: CallbackFunctionType, delay: number,
         ...args: unknown[]): number {
       checkThis(this);
       return prototype.setTimeout.apply(self, [callback, delay, ...args]);
     }
 
-    function clearTimeout(this: {}, id: number): void {
+    function clearTimeout(this: unknown, id: number): void {
       checkThis(this);
       return prototype.clearTimeout.call(self, id);
     }
@@ -180,7 +181,7 @@ export class TimingFunctionsShim implements TimingFunctions {
   /**
    * Emulate window.requestAnimationFrame() by adding the callback to the queue.
    */
-  requestAnimationFrame(callback: Function): number {
+  requestAnimationFrame(callback: FrameRequestCallback): number {
     if (!(callback instanceof Function)) {
       // Emulate the error produced by upstream requestAnimationFrame().
       throw new TypeError(
@@ -223,7 +224,8 @@ export class TimingFunctionsShim implements TimingFunctions {
   /**
    * Emulate window.setTimeout().
    */
-  setTimeout(callback: Function, delay = 0, ...args: unknown[]): number {
+  setTimeout(callback: CallbackFunctionType, delay = 0, ...args: unknown[]):
+      number {
     if (!(callback instanceof Function)) {
       // Upstream setTimout() doesn't throw, but since this class is for
       // testing, we'll check it anyway.

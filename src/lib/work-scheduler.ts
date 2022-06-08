@@ -36,7 +36,7 @@
 
 import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
 import {WorkQueue} from './work-queue';
-import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskWithId} from './work-task';
+import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
 
 export {RemainingTimeFn} from './work-task';
 
@@ -246,7 +246,7 @@ export class WorkScheduler {
   /**
    * Determine whether there's a task already queued with the provided Id.
    */
-  isScheduledId(id: {}): boolean {
+  isScheduledId(id: WorkTaskId): boolean {
     return this.presentWorkQueue.hasTaskId(id) ||
         this.futureWorkQueue.hasTaskId(id);
   }

@@ -163,7 +163,8 @@ describe('TimingFunctionsShim', () => {
 
       expect(() => {
         // Call with a string argument.
-        requestAnimationFrame.call(null, '() => {}' as {} as Function);
+        requestAnimationFrame.call(
+            null, '() => {}' as unknown as FrameRequestCallback);
       }).toThrow();
     });
   });
@@ -286,8 +287,8 @@ describe('TimingFunctionsShim', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
       const {setTimeout} = timingFunctionsShim;
 
-      const savedArgs: Array<Array<{}>> = [];
-      function saveArgs(...args: Array<{}>) {
+      const savedArgs: Array<Array<unknown>> = [];
+      function saveArgs(...args: unknown[]) {
         savedArgs.push(args);
       }
 

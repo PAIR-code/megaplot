@@ -19,7 +19,7 @@
  * manage ordered lists of work tasks.
  */
 
-import {ensureOrCreateWorkTask, getWorkTaskId, WorkTask, WorkTaskCallbackFn, WorkTaskWithId} from './work-task';
+import {ensureOrCreateWorkTask, getWorkTaskId, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
 
 /**
  * A WorkQueue consists of an array of work tasks with Ids, and a set for
@@ -32,7 +32,7 @@ export class WorkQueue {
    * Set of WorkTask ids which are present in the task list. Maintained for
    * rapid lookup.
    */
-  readonly idSet: Set<{}> = new Set();
+  readonly idSet: Set<WorkTaskId> = new Set();
 
   /**
    * List of tasks to be performed.
@@ -49,7 +49,7 @@ export class WorkQueue {
   /**
    * Return whether a WorkTask with the specified id has already been enqueued.
    */
-  hasTaskId(id: {}): boolean {
+  hasTaskId(id: WorkTaskId): boolean {
     return this.idSet.has(id);
   }
 
@@ -64,7 +64,7 @@ export class WorkQueue {
   /**
    * Get the task that has the provided id.
    */
-  getTaskById(id: {}): WorkTaskWithId|undefined {
+  getTaskById(id: WorkTaskId): WorkTaskWithId|undefined {
     if (!this.hasTaskId(id)) {
       return undefined;
     }
@@ -110,7 +110,7 @@ export class WorkQueue {
    * Given the id if of a WorkTask, if a matching WorkTask has been enqueued,
    * remove it and return it. Otherwise return undefined.
    */
-  removeTaskById(id: {}): WorkTaskWithId|undefined {
+  removeTaskById(id: WorkTaskId): WorkTaskWithId|undefined {
     // Short-circuit if the task is not present in the WorkQueue's idSet.
     if (!this.hasTaskId(id)) {
       return undefined;
@@ -141,7 +141,7 @@ export class WorkQueue {
    * Given an id, find the index of the task in the task list with that id. If
    * no task with that id is found, return -1.
    */
-  findTaskIndexById(id: {}): number {
+  findTaskIndexById(id: WorkTaskId): number {
     let index = -1;
     for (let i = 0; i < this.taskList.length; i++) {
       if (this.taskList[i].id === id) {

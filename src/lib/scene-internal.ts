@@ -46,6 +46,7 @@ import {runTextureSync} from './tasks/run-texture-sync';
 import {TextSelectionImpl} from './text-selection-impl';
 import {TextSelection} from './text-selection-types';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
+import {WorkTaskId} from './work-task';
 
 /**
  * This constant controls how many steps in a loop should pass before asking the
@@ -445,7 +446,7 @@ export class SceneInternal implements Renderer {
 
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
-    const win = window as {} as {[key: string]: unknown};
+    const win = window as unknown as {[key: string]: unknown};
     const createREGL = win['createREGL']! as (...args: unknown[]) =>
                            REGL.Regl || REGL;
 
@@ -894,7 +895,7 @@ export class SceneInternal implements Renderer {
    * Helper method to queue a run method.
    */
   private queueTask(
-      taskId: {},
+      taskId: WorkTaskId,
       runMethod: (remaining: RemainingTimeFn) => void,
       beginImmediately = false,
   ) {
