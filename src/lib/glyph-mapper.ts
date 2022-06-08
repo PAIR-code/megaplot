@@ -113,12 +113,12 @@ export class GlyphMapper {
    * Instance of TinySDF used for generating SDF values to be copied to the
    * texture.
    */
-  private tinySDF: TinySDF;
+  private readonly tinySDF: TinySDF;
 
   /**
    * Internal mapping to show where each glyph is in the texture.
    */
-  private glyphToCoordinates = new Map<string, GlyphCoordinates>();
+  private readonly glyphToCoordinates = new Map<string, GlyphCoordinates>();
 
   constructor(
       options: Partial<typeof DEFAULT_GLYPH_MAPPER_SETTINGS> =

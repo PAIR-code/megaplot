@@ -187,17 +187,17 @@ export class SceneInternal implements Renderer {
   /**
    * Time basis from which timestamps are computed.
    */
-  private basisTs: number;
+  private readonly basisTs: number;
 
   /**
    * Task id to uniquely specify a call to the draw command.
    */
-  private drawTaskId = Symbol('drawTask');
+  private readonly drawTaskId = Symbol('drawTask');
 
   /**
    * Task id to uniquely specify a call to update the data texture.
    */
-  private textureSyncTaskId = Symbol('textureSyncTask');
+  private readonly textureSyncTaskId = Symbol('textureSyncTask');
 
   /**
    * Array of UV values for the locations of instance swatches. These do not
@@ -215,7 +215,7 @@ export class SceneInternal implements Renderer {
    * Array of indices for the instances. Used when computing default z-order.
    * These do not change once initialized.
    */
-  private instanceIndexValues: Float32Array;
+  private readonly instanceIndexValues: Float32Array;
 
   /**
    * Buffer for instance indices.
@@ -407,23 +407,23 @@ export class SceneInternal implements Renderer {
   /**
    * Task id to uniquely identify the removal task.
    */
-  private runRemovalTaskId = Symbol('runRemovalTaskId');
+  private readonly runRemovalTaskId = Symbol('runRemovalTaskId');
 
   /**
    * Task id to uniquely identify task to assign waiting sprites to recovered
    * swatches from other removed sprites.
    */
-  private runAssignWaitingTaskId = Symbol('runAssignWaitingTask');
+  private readonly runAssignWaitingTaskId = Symbol('runAssignWaitingTask');
 
   /**
    * Task id to uniquely identify rebase tasks.
    */
-  private rebaseTaskId = Symbol('rebaseTask');
+  private readonly rebaseTaskId = Symbol('rebaseTask');
 
   /**
    * Task id to uniquely identify the runCallbacks task.
    */
-  private runCallbacksTaskId = Symbol('runCallbacksTask');
+  private readonly runCallbacksTaskId = Symbol('runCallbacksTask');
 
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.

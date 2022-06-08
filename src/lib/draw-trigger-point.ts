@@ -24,7 +24,7 @@ export class DrawTriggerPoint {
   private xValue = 0;
   private yValue = 0;
 
-  constructor(private coordinator: {queueDraw: () => void;}) {}
+  constructor(private readonly coordinator: {queueDraw: () => void;}) {}
 
   get x(): number {
     return this.xValue;

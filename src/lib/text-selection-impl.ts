@@ -52,13 +52,13 @@ interface TextGlyph<T> {
 }
 
 export class TextSelectionImpl<T> implements TextSelection<T> {
-  private selections: Selection<TextGlyph<T>>[] = [];
+  private readonly selections: Selection<TextGlyph<T>>[] = [];
 
   private boundData: T[] = [];
 
   // Unique objects to identify this instance's bind() and clear() tasks.
-  private bindingTaskId = Symbol('bindingTask');
-  private clearingTaskId = Symbol('clearingTask');
+  private readonly bindingTaskId = Symbol('bindingTask');
+  private readonly clearingTaskId = Symbol('clearingTask');
 
   // Binding or clearing task, if scheduled.
   private bindingTask?: WorkTaskWithId;
@@ -82,10 +82,10 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
    * Create a new selection in the associated Scene.
    */
   constructor(
-      private stepsBetweenChecks: number,
-      private renderer: Renderer,
-      private workScheduler: WorkScheduler,
-      private glyphMapper: GlyphMapper,
+      private readonly stepsBetweenChecks: number,
+      private readonly renderer: Renderer,
+      private readonly workScheduler: WorkScheduler,
+      private readonly glyphMapper: GlyphMapper,
   ) {}
 
   text(textCallback: (datum: T) => string) {

@@ -90,7 +90,7 @@ export class WorkScheduler {
    * browser default timing functions (setTimeout, etc.) but they're optionally
    * supplied in the constructor to facilitate fine-grained unit testing.
    */
-  private timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
+  private readonly timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
 
   /**
    * Timer for the animation frame (number returned by requestAnimationFrame).
@@ -131,7 +131,7 @@ export class WorkScheduler {
   /**
    * Queue of work tasks to complete.
    */
-  private presentWorkQueue = new WorkQueue();
+  private readonly presentWorkQueue = new WorkQueue();
 
   /**
    * Future queue of work tasks to add to the presentWorkQueue when work is not
@@ -139,7 +139,7 @@ export class WorkScheduler {
    * isPerformingWork is true. If isPerformingWork is false, then this array
    * should be empty, and new tasks should be pushed onto the presentWorkQueue.
    */
-  private futureWorkQueue = new WorkQueue();
+  private readonly futureWorkQueue = new WorkQueue();
 
   constructor(
       options: Partial<typeof DEFAULT_WORK_SCHEDULER_SETTINGS> =

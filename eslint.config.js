@@ -40,5 +40,6 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
+    '@typescript-eslint/prefer-readonly': ERROR,
   },
 };

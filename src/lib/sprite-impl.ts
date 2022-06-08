@@ -39,7 +39,7 @@ export class SpriteImpl {
   /**
    * Create a new Sprite in the associated Scene.
    */
-  constructor(private coordinator: CoordinatorAPI) {
+  constructor(private readonly coordinator: CoordinatorAPI) {
     this[InternalPropertiesSymbol] = new SpriteImplProperties();
   }
 

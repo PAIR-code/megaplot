@@ -71,8 +71,8 @@ export class SelectionImpl<T> implements Selection<T> {
   private hasWarned = false;
 
   // Unique objects to identify this instance's bind() and clear() tasks.
-  private bindingTaskId = Symbol('bindingTask');
-  private clearingTaskId = Symbol('clearingTask');
+  private readonly bindingTaskId = Symbol('bindingTask');
+  private readonly clearingTaskId = Symbol('clearingTask');
 
   // Binding or clearing task, if scheduled.
   private bindingTask?: WorkTaskWithId;
