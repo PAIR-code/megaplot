@@ -73,7 +73,7 @@ export class WorkQueue {
 
     // Sanity check.
     if (index === -1) {
-      throw new Error('Could not find matching task in task list.');
+      throw new Error('Could not find matching task in task list');
     }
 
     return this.taskList[index];
@@ -100,7 +100,7 @@ export class WorkQueue {
   dequeueTask(): WorkTaskWithId {
     const task = this.taskList.shift();
     if (!task) {
-      throw new Error('No tasks remain to dequeue.');
+      throw new Error('No tasks remain to dequeue');
     }
     this.idSet.delete(task.id);
     return task;
@@ -120,7 +120,7 @@ export class WorkQueue {
 
     // Sanity check.
     if (index === -1) {
-      throw new Error('Could not find matching task in task list.');
+      throw new Error('Could not find matching task in task list');
     }
 
     const [task] = this.taskList.splice(index, 1);
@@ -147,7 +147,7 @@ export class WorkQueue {
       if (this.taskList[i].id === id) {
         // Sanity check.
         if (index !== -1) {
-          throw new Error('Duplicate task found in task list.');
+          throw new Error('Duplicate task found in task list');
         }
         index = i;
       }

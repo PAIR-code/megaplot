@@ -81,7 +81,7 @@ function getSwatchRowExpandedRange(
 export function runTextureSync(coordinator: CoordinatorAPI) {
   // Short-circuit of there are no dirty indices to update.
   if (!coordinator.needsTextureSyncIndexRange.isDefined) {
-    throw new InternalError('No sprites are in need of texture sync.');
+    throw new InternalError('No sprites are in need of texture sync');
   }
 
   const {swatchesPerRow, textureWidth, valuesPerRow} =
@@ -143,7 +143,7 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
       // doing so would destroy the information that the rebase command needs
       // to determine the intermediate attribute values and deltas.
       throw new InternalError(
-          'Sprite is in the wrong lifecycle phase for sync.');
+          'Sprite is in the wrong lifecycle phase for sync');
     }
 
     if (properties.lifecyclePhase !== LifecyclePhase.NeedsTextureSync) {
@@ -157,7 +157,7 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
       // lifecycle phase ought to have been allocated a swatch and thus a
       // SpriteView to update it.
       throw new InternalError(
-          'Sprite queued for texture sync lacks a SpriteView.');
+          'Sprite queued for texture sync lacks a SpriteView');
     }
 
     if (properties.hasCallback) {

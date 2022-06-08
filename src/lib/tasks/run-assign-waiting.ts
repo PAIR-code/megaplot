@@ -71,14 +71,14 @@ export function runAssignWaiting(
     // This indicates an error condition in which there was an assign task
     // queued but before it could run the removed index ranges were somehow
     // used up.
-    throw new InternalError('No removed indices available to assign.');
+    throw new InternalError('No removed indices available to assign');
   }
 
   if (!waitingSprites.length) {
     // This indicates an error condition in which there is additional capacity
     // to dequeue waiting sprites, but somehow there are no waiting sprites to
     // dequeue.
-    throw new InternalError('No waiting sprites to assign.');
+    throw new InternalError('No waiting sprites to assign');
   }
 
   // Inside the while loop, we'll be iterating through both the removed index

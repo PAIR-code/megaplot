@@ -452,7 +452,7 @@ export class SceneInternal implements Renderer {
                            REGL.Regl || REGL;
 
     if (!createREGL) {
-      throw new Error('Could not find REGL.');
+      throw new Error('Could not find REGL');
     }
 
     const regl = this.regl = createREGL({
@@ -470,7 +470,7 @@ export class SceneInternal implements Renderer {
               !previousChildren.has(child);
         });
     if (!insertedChildren.length) {
-      throw new Error('Container is missing an inserted canvas.');
+      throw new Error('Container is missing an inserted canvas');
     }
     this.canvas = insertedChildren[0] as HTMLCanvasElement;
 
@@ -806,7 +806,7 @@ export class SceneInternal implements Renderer {
 
     // This signals a state maintenance bug. Somehow the removed index range
     // expanded to cover a range in which there are no removed sprites.
-    throw new Error('No removed sprites found in removed index range.');
+    throw new Error('No removed sprites found in removed index range');
   }
 
   createSprite(): Sprite {

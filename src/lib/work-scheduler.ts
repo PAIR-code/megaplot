@@ -206,7 +206,7 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentTask && futureTask) {
-      throw new Error('Found two matching tasks when at most one is allowed.');
+      throw new Error('Found two matching tasks when at most one is allowed');
     }
 
     return presentTask || futureTask || undefined;
@@ -226,7 +226,7 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentRemovedTask && futureRemovedTask) {
-      throw new Error('Found two matching tasks when at most one is allowed.');
+      throw new Error('Found two matching tasks when at most one is allowed');
     }
 
     // Make sure timers are set.
@@ -344,7 +344,7 @@ export class WorkScheduler {
   private performWork() {
     if (this.isPerformingWork) {
       throw new Error(
-          'Only one invocation of performWork is allowed at a time.');
+          'Only one invocation of performWork is allowed at a time');
     }
 
     this.isPerformingWork = true;
@@ -422,7 +422,7 @@ export class WorkScheduler {
   private performAnimationFrameWork() {
     if (this.isPerformingAnimationFrameWork) {
       throw new Error(
-          'Only one invocation of performAnimationFrameWork at a time.');
+          'Only one invocation of performAnimationFrameWork at a time');
     }
 
     this.isPerformingAnimationFrameWork = true;
@@ -439,7 +439,7 @@ export class WorkScheduler {
    */
   private performTimeoutWork() {
     if (this.isPerformingTimoutWork) {
-      throw new Error('Only one invocation of performTimoutWork at a time.');
+      throw new Error('Only one invocation of performTimoutWork at a time');
     }
 
     this.isPerformingTimoutWork = true;

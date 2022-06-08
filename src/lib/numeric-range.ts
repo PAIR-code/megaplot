@@ -79,7 +79,7 @@ export class NumericRange {
     }
 
     if (highValue < lowValue) {
-      throw new Error('High bound must be greater than or equal to low bound.');
+      throw new Error('High bound must be greater than or equal to low bound');
     }
 
     if (!this.isDefined) {

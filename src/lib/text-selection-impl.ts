@@ -407,6 +407,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
     // Determine sprites that could be hit,
     hitTestParameters;
-    throw new Error('Not yet implemented.');
+    throw new Error('Not yet implemented');
   }
 }

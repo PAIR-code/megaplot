@@ -177,7 +177,7 @@ export class AttributeMapper {
 
     if (!isFinite(settings.maxTextureSize) &&
         !isFinite(settings.desiredSwatchCapacity)) {
-      throw new Error('Cannot map attributes to texture of infinite size.');
+      throw new Error('Cannot map attributes to texture of infinite size');
     }
 
     this.dataChannelCount = settings.dataChannelCount;

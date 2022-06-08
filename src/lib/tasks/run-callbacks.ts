@@ -69,7 +69,7 @@ export function runCallbacks(
 ) {
   if (!coordinator.callbacksIndexRange.isDefined) {
     // This indicates a timing error in the code.
-    throw new InternalError('Running callbacks requires a range of indices.');
+    throw new InternalError('Running callbacks requires a range of indices');
   }
 
   // Make note of the exit index range for looping purposes.
@@ -98,12 +98,12 @@ export function runCallbacks(
   // invoked. Defined here so that its available in both try and catch.
   const afterCallback = () => {
     if (!properties) {
-      throw new InternalError('Attempted to re-run afterCallback steps.');
+      throw new InternalError('Attempted to re-run afterCallback steps');
     }
 
     const {spriteView, index} = properties;
     if (!spriteView || index === undefined) {
-      throw new InternalError('Sprite missing required properties.');
+      throw new InternalError('Sprite missing required properties');
     }
 
     // Append the current time to the arrival time value.
@@ -200,7 +200,7 @@ export function runCallbacks(
         // callbacks. This should not be possible under normal operations
         // and indicates a bug in the phase transition logic.
         throw new InternalError(
-            'Sprite in HasCallback state missing callbacks.');
+            'Sprite in HasCallback state missing callbacks');
       }
 
       // Poke the defaultTransitionTimeMs into the spriteView arrival time.

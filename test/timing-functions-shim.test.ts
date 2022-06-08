@@ -174,7 +174,7 @@ describe('TimingFunctionsShim', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
       const {requestAnimationFrame} = timingFunctionsShim;
 
-      const EXPECTED_ERROR = new Error('Always fails.');
+      const EXPECTED_ERROR = new Error('Always fails');
       const errorCallback = () => {
         throw EXPECTED_ERROR;
       };
@@ -420,7 +420,7 @@ describe('TimingFunctionsShim', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
       const {setTimeout} = timingFunctionsShim;
 
-      const EXPECTED_ERROR = new Error('Always fails.');
+      const EXPECTED_ERROR = new Error('Always fails');
       const errorCallback = () => {
         throw EXPECTED_ERROR;
       };

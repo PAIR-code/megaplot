@@ -55,7 +55,7 @@ export function runRebase(
 ) {
   // Sanity check: nothing to do if there's nothing in the rebase queue.
   if (!coordinator.needsRebaseIndexRange.isDefined) {
-    throw new InternalError('No sprites are queued for rebase.');
+    throw new InternalError('No sprites are queued for rebase');
   }
 
   // For each queued sprite to rebase, copy its UV values into the
@@ -86,7 +86,7 @@ export function runRebase(
   if (!coordinator.rebaseCount) {
     // This signals that while the rebase index range was defined, none of the
     // sprites in that range were actually due for rebase.
-    throw new InternalError('No sprites were found to need rebase.');
+    throw new InternalError('No sprites were found to need rebase');
   }
 
   // Queue a texture sync, since that's always the next lifecycle phase for

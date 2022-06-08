@@ -81,7 +81,7 @@ export class TinySDF {
     const ctx = this.canvas.getContext('2d');
 
     if (!ctx) {
-      throw new Error('Could not get canvas 2d context.');
+      throw new Error('Could not get canvas 2d context');
     }
 
     this.ctx = ctx;
@@ -262,7 +262,7 @@ export function canvasToSDFData(
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
-    throw new Error('Could not get canvas 2d context.');
+    throw new Error('Could not get canvas 2d context');
   }
 
   const imgData = ctx.getImageData(0, 0, width, height);

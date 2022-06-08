@@ -120,7 +120,7 @@ export function isWorkTaskOrFunction(workTaskOrFunction: WorkTask|
 export function getWorkTaskId(workTaskOrFunction: WorkTask|
                               WorkTaskCallbackFn): WorkTaskId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-    throw new Error('Provided object was not a work task or function.');
+    throw new Error('Provided object was not a work task or function');
   }
 
   // The id of a naked Function is just the function itself.
@@ -150,7 +150,7 @@ export function getWorkTaskId(workTaskOrFunction: WorkTask|
 export function ensureOrCreateWorkTask(workTaskOrFunction: WorkTask|
                                        WorkTaskCallbackFn): WorkTaskWithId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-    throw new Error('Provided object was not a work task or function.');
+    throw new Error('Provided object was not a work task or function');
   }
 
   // Wrap naked function in an object with the minimum required properties.

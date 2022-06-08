@@ -64,7 +64,7 @@ export function runRemoval(
     // This signals an error in lifecycle phase change logic of the coordinator.
     // This method should not be invoke until there are sprites slated for
     // removal.
-    throw new InternalError('No sprites are queued for removal.');
+    throw new InternalError('No sprites are queued for removal');
   }
 
   const currentTimeMs = coordinator.elapsedTimeMs();
@@ -112,7 +112,7 @@ export function runRemoval(
       }
 
       if (!properties.spriteView || properties.index === undefined) {
-        throw new InternalError('Sprite missing required properties.')
+        throw new InternalError('Sprite missing required properties')
       }
 
       // If the sprite's time has not yet finished, then add it back to the
@@ -154,7 +154,7 @@ export function runRemoval(
             // ought to have been allocated a swatch and thus a SpriteView for
             // interacting with it.
             // eslint-disable-next-line no-unsafe-finally
-            throw new InternalError('Sprite lacks a SpriteView.');
+            throw new InternalError('Sprite lacks a SpriteView');
           }
           coordinator.toBeRemovedTsRange.expandToInclude(
               properties.spriteView.TransitionTimeMs);

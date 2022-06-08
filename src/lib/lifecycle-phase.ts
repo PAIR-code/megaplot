@@ -154,6 +154,6 @@ export function checkLifecyclePhaseTransition(
     toPhase: LifecyclePhase,
 ) {
   if (!(transitionToFlag(fromPhase, toPhase) & ALLOWED_TRANSITION_MASK)) {
-    throw new Error('Illegal sprite lifecycle phase transition.');
+    throw new Error('Illegal sprite lifecycle phase transition');
   }
 }

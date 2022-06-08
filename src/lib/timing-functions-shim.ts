@@ -186,15 +186,14 @@ export class TimingFunctionsShim implements TimingFunctions {
       // Emulate the error produced by upstream requestAnimationFrame().
       throw new TypeError(
           'Failed to execute \'requestAnimationFrame\' on \'Window\': ' +
-          'The callback provided as parameter 1 is not a function.');
+          'The callback provided as parameter 1 is not a function');
     }
 
     const id = this.nextAnimationFrameId;
 
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError(
-          'Animation frame ids must be odd, positive integers.');
+      throw new TypeError('Animation frame ids must be odd, positive integers');
     }
 
     this.nextAnimationFrameId += 2;
@@ -210,8 +209,7 @@ export class TimingFunctionsShim implements TimingFunctions {
   cancelAnimationFrame(id: number): void {
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError(
-          'Animation frame ids must be odd, positive integers.');
+      throw new TypeError('Animation frame ids must be odd, positive integers');
     }
 
     for (let i = this.animationFrameCallbackQueue.length - 1; i >= 0; i--) {
@@ -231,14 +229,14 @@ export class TimingFunctionsShim implements TimingFunctions {
       // testing, we'll check it anyway.
       throw new TypeError(
           'Failed to execute \'setTimeout\': ' +
-          'The callback provided as parameter 1 is not a function.');
+          'The callback provided as parameter 1 is not a function');
     }
 
     const id = this.nextTimeoutId;
 
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers.');
+      throw new TypeError('Timeout ids must be even, positive integers');
     }
 
     this.nextTimeoutId += 2;
@@ -254,7 +252,7 @@ export class TimingFunctionsShim implements TimingFunctions {
   clearTimeout(id: number): void {
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers.');
+      throw new TypeError('Timeout ids must be even, positive integers');
     }
 
     for (let i = this.timeoutCallbackQueue.length - 1; i >= 0; i--) {
@@ -295,7 +293,7 @@ export class TimingFunctionsShim implements TimingFunctions {
         if (!item) {
           // Indicates a bug in Megaplot. Each item in the callback queue should
           // be an object with an id and a callback function to invoke.
-          throw new Error('Falsey value found in callback queue.');
+          throw new Error('Falsey value found in callback queue');
         }
 
         item.callback.call(null, currentTimestamp);
@@ -340,7 +338,7 @@ export class TimingFunctionsShim implements TimingFunctions {
         if (!timeoutCallback) {
           // Indicates a bug in Megaplot. Each item in the callback queue should
           // be an object with an id and a callback function to invoke.
-          throw new Error('Falsey value found in callback queue.');
+          throw new Error('Falsey value found in callback queue');
         }
 
         if (this.now() < timeoutCallback.thresholdTimeMs) {

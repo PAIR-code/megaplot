@@ -158,7 +158,7 @@ export class SelectionImpl<T> implements Selection<T> {
     // If a previous call to bind() has been scheduled but not started, it
     // probably indicates a bug in the API user's code.
     if (!this.hasWarned && this.bindingState === BindingState.Scheduled) {
-      console.warn('Possibly conflicting .bind() invocations detected.');
+      console.warn('Possibly conflicting .bind() invocations detected');
       this.hasWarned = true;
     }
 
