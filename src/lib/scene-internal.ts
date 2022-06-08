@@ -921,7 +921,7 @@ export class SceneInternal implements Renderer {
     if (!this.workScheduler.isScheduledId(taskId)) {
       this.workScheduler.scheduleTask({
         id: taskId,
-        callback: runMethod.bind(this),
+        callback: runMethod,
         beginImmediately,
       });
     }
@@ -933,50 +933,34 @@ export class SceneInternal implements Renderer {
 
   /**
    * This method schedules runAssignWaiting to be invoked if it isn't already.
+   * It uses available swatch capacity to take waiting sprites out of the queue.
    */
   queueAssignWaiting() {
-    this.queueTask(this.runAssignWaitingTaskId, this.runAssignWaiting);
-  }
-
-  /**
-   * Use available swatch capacity to take waiting sprites out of the queue.
-   */
-  runAssignWaiting(remaining: RemainingTimeFn) {
-    return runAssignWaiting(
-        this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runAssignWaitingTaskId, runMethod);
   }
 
   /**
    * This method schedules runCallbacks to be invoked if it isn't already.
    */
   queueRunCallbacks() {
-    this.queueTask(this.runCallbacksTaskId, this.runCallbacks);
-  }
-
-  /**
-   * Method to run callbacks for sprites that have them. This should be invoked
-   * by the WorkScheduler.
-   */
-  runCallbacks(remaining: RemainingTimeFn) {
-    return runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runCallbacksTaskId, runMethod);
   }
 
   /**
    * This method schedules a task to remove sprites that have been marked for
-   * removal.
-   */
-  queueRemovalTask() {
-    this.queueTask(this.runRemovalTaskId, this.runRemoval);
-  }
-
-  /**
-   * This batch task looks for sprites that have been marked for removal and
+   * removal. The task looks for sprites that have been marked for removal and
    * whose arrival times have passed. Those sprites need to have their values
    * flashed to zero and to be marked for texture sync. That way, the swatch
    * that the sprite used to command can be reused for another sprite later.
    */
-  runRemoval(remaining: RemainingTimeFn) {
-    return runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+  queueRemovalTask() {
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runRemovalTaskId, runMethod);
   }
 
   queueTextureSync() {

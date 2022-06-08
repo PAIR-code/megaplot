@@ -64,7 +64,8 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   private bindingTask?: WorkTaskWithId;
   private clearingTask?: WorkTaskWithId;
 
-  private textCallback?: ((datum: T) => string) = ((datum: T) => `${datum}`);
+  private textCallback?:
+      ((datum: T) => string) = ((datum: T) => `${datum as unknown as string}`);
 
   private bindCallback?: SelectionCallback<T>;
   private initCallback?: SelectionCallback<T>;
@@ -128,9 +129,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   }
 
   private datumToGlyphs(datum: T): Array<TextGlyph<T>> {
-    const text =
-        (this.textCallback ? this.textCallback.call(datum, datum) : `${datum}`)
-            .trim();
+    const text = (this.textCallback ? this.textCallback.call(datum, datum) :
+                                      `${datum as unknown as string}`)
+                     .trim();
 
     const align = (this.alignCallback && this.alignCallback(datum)) ||
         DEFAULT_ALIGN_VALUE;

@@ -85,8 +85,7 @@ export class TinySDF {
     }
 
     this.ctx = ctx;
-    this.ctx.font =
-        this.fontWeight + ' ' + this.fontSize + 'px ' + this.fontFamily;
+    this.ctx.font = `${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
     this.ctx.textBaseline = 'middle';
     this.ctx.fillStyle = 'black';
 

@@ -19,9 +19,11 @@
  */
 
 /**
- * Template tag to mark GLSL code fragments.
+ * Template tag to mark GLSL code fragments, for syntax highlighting in editors
+ * which that it.
  */
-export function glsl(strs: TemplateStringsArray, ...args: unknown[]) {
+export function glsl(
+    strs: TemplateStringsArray, ...args: Array<string|number>) {
   const interleaved: string[] = [];
   for (let i = 0; i < args.length; i++) {
     interleaved.push(strs[i], `${args[i]}`);

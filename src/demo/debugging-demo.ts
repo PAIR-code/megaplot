@@ -59,7 +59,7 @@ document.body.style.background = `
 const TEXT_BORDER = d3.color('black') as d3.RGBColor;
 const TEXT_FILL = d3.color('white') as d3.RGBColor;
 
-async function main() {
+function main() {
   // Locate the container element.
   const container = d3.select('body').node() as HTMLElement;
 
@@ -256,7 +256,7 @@ async function main() {
   d3.select(scene.canvas)
       .call(zoom)
       .call(
-          zoom.transform,
+          zoom.transform.bind(zoom),
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
@@ -282,6 +282,4 @@ async function main() {
   });
 }
 
-main().catch(err => {
-  throw err;
-});
+main();

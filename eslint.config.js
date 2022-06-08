@@ -40,10 +40,5 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
-    '@typescript-eslint/no-unsafe-return' :OFF,
-    '@typescript-eslint/require-await' :OFF,
-    '@typescript-eslint/restrict-plus-operands' :OFF,
-    '@typescript-eslint/restrict-template-expressions' :OFF,
-    '@typescript-eslint/unbound-method' :OFF,
   },
 };

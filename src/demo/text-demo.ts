@@ -48,7 +48,7 @@ document.body.style.background = `
       <path fill="none" stroke="blue" stroke-opacity="0.2" stroke-width="0.5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
 
-async function main() {
+function main() {
   // Locate the container element.
   const container = d3.select('body').node() as HTMLElement;
 
@@ -252,11 +252,9 @@ async function main() {
   d3.select(scene.canvas)
       .call(zoom)
       .call(
-          zoom.transform,
+          zoom.transform.bind(zoom),
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 }
 
-main().catch(err => {
-  throw err;
-});
+main();
