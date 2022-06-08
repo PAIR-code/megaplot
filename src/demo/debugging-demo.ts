@@ -136,9 +136,8 @@ async function main() {
     settings.total = count * count;
 
     // Setup a rainbow color scale.
-    const colorScale = d3.scaleLinear().domain(
+    const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
-    (colorScale as any).range(colors);
 
     selection.onInit(s => {
       s.BorderColorOpacity = 0;

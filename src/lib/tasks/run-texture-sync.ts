@@ -199,17 +199,14 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
     coordinator.queueRemovalTask();
   }
 
-  // By definition, we've updated all sprites that surround the low and high
-  // dirty indices.
   coordinator.needsTextureSyncIndexRange.clear();
 
-  // TODO(jimbo): 'subimage' seems to be missing from REGL texture type.
   const subimageData = {
     data: dataView,
     width: textureWidth,
     height: rowHeight,
   };
-  (coordinator.targetValuesTexture as any).subimage(subimageData, 0, lowRow);
+  coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
 
   return true;
 }
