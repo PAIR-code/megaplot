@@ -19,6 +19,7 @@
  * manage ordered lists of work tasks.
  */
 
+import {InternalError} from './internal-error';
 import {ensureOrCreateWorkTask, getWorkTaskId, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
 
 /**
@@ -73,7 +74,7 @@ export class WorkQueue {
 
     // Sanity check.
     if (index === -1) {
-      throw new Error('Could not find matching task in task list');
+      throw new InternalError('Could not find matching task in task list');
     }
 
     return this.taskList[index];
@@ -120,7 +121,7 @@ export class WorkQueue {
 
     // Sanity check.
     if (index === -1) {
-      throw new Error('Could not find matching task in task list');
+      throw new InternalError('Could not find matching task in task list');
     }
 
     const [task] = this.taskList.splice(index, 1);
@@ -147,7 +148,7 @@ export class WorkQueue {
       if (this.taskList[i].id === id) {
         // Sanity check.
         if (index !== -1) {
-          throw new Error('Duplicate task found in task list');
+          throw new InternalError('Duplicate task found in task list');
         }
         index = i;
       }

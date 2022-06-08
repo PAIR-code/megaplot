@@ -35,6 +35,7 @@
  */
 
 import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
+import {InternalError} from './internal-error';
 import {WorkQueue} from './work-queue';
 import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
 
@@ -206,7 +207,8 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentTask && futureTask) {
-      throw new Error('Found two matching tasks when at most one is allowed');
+      throw new InternalError(
+          'Found two matching tasks when at most one is allowed');
     }
 
     return presentTask || futureTask || undefined;
@@ -226,7 +228,8 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentRemovedTask && futureRemovedTask) {
-      throw new Error('Found two matching tasks when at most one is allowed');
+      throw new InternalError(
+          'Found two matching tasks when at most one is allowed');
     }
 
     // Make sure timers are set.

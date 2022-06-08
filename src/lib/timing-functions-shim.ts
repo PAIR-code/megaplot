@@ -22,6 +22,7 @@
  */
 
 import {CallbackFunctionType, TimingFunctions} from './default-timing-functions';
+import {InternalError} from './internal-error';
 
 /**
  * Object for storing information about an animation frame callback.
@@ -291,9 +292,7 @@ export class TimingFunctionsShim implements TimingFunctions {
         const item = presentCallbackQueue.shift();
 
         if (!item) {
-          // Indicates a bug in Megaplot. Each item in the callback queue should
-          // be an object with an id and a callback function to invoke.
-          throw new Error('Falsey value found in callback queue');
+          throw new InternalError('Falsey value found in callback queue');
         }
 
         item.callback.call(null, currentTimestamp);
@@ -336,9 +335,7 @@ export class TimingFunctionsShim implements TimingFunctions {
         const timeoutCallback = presentCallbackQueue.shift();
 
         if (!timeoutCallback) {
-          // Indicates a bug in Megaplot. Each item in the callback queue should
-          // be an object with an id and a callback function to invoke.
-          throw new Error('Falsey value found in callback queue');
+          throw new InternalError('Falsey value found in callback queue');
         }
 
         if (this.now() < timeoutCallback.thresholdTimeMs) {

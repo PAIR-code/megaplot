@@ -806,7 +806,7 @@ export class SceneInternal implements Renderer {
 
     // This signals a state maintenance bug. Somehow the removed index range
     // expanded to cover a range in which there are no removed sprites.
-    throw new Error('No removed sprites found in removed index range');
+    throw new InternalError('No removed sprites found in removed index range');
   }
 
   createSprite(): Sprite {
@@ -842,7 +842,7 @@ export class SceneInternal implements Renderer {
       // This error indicates a bug in the logic handling Created (waiting)
       // sprites. Only Sprites which have never been assigned indices should be
       // considered for assignment.
-      throw new Error(
+      throw new InternalError(
           'Only sprites in the Created phase can be assigned indices');
     }
 
@@ -877,7 +877,7 @@ export class SceneInternal implements Renderer {
    */
   removeSprite(sprite: SpriteImpl) {
     if (sprite.isRemoved) {
-      throw new Error('Sprite can be removed only once');
+      throw new InternalError('Sprite can be removed only once');
     }
 
     const properties = sprite[InternalPropertiesSymbol];
