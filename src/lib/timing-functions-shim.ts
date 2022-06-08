@@ -138,45 +138,39 @@ export class TimingFunctionsShim implements TimingFunctions {
    * (usually window, or null/undefined in strict mode).
    */
   constructor() {
-    const self = this;
-    const prototype = Object.getPrototypeOf(this);
-
-    function requestAnimationFrame(
-        this: unknown, callback: CallbackFunctionType): number {
+    const boundRequestAnimationFrame = this.requestAnimationFrame.bind(this);
+    this.requestAnimationFrame = function requestAnimationFrame(
+        this: unknown, callback: FrameRequestCallback): number {
       checkThis(this);
-      return prototype.requestAnimationFrame.call(self, callback);
-    }
+      return boundRequestAnimationFrame(callback);
+    };
 
-    function cancelAnimationFrame(this: unknown, id: number): void {
+    const boundCancelAnimationFrame = this.cancelAnimationFrame.bind(this);
+    this.cancelAnimationFrame = function cancelAnimationFrame(
+        this: unknown, id: number): void {
       checkThis(this);
-      return prototype.cancelAnimationFrame.call(self, id);
-    }
+      return boundCancelAnimationFrame(id);
+    };
 
-    function setTimeout(
+    const boundSetTimeout = this.setTimeout.bind(this);
+    this.setTimeout = function setTimeout(
         this: unknown, callback: CallbackFunctionType, delay: number,
         ...args: unknown[]): number {
       checkThis(this);
-      return prototype.setTimeout.apply(self, [callback, delay, ...args]);
-    }
+      return boundSetTimeout(callback, delay, ...args);
+    };
 
-    function clearTimeout(this: unknown, id: number): void {
+    const boundClearTimeout = this.clearTimeout.bind(this);
+    this.clearTimeout = function clearTimeout(this: unknown, id: number): void {
       checkThis(this);
-      return prototype.clearTimeout.call(self, id);
-    }
+      return boundClearTimeout(id);
+    };
 
     /**
      * Date.now() does not seem to care whether the 'this' object provided is in
      * fact the Date global.
      */
-    const now = this.now.bind(this);
-
-    Object.assign(this, {
-      requestAnimationFrame,
-      cancelAnimationFrame,
-      setTimeout,
-      clearTimeout,
-      now,
-    });
+    this.now = this.now.bind(this);
   }
 
   /**

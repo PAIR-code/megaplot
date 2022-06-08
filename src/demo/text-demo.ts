@@ -241,7 +241,8 @@ async function main() {
   const zoom = d3.zoom<HTMLCanvasElement, unknown>()
                    .scaleExtent([1, 200000])
                    .on('zoom', (event) => {
-                     const {x, y, k} = event.transform;
+                     const {x, y, k} =
+                         event.transform as Record<string, number>;
                      scene.scale.x = k;
                      scene.scale.y = k;
                      scene.offset.x = x;
