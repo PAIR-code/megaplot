@@ -24,6 +24,7 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene} from '../index';
+import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
 
@@ -137,10 +138,12 @@ async function main() {
       }
 
       // Add this label to the appropriate group.
-      if (!facets.has(facetKey)) {
-        facets.set(facetKey, []);
+      let facetLabels = facets.get(facetKey);
+      if (!facetLabels) {
+        facetLabels = [];
+        facets.set(facetKey, facetLabels);
       }
-      facets.get(facetKey)!.push(label);
+      facetLabels.push(label);
     }
 
     // Place labels into columns for display.
@@ -148,7 +151,12 @@ async function main() {
     const facetKeys = [...facets.keys()].sort((a, b) => a.localeCompare(b));
     for (const facetKey of facetKeys) {
       // For each facetKey, collect the labels and sort them.
-      const facetLabels = facets.get(facetKey)!;
+      const facetLabels = facets.get(facetKey);
+
+      if (!facetLabels) {
+        throw new InternalError('Could not find labels for facet key');
+      }
+
       facetLabels.sort(
           (a, b) => a.text.localeCompare(b.text) *
               (settings.sort === 'ascending' ? 1 : -1));

@@ -28,6 +28,7 @@ import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
 import {HitTestParameters} from './hit-test-types';
+import {InternalError} from './internal-error';
 import {LifecyclePhase} from './lifecycle-phase';
 import {NumericRange} from './numeric-range';
 import {ReglContext} from './regl-types';
@@ -391,7 +392,7 @@ export class SceneInternal implements Renderer {
   /**
    * Regl command to capture the current value and velocity of attributes.
    */
-  rebaseCommand?: REGL.DrawCommand;
+  readonly rebaseCommand: REGL.DrawCommand;
 
   /**
    * Regl command to render the current world to the viewable canvas.
@@ -447,7 +448,7 @@ export class SceneInternal implements Renderer {
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
     const win = window as unknown as {[key: string]: unknown};
-    const createREGL = win['createREGL']! as (...args: unknown[]) =>
+    const createREGL = win['createREGL'] as (...args: unknown[]) =>
                            REGL.Regl || REGL;
 
     if (!createREGL) {
@@ -821,7 +822,12 @@ export class SceneInternal implements Renderer {
     } else {
       // Since there's available capacity, assign this sprite to the next
       // available index.
-      this.assignSpriteToIndex(sprite, this.getNextIndex()!);
+      const nextIndex = this.getNextIndex();
+      if (nextIndex === undefined) {
+        throw new InternalError(
+            'Next index undefined despite available capacity');
+      }
+      this.assignSpriteToIndex(sprite, nextIndex);
     }
 
     return sprite;
@@ -871,7 +877,7 @@ export class SceneInternal implements Renderer {
    */
   removeSprite(sprite: SpriteImpl) {
     if (sprite.isRemoved) {
-      throw new Error('Sprite can be removed only once.');
+      throw new Error('Sprite can be removed only once');
     }
 
     const properties = sprite[InternalPropertiesSymbol];
@@ -880,13 +886,28 @@ export class SceneInternal implements Renderer {
       // In the case where the removed sprite happens to be the one at the end
       // of the list, decrement the instance count to compensate. In any other
       // case, the degenerate sprite will be left alone, having had zeros
-      // flashed to its swatches.
+      // flashed to its swatch values.
       this.instanceCount--;
     }
 
     properties.lifecyclePhase = LifecyclePhase.Removed;
-    properties.spriteView![DataViewSymbol] = undefined!;
-    this.removedIndexRange.expandToInclude(properties.index!);
+
+    if (properties.spriteView) {
+      // SpriteView instances are passed to user-land callbacks with the
+      // expectation that those instances are not kept outside of the scope of
+      // the callback function. But it is not possible to force the user to
+      // abide this expectation. The user could keep a reference to the
+      // SpriteView by setting a variable whose scope is outside the callback.
+      // So here, we forcibly dissociate the SpriteView with its underlying
+      // swatch. That way, if, for any reason, the SpriteView is used later, it
+      // will throw.
+      properties.spriteView[DataViewSymbol] =
+          undefined as unknown as Float32Array;
+    }
+
+    if (properties.index !== undefined) {
+      this.removedIndexRange.expandToInclude(properties.index);
+    }
   }
 
   /**

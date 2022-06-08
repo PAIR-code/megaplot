@@ -40,7 +40,6 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
-    '@typescript-eslint/no-non-null-assertion' :OFF,
     '@typescript-eslint/no-this-alias' :OFF,
     '@typescript-eslint/no-unsafe-assignment' :OFF,
     '@typescript-eslint/no-unsafe-call' :OFF,

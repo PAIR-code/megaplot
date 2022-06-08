@@ -19,6 +19,7 @@
  */
 import REGL from 'regl';
 
+import {InternalError} from '../internal-error';
 import {LifecyclePhase} from '../lifecycle-phase';
 import {NumericRange} from '../numeric-range';
 import {SpriteImpl} from '../sprite-impl';
@@ -38,7 +39,7 @@ interface CoordinatorAPI {
   previousValuesFramebuffer: REGL.Framebuffer2D;
   previousValuesTexture: REGL.Texture2D;
   queueTextureSync: () => void;
-  rebaseCommand?: () => void;
+  rebaseCommand: () => void;
   rebaseCount: number;
   sprites: SpriteImpl[];
 }
@@ -54,7 +55,7 @@ export function runRebase(
 ) {
   // Sanity check: nothing to do if there's nothing in the rebase queue.
   if (!coordinator.needsRebaseIndexRange.isDefined) {
-    throw new Error('No sprites are queued for rebase.');
+    throw new InternalError('No sprites are queued for rebase.');
   }
 
   // For each queued sprite to rebase, copy its UV values into the
@@ -85,7 +86,7 @@ export function runRebase(
   if (!coordinator.rebaseCount) {
     // This signals that while the rebase index range was defined, none of the
     // sprites in that range were actually due for rebase.
-    throw new Error('No sprites were found to need rebase.');
+    throw new InternalError('No sprites were found to need rebase.');
   }
 
   // Queue a texture sync, since that's always the next lifecycle phase for
@@ -99,7 +100,7 @@ export function runRebase(
 
   // Render using the rebase shader. This should leave intact any swatches
   // for sprites that are not being rebased.
-  coordinator.rebaseCommand!();
+  coordinator.rebaseCommand();
 
   // Flash values back to 'input' previous texture.
   coordinator.previousValuesFramebuffer.use(

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ if (!fs.existsSync(outputDir)) {
 
 const LICENSE = `/**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ const LICENSE = `/**
  * limitations under the License.
  */`;
 
+const AS_NUM = ' as unknown as number';
+
 /**
  * For an attribute that has components, generate the compound type for
  * destructuring assignment in setters. For example, the SizeWorld attribute
@@ -68,7 +70,7 @@ const LICENSE = `/**
  */
 function generateSetterType(attribute: SpriteAttribute) {
   if (!attribute.components) {
-    throw new TypeError('Attribute must have components for compound setter.');
+    throw new TypeError('Attribute must have components for compound setter');
   }
 
   const componentTypes = attribute.components.map((component) => {
@@ -160,7 +162,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set ${attributeComponentName}(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('${attributeComponentName} cannot be NaN.');
+      throw new RangeError('${attributeComponentName} cannot be NaN');
     }
     this[DataViewSymbol][${i}] = attributeValue;
   }`);
@@ -180,22 +182,22 @@ export class SpriteViewImpl implements SpriteView {
 
     const setComponentsByIndex = codeFormat(components.map(({component, i}) => `
       if ('${i}' in value) {
-        this.${attributeName}${component} = value[${i}]!;
+        this.${attributeName}${component} = value[${i}]${AS_NUM};
         anyComponentSet = true;
       }`));
 
     const setComponentsByName =
         codeFormat(components.map(({component, lower}) => `
       if ('${lower}' in value) {
-        this.${attributeName}${component} = value['${lower}']!;
+        this.${attributeName}${component} = value['${lower}']${AS_NUM};
         anyComponentSet = true;
       }`));
 
     const broadcastClause = codeFormat(components.map(({component}) => `
     this.${attributeName}${component} = value;`));
 
-    const typeErrorClause =
-        `throw new TypeError('Argument must be an array or object.');`;
+    const typeErrorClause = `throw new TypeError('${
+        attributeName} setter argument must be an array or object');`;
 
     const broadcastOrTypeError =
         attribute.isBroadcastable ? broadcastClause : typeErrorClause;
@@ -207,7 +209,7 @@ export class SpriteViewImpl implements SpriteView {
       ${setComponentsByIndex}
       if (!anyComponentSet) {
         throw new TypeError(
-            'No ${attributeName} component index values were found.');
+            'No ${attributeName} component index values were found');
       }
       return;
     }
@@ -217,7 +219,7 @@ export class SpriteViewImpl implements SpriteView {
       ${setComponentsByName}
       if (!anyComponentSet) {
         throw new TypeError(
-            'No ${attributeName} component key values were found.');
+            'No ${attributeName} component key values were found');
       }
       return;
     }

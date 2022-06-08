@@ -163,14 +163,15 @@ export class GlyphMapper {
    * glyph's coordinates.
    */
   addGlyph(glyph: string): GlyphCoordinates {
-    if (this.hasGlyph(glyph)) {
-      return this.getGlyph(glyph)!;
+    const existingCoordinates = this.getGlyph(glyph);
+    if (existingCoordinates) {
+      return existingCoordinates;
     }
 
     const index = this.glyphToCoordinates.size;
 
     if (index >= this.glyphCapacity) {
-      throw new Error('Cannot add glyph, already at capacity.');
+      throw new Error('Cannot add glyph, already at capacity');
     }
 
     const row = Math.floor(index / this.glyphsPerRow);

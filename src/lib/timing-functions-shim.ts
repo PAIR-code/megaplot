@@ -290,7 +290,15 @@ export class TimingFunctionsShim implements TimingFunctions {
     try {
       // Dequeue present callbacks and run them in order.
       while (presentCallbackQueue.length) {
-        presentCallbackQueue.shift()!.callback.call(null, currentTimestamp);
+        const item = presentCallbackQueue.shift();
+
+        if (!item) {
+          // Indicates a bug in Megaplot. Each item in the callback queue should
+          // be an object with an id and a callback function to invoke.
+          throw new Error('Falsey value found in callback queue.');
+        }
+
+        item.callback.call(null, currentTimestamp);
       }
 
     } finally {
@@ -327,7 +335,13 @@ export class TimingFunctionsShim implements TimingFunctions {
     try {
       // Dequeue present callbacks and run any with hit thresholds.
       while (presentCallbackQueue.length) {
-        const timeoutCallback = presentCallbackQueue.shift()!;
+        const timeoutCallback = presentCallbackQueue.shift();
+
+        if (!timeoutCallback) {
+          // Indicates a bug in Megaplot. Each item in the callback queue should
+          // be an object with an id and a callback function to invoke.
+          throw new Error('Falsey value found in callback queue.');
+        }
 
         if (this.now() < timeoutCallback.thresholdTimeMs) {
           delayedCallbackQueue.push(timeoutCallback);

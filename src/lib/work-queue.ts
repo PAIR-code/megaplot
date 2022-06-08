@@ -98,10 +98,10 @@ export class WorkQueue {
    * Dequeue a task from the front of the task list. If no tasks remain, throw.
    */
   dequeueTask(): WorkTaskWithId {
-    if (!this.length) {
+    const task = this.taskList.shift();
+    if (!task) {
       throw new Error('No tasks remain to dequeue.');
     }
-    const task = this.taskList.shift()!;
     this.idSet.delete(task.id);
     return task;
   }

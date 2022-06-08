@@ -26,6 +26,7 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene} from '../index';
+import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 
 require('./styles.css');
@@ -189,7 +190,11 @@ async function main() {
             Math.floor(Math.random() * glyphs.length) :
             index % glyphs.length;
         const glyph = glyphs[glyphIndex];
-        const coords = glyphMapper.getGlyph(glyph)!;
+        const coords = glyphMapper.getGlyph(glyph);
+
+        if (!coords) {
+          throw new InternalError('Could not find coordinates for glyph');
+        }
 
         s.Sides = 0;
         s.ShapeTexture = coords;
