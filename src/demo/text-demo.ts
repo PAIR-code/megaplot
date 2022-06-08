@@ -28,6 +28,8 @@ import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
 
+import {TransformEvent} from './transform-event';
+
 require('./styles.css');
 
 /**
@@ -240,9 +242,8 @@ async function main() {
   // Setup zoom behavior.
   const zoom = d3.zoom<HTMLCanvasElement, unknown>()
                    .scaleExtent([1, 200000])
-                   .on('zoom', (event) => {
-                     const {x, y, k} =
-                         event.transform as Record<string, number>;
+                   .on('zoom', (event: TransformEvent) => {
+                     const {x, y, k} = event.transform;
                      scene.scale.x = k;
                      scene.scale.y = k;
                      scene.offset.x = x;

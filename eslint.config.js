@@ -40,8 +40,6 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
-    '@typescript-eslint/no-unsafe-call' :OFF,
-    '@typescript-eslint/no-unsafe-member-access' :OFF,
     '@typescript-eslint/no-unsafe-return' :OFF,
     '@typescript-eslint/require-await' :OFF,
     '@typescript-eslint/restrict-plus-operands' :OFF,
