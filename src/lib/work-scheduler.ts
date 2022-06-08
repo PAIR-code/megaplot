@@ -369,7 +369,7 @@ export class WorkScheduler {
           break;
         }
 
-        let task = this.presentWorkQueue.dequeueTask();
+        const task = this.presentWorkQueue.dequeueTask();
 
         if (!this.isPerformingAnimationFrameWork &&
             (task.animationOnly === undefined || task.animationOnly)) {

@@ -77,7 +77,7 @@ export function runRemoval(
     return true;
   }
 
-  let {lowBound: lowIndex, highBound: highIndex} =
+  const {lowBound: lowIndex, highBound: highIndex} =
       coordinator.toBeRemovedIndexRange;
 
   // Clear the removal index and ts ranges. They will be added to as needed.
