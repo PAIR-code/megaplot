@@ -40,6 +40,7 @@ module.exports = {
     tsconfigRootDir:__dirname,
   },
   rules: {
+    '@typescript-eslint/no-confusing-void-expression': ERROR,
     '@typescript-eslint/prefer-readonly': ERROR,
   },
 };

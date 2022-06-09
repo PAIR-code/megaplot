@@ -60,7 +60,7 @@ export function runAssignWaiting(
     coordinator: CoordinatorAPI,
     remaining: RemainingTimeFn,
     stepsBetweenChecks: number,
-) {
+    ): void {
   const {
     removedIndexRange,
     sprites,
@@ -153,10 +153,7 @@ export function runAssignWaiting(
       throw new InternalError('Removed Sprite lacks index');
     }
 
-    coordinator.assignSpriteToIndex(
-        waitingSprite,
-        removedProperties.index,
-    );
+    coordinator.assignSpriteToIndex(waitingSprite, removedProperties.index);
 
     if (waitingProperties.index === undefined) {
       throw new InternalError('Sprite index was not assigned');

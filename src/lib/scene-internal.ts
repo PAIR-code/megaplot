@@ -703,7 +703,9 @@ export class SceneInternal implements Renderer {
   }
 
   queueDraw(beginImmediately = true) {
-    this.queueTask(this.drawTaskId, () => this.doDraw(), beginImmediately);
+    this.queueTask(this.drawTaskId, () => {
+      this.doDraw();
+    }, beginImmediately);
   }
 
   /**
@@ -713,7 +715,9 @@ export class SceneInternal implements Renderer {
   async snapshot(): Promise<Blob> {
     this.drawCommand();
     return new Promise((resolve, reject) => {
-      this.canvas.toBlob(blob => blob ? resolve(blob) : reject(blob));
+      this.canvas.toBlob(blob => {
+        blob ? resolve(blob) : reject(blob);
+      });
     });
   }
 
@@ -928,7 +932,9 @@ export class SceneInternal implements Renderer {
   }
 
   queueRebase() {
-    this.queueTask(this.rebaseTaskId, () => runRebase(this));
+    this.queueTask(this.rebaseTaskId, () => {
+      runRebase(this);
+    });
   }
 
   /**
@@ -936,8 +942,9 @@ export class SceneInternal implements Renderer {
    * It uses available swatch capacity to take waiting sprites out of the queue.
    */
   queueAssignWaiting() {
-    const runMethod = (remaining: RemainingTimeFn) =>
-        runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) => {
+      runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    };
     this.queueTask(this.runAssignWaitingTaskId, runMethod);
   }
 
@@ -945,8 +952,9 @@ export class SceneInternal implements Renderer {
    * This method schedules runCallbacks to be invoked if it isn't already.
    */
   queueRunCallbacks() {
-    const runMethod = (remaining: RemainingTimeFn) =>
-        runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) => {
+      runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    };
     this.queueTask(this.runCallbacksTaskId, runMethod);
   }
 
@@ -958,13 +966,16 @@ export class SceneInternal implements Renderer {
    * that the sprite used to command can be reused for another sprite later.
    */
   queueRemovalTask() {
-    const runMethod = (remaining: RemainingTimeFn) =>
-        runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) => {
+      runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    };
     this.queueTask(this.runRemovalTaskId, runMethod);
   }
 
   queueTextureSync() {
-    this.queueTask(this.textureSyncTaskId, () => runTextureSync(this));
+    this.queueTask(this.textureSyncTaskId, () => {
+      runTextureSync(this);
+    });
   }
 
   createSelection<T>(): Selection<T> {
