@@ -20,6 +20,7 @@
  * invokes them.
  */
 
+import {InternalError} from '../internal-error';
 import {LifecyclePhase} from '../lifecycle-phase';
 import {NumericRange} from '../numeric-range';
 import {SpriteViewCallback} from '../sprite';
@@ -68,7 +69,7 @@ export function runCallbacks(
 ) {
   if (!coordinator.callbacksIndexRange.isDefined) {
     // This indicates a timing error in the code.
-    throw new Error('Running callbacks requires a range of indices.');
+    throw new InternalError('Running callbacks requires a range of indices');
   }
 
   // Make note of the exit index range for looping purposes.
@@ -97,11 +98,15 @@ export function runCallbacks(
   // invoked. Defined here so that its available in both try and catch.
   const afterCallback = () => {
     if (!properties) {
-      throw new Error('Attempted to re-run afterCallback steps.');
+      throw new InternalError('Attempted to re-run afterCallback steps');
+    }
+
+    const {spriteView, index} = properties;
+    if (!spriteView || index === undefined) {
+      throw new InternalError('Sprite missing required properties');
     }
 
     // Append the current time to the arrival time value.
-    const spriteView = properties.spriteView!;
     spriteView.TransitionTimeMs += currentTimeMs;
 
     // Make sure that the draw Ts range includes the current transition time
@@ -117,12 +122,12 @@ export function runCallbacks(
       // needs a rebase.
       anyNeedsRebase = true;
       properties.lifecyclePhase = LifecyclePhase.NeedsRebase;
-      coordinator.needsRebaseIndexRange.expandToInclude(properties.index!);
+      coordinator.needsRebaseIndexRange.expandToInclude(index);
     } else {
       // Otherwise it's ready for texture sync immediately.
       anyNeedsTextureSync = true;
       properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
-      coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index!);
+      coordinator.needsTextureSyncIndexRange.expandToInclude(index);
 
       if (properties.toBeRemoved && !properties.hasCallback) {
         // If this sprite is slated for removal, and it has no further
@@ -173,6 +178,11 @@ export function runCallbacks(
         continue;
       }
 
+      if (!properties.spriteView) {
+        throw new InternalError(
+            'Sprite in HasCallback lifecycle phase missing SpriteView');
+      }
+
       // Pick earliest callback to run (enter, then update, then exit).
       let callback: SpriteViewCallback;
       if (properties.enterCallback) {
@@ -189,7 +199,8 @@ export function runCallbacks(
         // HasCallback lifecycle phase but did not, in fact, have any
         // callbacks. This should not be possible under normal operations
         // and indicates a bug in the phase transition logic.
-        throw new Error('Sprite in HasCallback state missing callbacks.');
+        throw new InternalError(
+            'Sprite in HasCallback state missing callbacks');
       }
 
       // Poke the defaultTransitionTimeMs into the spriteView arrival time.
@@ -197,7 +208,7 @@ export function runCallbacks(
       // transition duration. Whether the value is changed or not as part of
       // the callback, the value will have the elapsed time added to it so
       // that the transition completion time is in the future.
-      properties.spriteView!.TransitionTimeMs =
+      properties.spriteView.TransitionTimeMs =
           coordinator.defaultTransitionTimeMs;
 
       // Reset the step counter to force a time check at the top of the next
@@ -205,7 +216,7 @@ export function runCallbacks(
       step = 0;
 
       // Invoke the callback, may error out.
-      callback.call(sprite, properties.spriteView!);
+      callback.call(sprite, properties.spriteView);
 
       // Perform after callback steps. This is duplicated in the catch
       // clause, just in case.

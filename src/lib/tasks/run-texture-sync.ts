@@ -23,6 +23,7 @@
 import REGL from 'regl';
 
 import {AttributeMapper} from '../attribute-mapper';
+import {InternalError} from '../internal-error';
 import {LifecyclePhase} from '../lifecycle-phase';
 import {NumericRange} from '../numeric-range';
 import {SpriteImpl} from '../sprite-impl';
@@ -80,7 +81,7 @@ function getSwatchRowExpandedRange(
 export function runTextureSync(coordinator: CoordinatorAPI) {
   // Short-circuit of there are no dirty indices to update.
   if (!coordinator.needsTextureSyncIndexRange.isDefined) {
-    throw new Error('No sprites are in need of texture sync.');
+    throw new InternalError('No sprites are in need of texture sync');
   }
 
   const {swatchesPerRow, textureWidth, valuesPerRow} =
@@ -141,13 +142,22 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
       // loop. It would be an error to sync its values to the texture because
       // doing so would destroy the information that the rebase command needs
       // to determine the intermediate attribute values and deltas.
-      throw new Error('Sprite is in the wrong lifecycle phase for sync.');
+      throw new InternalError(
+          'Sprite is in the wrong lifecycle phase for sync');
     }
 
     if (properties.lifecyclePhase !== LifecyclePhase.NeedsTextureSync) {
       // This sprite was a passive participant in the texture sync operation.
       // Its blob/array swatch and texture swatch were already sync'd.
       continue;
+    }
+
+    if (!properties.spriteView) {
+      // Indicates a bug in Megaplot. Any Sprite in the NeedsTextureSync
+      // lifecycle phase ought to have been allocated a swatch and thus a
+      // SpriteView to update it.
+      throw new InternalError(
+          'Sprite queued for texture sync lacks a SpriteView');
     }
 
     if (properties.hasCallback) {
@@ -169,7 +179,7 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
     // The sprite was slated for removal. How to proceed depends on
     // whether it has more time left before its target arrival time.
 
-    if (properties.spriteView!.TransitionTimeMs <= currentTimeMs) {
+    if (properties.spriteView.TransitionTimeMs <= currentTimeMs) {
       // The sprite was slated for removal, and its time has expired.
       // Return its swatch for future reuse.
       coordinator.removeSprite(sprite);
@@ -183,7 +193,7 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
     properties.lifecyclePhase = LifecyclePhase.Rest;
     coordinator.toBeRemovedIndexRange.expandToInclude(index);
     coordinator.toBeRemovedTsRange.expandToInclude(
-        properties.spriteView!.TransitionTimeMs);
+        properties.spriteView.TransitionTimeMs);
   }
 
   if (coordinator.waitingSprites.length &&
@@ -199,17 +209,14 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
     coordinator.queueRemovalTask();
   }
 
-  // By definition, we've updated all sprites that surround the low and high
-  // dirty indices.
   coordinator.needsTextureSyncIndexRange.clear();
 
-  // TODO(jimbo): 'subimage' seems to be missing from REGL texture type.
   const subimageData = {
     data: dataView,
     width: textureWidth,
     height: rowHeight,
   };
-  (coordinator.targetValuesTexture as any).subimage(subimageData, 0, lowRow);
+  coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
 
   return true;
 }

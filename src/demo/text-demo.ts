@@ -24,8 +24,11 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene} from '../index';
+import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
+
+import {TransformEvent} from './transform-event';
 
 require('./styles.css');
 
@@ -45,7 +48,7 @@ document.body.style.background = `
       <path fill="none" stroke="blue" stroke-opacity="0.2" stroke-width="0.5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
 
-async function main() {
+function main() {
   // Locate the container element.
   const container = d3.select('body').node() as HTMLElement;
 
@@ -87,7 +90,7 @@ async function main() {
   };
 
   // As a synthetic data set, use the properties on the Window object.
-  const win = window as {} as {[key: string]: unknown};
+  const win = window as unknown as {[key: string]: unknown};
 
   interface Property {
     name: string;
@@ -137,10 +140,12 @@ async function main() {
       }
 
       // Add this label to the appropriate group.
-      if (!facets.has(facetKey)) {
-        facets.set(facetKey, []);
+      let facetLabels = facets.get(facetKey);
+      if (!facetLabels) {
+        facetLabels = [];
+        facets.set(facetKey, facetLabels);
       }
-      facets.get(facetKey)!.push(label);
+      facetLabels.push(label);
     }
 
     // Place labels into columns for display.
@@ -148,7 +153,12 @@ async function main() {
     const facetKeys = [...facets.keys()].sort((a, b) => a.localeCompare(b));
     for (const facetKey of facetKeys) {
       // For each facetKey, collect the labels and sort them.
-      const facetLabels = facets.get(facetKey)!;
+      const facetLabels = facets.get(facetKey);
+
+      if (!facetLabels) {
+        throw new InternalError('Could not find labels for facet key');
+      }
+
       facetLabels.sort(
           (a, b) => a.text.localeCompare(b.text) *
               (settings.sort === 'ascending' ? 1 : -1));
@@ -232,7 +242,7 @@ async function main() {
   // Setup zoom behavior.
   const zoom = d3.zoom<HTMLCanvasElement, unknown>()
                    .scaleExtent([1, 200000])
-                   .on('zoom', (event) => {
+                   .on('zoom', (event: TransformEvent) => {
                      const {x, y, k} = event.transform;
                      scene.scale.x = k;
                      scene.scale.y = k;
@@ -242,11 +252,9 @@ async function main() {
   d3.select(scene.canvas)
       .call(zoom)
       .call(
-          zoom.transform,
+          zoom.transform.bind(zoom),
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 }
 
-main().catch(err => {
-  throw err;
-});
+main();

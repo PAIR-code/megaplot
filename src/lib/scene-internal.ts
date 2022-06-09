@@ -28,6 +28,7 @@ import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
 import {HitTestParameters} from './hit-test-types';
+import {InternalError} from './internal-error';
 import {LifecyclePhase} from './lifecycle-phase';
 import {NumericRange} from './numeric-range';
 import {ReglContext} from './regl-types';
@@ -46,6 +47,7 @@ import {runTextureSync} from './tasks/run-texture-sync';
 import {TextSelectionImpl} from './text-selection-impl';
 import {TextSelection} from './text-selection-types';
 import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
+import {WorkTaskId} from './work-task';
 
 /**
  * This constant controls how many steps in a loop should pass before asking the
@@ -185,17 +187,17 @@ export class SceneInternal implements Renderer {
   /**
    * Time basis from which timestamps are computed.
    */
-  private basisTs: number;
+  private readonly basisTs: number;
 
   /**
    * Task id to uniquely specify a call to the draw command.
    */
-  private drawTaskId = Symbol('drawTask');
+  private readonly drawTaskId = Symbol('drawTask');
 
   /**
    * Task id to uniquely specify a call to update the data texture.
    */
-  private textureSyncTaskId = Symbol('textureSyncTask');
+  private readonly textureSyncTaskId = Symbol('textureSyncTask');
 
   /**
    * Array of UV values for the locations of instance swatches. These do not
@@ -213,7 +215,7 @@ export class SceneInternal implements Renderer {
    * Array of indices for the instances. Used when computing default z-order.
    * These do not change once initialized.
    */
-  private instanceIndexValues: Float32Array;
+  private readonly instanceIndexValues: Float32Array;
 
   /**
    * Buffer for instance indices.
@@ -390,12 +392,12 @@ export class SceneInternal implements Renderer {
   /**
    * Regl command to capture the current value and velocity of attributes.
    */
-  rebaseCommand?: REGL.DrawCommand;
+  readonly rebaseCommand: REGL.DrawCommand;
 
   /**
    * Regl command to render the current world to the viewable canvas.
    */
-  private drawCommand?: REGL.DrawCommand;
+  private readonly drawCommand: REGL.DrawCommand;
 
   /**
    * Regl command to capture the current hit test values.
@@ -405,23 +407,23 @@ export class SceneInternal implements Renderer {
   /**
    * Task id to uniquely identify the removal task.
    */
-  private runRemovalTaskId = Symbol('runRemovalTaskId');
+  private readonly runRemovalTaskId = Symbol('runRemovalTaskId');
 
   /**
    * Task id to uniquely identify task to assign waiting sprites to recovered
    * swatches from other removed sprites.
    */
-  private runAssignWaitingTaskId = Symbol('runAssignWaitingTask');
+  private readonly runAssignWaitingTaskId = Symbol('runAssignWaitingTask');
 
   /**
    * Task id to uniquely identify rebase tasks.
    */
-  private rebaseTaskId = Symbol('rebaseTask');
+  private readonly rebaseTaskId = Symbol('rebaseTask');
 
   /**
    * Task id to uniquely identify the runCallbacks task.
    */
-  private runCallbacksTaskId = Symbol('runCallbacksTask');
+  private readonly runCallbacksTaskId = Symbol('runCallbacksTask');
 
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
@@ -445,12 +447,12 @@ export class SceneInternal implements Renderer {
 
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
-    const win = window as {} as {[key: string]: unknown};
-    const createREGL = win['createREGL']! as (...args: unknown[]) =>
+    const win = window as unknown as {[key: string]: unknown};
+    const createREGL = win['createREGL'] as (...args: unknown[]) =>
                            REGL.Regl || REGL;
 
     if (!createREGL) {
-      throw new Error('Could not find REGL.');
+      throw new Error('Could not find REGL');
     }
 
     const regl = this.regl = createREGL({
@@ -468,7 +470,7 @@ export class SceneInternal implements Renderer {
               !previousChildren.has(child);
         });
     if (!insertedChildren.length) {
-      throw new Error('Container is missing an inserted canvas.');
+      throw new Error('Container is missing an inserted canvas');
     }
     this.canvas = insertedChildren[0] as HTMLCanvasElement;
 
@@ -691,12 +693,10 @@ export class SceneInternal implements Renderer {
 
   doDraw() {
     const currentTimeMs = this.elapsedTimeMs();
-    try {
-      this.drawCommand!();
-    } finally {
-      if (!this.toDrawTsRange.isDefined) {
-        return;
-      }
+
+    this.drawCommand();
+
+    if (this.toDrawTsRange.isDefined) {
       this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
       this.queueDraw(false);
     }
@@ -711,7 +711,7 @@ export class SceneInternal implements Renderer {
    * the canvas to convert it to a blob.
    */
   async snapshot(): Promise<Blob> {
-    this.drawCommand!();
+    this.drawCommand();
     return new Promise((resolve, reject) => {
       this.canvas.toBlob(blob => blob ? resolve(blob) : reject(blob));
     });
@@ -806,7 +806,7 @@ export class SceneInternal implements Renderer {
 
     // This signals a state maintenance bug. Somehow the removed index range
     // expanded to cover a range in which there are no removed sprites.
-    throw new Error('No removed sprites found in removed index range.');
+    throw new InternalError('No removed sprites found in removed index range');
   }
 
   createSprite(): Sprite {
@@ -822,7 +822,12 @@ export class SceneInternal implements Renderer {
     } else {
       // Since there's available capacity, assign this sprite to the next
       // available index.
-      this.assignSpriteToIndex(sprite, this.getNextIndex()!);
+      const nextIndex = this.getNextIndex();
+      if (nextIndex === undefined) {
+        throw new InternalError(
+            'Next index undefined despite available capacity');
+      }
+      this.assignSpriteToIndex(sprite, nextIndex);
     }
 
     return sprite;
@@ -837,7 +842,7 @@ export class SceneInternal implements Renderer {
       // This error indicates a bug in the logic handling Created (waiting)
       // sprites. Only Sprites which have never been assigned indices should be
       // considered for assignment.
-      throw new Error(
+      throw new InternalError(
           'Only sprites in the Created phase can be assigned indices');
     }
 
@@ -872,7 +877,7 @@ export class SceneInternal implements Renderer {
    */
   removeSprite(sprite: SpriteImpl) {
     if (sprite.isRemoved) {
-      throw new Error('Sprite can be removed only once.');
+      throw new InternalError('Sprite can be removed only once');
     }
 
     const properties = sprite[InternalPropertiesSymbol];
@@ -881,27 +886,42 @@ export class SceneInternal implements Renderer {
       // In the case where the removed sprite happens to be the one at the end
       // of the list, decrement the instance count to compensate. In any other
       // case, the degenerate sprite will be left alone, having had zeros
-      // flashed to its swatches.
+      // flashed to its swatch values.
       this.instanceCount--;
     }
 
     properties.lifecyclePhase = LifecyclePhase.Removed;
-    properties.spriteView![DataViewSymbol] = undefined!;
-    this.removedIndexRange.expandToInclude(properties.index!);
+
+    if (properties.spriteView) {
+      // SpriteView instances are passed to user-land callbacks with the
+      // expectation that those instances are not kept outside of the scope of
+      // the callback function. But it is not possible to force the user to
+      // abide this expectation. The user could keep a reference to the
+      // SpriteView by setting a variable whose scope is outside the callback.
+      // So here, we forcibly dissociate the SpriteView with its underlying
+      // swatch. That way, if, for any reason, the SpriteView is used later, it
+      // will throw.
+      properties.spriteView[DataViewSymbol] =
+          undefined as unknown as Float32Array;
+    }
+
+    if (properties.index !== undefined) {
+      this.removedIndexRange.expandToInclude(properties.index);
+    }
   }
 
   /**
    * Helper method to queue a run method.
    */
   private queueTask(
-      taskId: {},
+      taskId: WorkTaskId,
       runMethod: (remaining: RemainingTimeFn) => void,
       beginImmediately = false,
   ) {
     if (!this.workScheduler.isScheduledId(taskId)) {
       this.workScheduler.scheduleTask({
         id: taskId,
-        callback: runMethod.bind(this),
+        callback: runMethod,
         beginImmediately,
       });
     }
@@ -913,50 +933,34 @@ export class SceneInternal implements Renderer {
 
   /**
    * This method schedules runAssignWaiting to be invoked if it isn't already.
+   * It uses available swatch capacity to take waiting sprites out of the queue.
    */
   queueAssignWaiting() {
-    this.queueTask(this.runAssignWaitingTaskId, this.runAssignWaiting);
-  }
-
-  /**
-   * Use available swatch capacity to take waiting sprites out of the queue.
-   */
-  runAssignWaiting(remaining: RemainingTimeFn) {
-    return runAssignWaiting(
-        this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runAssignWaitingTaskId, runMethod);
   }
 
   /**
    * This method schedules runCallbacks to be invoked if it isn't already.
    */
   queueRunCallbacks() {
-    this.queueTask(this.runCallbacksTaskId, this.runCallbacks);
-  }
-
-  /**
-   * Method to run callbacks for sprites that have them. This should be invoked
-   * by the WorkScheduler.
-   */
-  runCallbacks(remaining: RemainingTimeFn) {
-    return runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runCallbacksTaskId, runMethod);
   }
 
   /**
    * This method schedules a task to remove sprites that have been marked for
-   * removal.
-   */
-  queueRemovalTask() {
-    this.queueTask(this.runRemovalTaskId, this.runRemoval);
-  }
-
-  /**
-   * This batch task looks for sprites that have been marked for removal and
+   * removal. The task looks for sprites that have been marked for removal and
    * whose arrival times have passed. Those sprites need to have their values
    * flashed to zero and to be marked for texture sync. That way, the swatch
    * that the sprite used to command can be reused for another sprite later.
    */
-  runRemoval(remaining: RemainingTimeFn) {
-    return runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+  queueRemovalTask() {
+    const runMethod = (remaining: RemainingTimeFn) =>
+        runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    this.queueTask(this.runRemovalTaskId, runMethod);
   }
 
   queueTextureSync() {

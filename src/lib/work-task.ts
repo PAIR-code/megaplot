@@ -27,6 +27,8 @@
  */
 export type RemainingTimeFn = () => number;
 
+export type WorkTaskId = unknown;
+
 /**
  * A work task callback function takes a remaining time function as a parameter.
  * Simple work tasks may ignore this parameter, but it's always provided.
@@ -61,7 +63,7 @@ export interface WorkTask {
    * This object is checked for strict equality to find a match. If omitted,
    * then the task's callback will be used instead.
    */
-  id?: {};
+  id?: WorkTaskId;
 
   /**
    * Whether this task is only relevant in an animation context. By default,
@@ -96,7 +98,7 @@ export interface WorkTask {
  * may change properties, and we should be able to handle that.
  */
 export interface WorkTaskWithId extends Readonly<WorkTask> {
-  readonly id: {};
+  readonly id: WorkTaskId;
 }
 
 /**
@@ -116,9 +118,9 @@ export function isWorkTaskOrFunction(workTaskOrFunction: WorkTask|
  * WorkTaskWithId.
  */
 export function getWorkTaskId(workTaskOrFunction: WorkTask|
-                              WorkTaskCallbackFn): {} {
+                              WorkTaskCallbackFn): WorkTaskId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-    throw new Error('Provided object was not a work task or function.');
+    throw new Error('Provided object was not a work task or function');
   }
 
   // The id of a naked Function is just the function itself.
@@ -148,7 +150,7 @@ export function getWorkTaskId(workTaskOrFunction: WorkTask|
 export function ensureOrCreateWorkTask(workTaskOrFunction: WorkTask|
                                        WorkTaskCallbackFn): WorkTaskWithId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-    throw new Error('Provided object was not a work task or function.');
+    throw new Error('Provided object was not a work task or function');
   }
 
   // Wrap naked function in an object with the minimum required properties.

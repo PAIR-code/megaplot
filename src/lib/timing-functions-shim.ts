@@ -21,7 +21,8 @@
  * requestAnimationFrame() and setTimeout().
  */
 
-import {TimingFunctions} from './default-timing-functions';
+import {CallbackFunctionType, TimingFunctions} from './default-timing-functions';
+import {InternalError} from './internal-error';
 
 /**
  * Object for storing information about an animation frame callback.
@@ -35,7 +36,7 @@ interface AnimationFrameCallback {
   /**
    * Function to be invoked.
    */
-  callback: Function;
+  callback: FrameRequestCallback;
 }
 
 /**
@@ -50,7 +51,7 @@ interface TimeoutCallback {
   /**
    * Function to be invoked.
    */
-  callback: Function;
+  callback: CallbackFunctionType;
 
   /**
    * Earliest time when this timeout is executable.
@@ -69,13 +70,13 @@ interface TimeoutCallback {
  * checking against the global 'this' object (usually the window, or null in
  * strict mode).
  */
-function getThis(this: ({}|null)) {
+function getThis(this: unknown) {
   return this;
 }
 
 const GLOBAL_THIS = getThis.call(null);
 
-function checkThis(obj: {}) {
+function checkThis(obj: unknown) {
   if (obj !== null && obj !== undefined && obj !== GLOBAL_THIS) {
     throw new TypeError('Illegal invocation');
   }
@@ -137,63 +138,57 @@ export class TimingFunctionsShim implements TimingFunctions {
    * (usually window, or null/undefined in strict mode).
    */
   constructor() {
-    const self = this;
-    const prototype = Object.getPrototypeOf(this);
-
-    function requestAnimationFrame(this: {}, callback: Function): number {
+    const boundRequestAnimationFrame = this.requestAnimationFrame.bind(this);
+    this.requestAnimationFrame = function requestAnimationFrame(
+        this: unknown, callback: FrameRequestCallback): number {
       checkThis(this);
-      return prototype.requestAnimationFrame.call(self, callback);
-    }
+      return boundRequestAnimationFrame(callback);
+    };
 
-    function cancelAnimationFrame(this: {}, id: number): void {
+    const boundCancelAnimationFrame = this.cancelAnimationFrame.bind(this);
+    this.cancelAnimationFrame = function cancelAnimationFrame(
+        this: unknown, id: number): void {
       checkThis(this);
-      return prototype.cancelAnimationFrame.call(self, id);
-    }
+      return boundCancelAnimationFrame(id);
+    };
 
-    function setTimeout(
-        this: {}, callback: Function, delay: number,
+    const boundSetTimeout = this.setTimeout.bind(this);
+    this.setTimeout = function setTimeout(
+        this: unknown, callback: CallbackFunctionType, delay: number,
         ...args: unknown[]): number {
       checkThis(this);
-      return prototype.setTimeout.apply(self, [callback, delay, ...args]);
-    }
+      return boundSetTimeout(callback, delay, ...args);
+    };
 
-    function clearTimeout(this: {}, id: number): void {
+    const boundClearTimeout = this.clearTimeout.bind(this);
+    this.clearTimeout = function clearTimeout(this: unknown, id: number): void {
       checkThis(this);
-      return prototype.clearTimeout.call(self, id);
-    }
+      return boundClearTimeout(id);
+    };
 
     /**
      * Date.now() does not seem to care whether the 'this' object provided is in
      * fact the Date global.
      */
-    const now = this.now.bind(this);
-
-    Object.assign(this, {
-      requestAnimationFrame,
-      cancelAnimationFrame,
-      setTimeout,
-      clearTimeout,
-      now,
-    });
+    this.now = this.now.bind(this);
   }
 
   /**
    * Emulate window.requestAnimationFrame() by adding the callback to the queue.
    */
-  requestAnimationFrame(callback: Function): number {
+  requestAnimationFrame(callback: FrameRequestCallback): number {
     if (!(callback instanceof Function)) {
       // Emulate the error produced by upstream requestAnimationFrame().
       throw new TypeError(
           'Failed to execute \'requestAnimationFrame\' on \'Window\': ' +
-          'The callback provided as parameter 1 is not a function.');
+          'The callback provided as parameter 1 is not a function');
     }
 
     const id = this.nextAnimationFrameId;
 
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError(
-          'Animation frame ids must be odd, positive integers.');
+      throw new TypeError('Animation frame ids must be odd, positive integers');
     }
 
     this.nextAnimationFrameId += 2;
@@ -209,8 +204,7 @@ export class TimingFunctionsShim implements TimingFunctions {
   cancelAnimationFrame(id: number): void {
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError(
-          'Animation frame ids must be odd, positive integers.');
+      throw new TypeError('Animation frame ids must be odd, positive integers');
     }
 
     for (let i = this.animationFrameCallbackQueue.length - 1; i >= 0; i--) {
@@ -223,20 +217,21 @@ export class TimingFunctionsShim implements TimingFunctions {
   /**
    * Emulate window.setTimeout().
    */
-  setTimeout(callback: Function, delay = 0, ...args: unknown[]): number {
+  setTimeout(callback: CallbackFunctionType, delay = 0, ...args: unknown[]):
+      number {
     if (!(callback instanceof Function)) {
       // Upstream setTimout() doesn't throw, but since this class is for
       // testing, we'll check it anyway.
       throw new TypeError(
           'Failed to execute \'setTimeout\': ' +
-          'The callback provided as parameter 1 is not a function.');
+          'The callback provided as parameter 1 is not a function');
     }
 
     const id = this.nextTimeoutId;
 
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers.');
+      throw new TypeError('Timeout ids must be even, positive integers');
     }
 
     this.nextTimeoutId += 2;
@@ -252,7 +247,7 @@ export class TimingFunctionsShim implements TimingFunctions {
   clearTimeout(id: number): void {
     // Sanity check.
     if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers.');
+      throw new TypeError('Timeout ids must be even, positive integers');
     }
 
     for (let i = this.timeoutCallbackQueue.length - 1; i >= 0; i--) {
@@ -288,7 +283,13 @@ export class TimingFunctionsShim implements TimingFunctions {
     try {
       // Dequeue present callbacks and run them in order.
       while (presentCallbackQueue.length) {
-        presentCallbackQueue.shift()!.callback.call(null, currentTimestamp);
+        const item = presentCallbackQueue.shift();
+
+        if (!item) {
+          throw new InternalError('Falsey value found in callback queue');
+        }
+
+        item.callback.call(null, currentTimestamp);
       }
 
     } finally {
@@ -325,7 +326,11 @@ export class TimingFunctionsShim implements TimingFunctions {
     try {
       // Dequeue present callbacks and run any with hit thresholds.
       while (presentCallbackQueue.length) {
-        const timeoutCallback = presentCallbackQueue.shift()!;
+        const timeoutCallback = presentCallbackQueue.shift();
+
+        if (!timeoutCallback) {
+          throw new InternalError('Falsey value found in callback queue');
+        }
 
         if (this.now() < timeoutCallback.thresholdTimeMs) {
           delayedCallbackQueue.push(timeoutCallback);

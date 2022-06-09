@@ -52,19 +52,20 @@ interface TextGlyph<T> {
 }
 
 export class TextSelectionImpl<T> implements TextSelection<T> {
-  private selections: Selection<TextGlyph<T>>[] = [];
+  private readonly selections: Selection<TextGlyph<T>>[] = [];
 
   private boundData: T[] = [];
 
   // Unique objects to identify this instance's bind() and clear() tasks.
-  private bindingTaskId = Symbol('bindingTask');
-  private clearingTaskId = Symbol('clearingTask');
+  private readonly bindingTaskId = Symbol('bindingTask');
+  private readonly clearingTaskId = Symbol('clearingTask');
 
   // Binding or clearing task, if scheduled.
   private bindingTask?: WorkTaskWithId;
   private clearingTask?: WorkTaskWithId;
 
-  private textCallback?: ((datum: T) => string) = ((datum: T) => `${datum}`);
+  private textCallback?:
+      ((datum: T) => string) = ((datum: T) => `${datum as unknown as string}`);
 
   private bindCallback?: SelectionCallback<T>;
   private initCallback?: SelectionCallback<T>;
@@ -81,10 +82,10 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
    * Create a new selection in the associated Scene.
    */
   constructor(
-      private stepsBetweenChecks: number,
-      private renderer: Renderer,
-      private workScheduler: WorkScheduler,
-      private glyphMapper: GlyphMapper,
+      private readonly stepsBetweenChecks: number,
+      private readonly renderer: Renderer,
+      private readonly workScheduler: WorkScheduler,
+      private readonly glyphMapper: GlyphMapper,
   ) {}
 
   text(textCallback: (datum: T) => string) {
@@ -128,9 +129,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   }
 
   private datumToGlyphs(datum: T): Array<TextGlyph<T>> {
-    const text =
-        (this.textCallback ? this.textCallback.call(datum, datum) : `${datum}`)
-            .trim();
+    const text = (this.textCallback ? this.textCallback.call(datum, datum) :
+                                      `${datum as unknown as string}`)
+                     .trim();
 
     const align = (this.alignCallback && this.alignCallback(datum)) ||
         DEFAULT_ALIGN_VALUE;
@@ -407,6 +408,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
     // Determine sprites that could be hit,
     hitTestParameters;
-    throw new Error('Not yet implemented.');
+    throw new Error('Not yet implemented');
   }
 }

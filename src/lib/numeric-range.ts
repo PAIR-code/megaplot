@@ -75,11 +75,12 @@ export class NumericRange {
    */
   truncateToWithin(lowValue: number, highValue: number) {
     if (isNaN(+lowValue) || isNaN(+highValue)) {
-      throw new Error('Both values must be numbers');
+      throw new RangeError('Both values must be numbers');
     }
 
     if (highValue < lowValue) {
-      throw new Error('High bound must be greater than or equal to low bound.');
+      throw new RangeError(
+          'High bound must be greater than or equal to low bound');
     }
 
     if (!this.isDefined) {

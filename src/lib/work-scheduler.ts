@@ -35,8 +35,9 @@
  */
 
 import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
+import {InternalError} from './internal-error';
 import {WorkQueue} from './work-queue';
-import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskWithId} from './work-task';
+import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
 
 export {RemainingTimeFn} from './work-task';
 
@@ -89,7 +90,7 @@ export class WorkScheduler {
    * browser default timing functions (setTimeout, etc.) but they're optionally
    * supplied in the constructor to facilitate fine-grained unit testing.
    */
-  private timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
+  private readonly timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
 
   /**
    * Timer for the animation frame (number returned by requestAnimationFrame).
@@ -130,7 +131,7 @@ export class WorkScheduler {
   /**
    * Queue of work tasks to complete.
    */
-  private presentWorkQueue = new WorkQueue();
+  private readonly presentWorkQueue = new WorkQueue();
 
   /**
    * Future queue of work tasks to add to the presentWorkQueue when work is not
@@ -138,7 +139,7 @@ export class WorkScheduler {
    * isPerformingWork is true. If isPerformingWork is false, then this array
    * should be empty, and new tasks should be pushed onto the presentWorkQueue.
    */
-  private futureWorkQueue = new WorkQueue();
+  private readonly futureWorkQueue = new WorkQueue();
 
   constructor(
       options: Partial<typeof DEFAULT_WORK_SCHEDULER_SETTINGS> =
@@ -206,7 +207,8 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentTask && futureTask) {
-      throw new Error('Found two matching tasks when at most one is allowed.');
+      throw new InternalError(
+          'Found two matching tasks when at most one is allowed');
     }
 
     return presentTask || futureTask || undefined;
@@ -226,7 +228,8 @@ export class WorkScheduler {
     // Sanity check. It should not be possible for the same task to be in both
     // the present and future work queues.
     if (presentRemovedTask && futureRemovedTask) {
-      throw new Error('Found two matching tasks when at most one is allowed.');
+      throw new InternalError(
+          'Found two matching tasks when at most one is allowed');
     }
 
     // Make sure timers are set.
@@ -246,7 +249,7 @@ export class WorkScheduler {
   /**
    * Determine whether there's a task already queued with the provided Id.
    */
-  isScheduledId(id: {}): boolean {
+  isScheduledId(id: WorkTaskId): boolean {
     return this.presentWorkQueue.hasTaskId(id) ||
         this.futureWorkQueue.hasTaskId(id);
   }
@@ -344,7 +347,7 @@ export class WorkScheduler {
   private performWork() {
     if (this.isPerformingWork) {
       throw new Error(
-          'Only one invocation of performWork is allowed at a time.');
+          'Only one invocation of performWork is allowed at a time');
     }
 
     this.isPerformingWork = true;
@@ -369,7 +372,7 @@ export class WorkScheduler {
           break;
         }
 
-        let task = this.presentWorkQueue.dequeueTask();
+        const task = this.presentWorkQueue.dequeueTask();
 
         if (!this.isPerformingAnimationFrameWork &&
             (task.animationOnly === undefined || task.animationOnly)) {
@@ -422,7 +425,7 @@ export class WorkScheduler {
   private performAnimationFrameWork() {
     if (this.isPerformingAnimationFrameWork) {
       throw new Error(
-          'Only one invocation of performAnimationFrameWork at a time.');
+          'Only one invocation of performAnimationFrameWork at a time');
     }
 
     this.isPerformingAnimationFrameWork = true;
@@ -439,7 +442,7 @@ export class WorkScheduler {
    */
   private performTimeoutWork() {
     if (this.isPerformingTimoutWork) {
-      throw new Error('Only one invocation of performTimoutWork at a time.');
+      throw new Error('Only one invocation of performTimoutWork at a time');
     }
 
     this.isPerformingTimoutWork = true;

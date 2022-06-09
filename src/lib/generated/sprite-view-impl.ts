@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set TransitionTimeMs(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('TransitionTimeMs cannot be NaN.');
+      throw new RangeError('TransitionTimeMs cannot be NaN');
     }
     this[DataViewSymbol][0] = attributeValue;
   }
@@ -46,7 +46,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionWorldX(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionWorldX cannot be NaN.');
+      throw new RangeError('PositionWorldX cannot be NaN');
     }
     this[DataViewSymbol][1] = attributeValue;
   }
@@ -57,7 +57,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionWorldY(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionWorldY cannot be NaN.');
+      throw new RangeError('PositionWorldY cannot be NaN');
     }
     this[DataViewSymbol][2] = attributeValue;
   }
@@ -68,7 +68,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set SizeWorldWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('SizeWorldWidth cannot be NaN.');
+      throw new RangeError('SizeWorldWidth cannot be NaN');
     }
     this[DataViewSymbol][3] = attributeValue;
   }
@@ -79,7 +79,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set SizeWorldHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('SizeWorldHeight cannot be NaN.');
+      throw new RangeError('SizeWorldHeight cannot be NaN');
     }
     this[DataViewSymbol][4] = attributeValue;
   }
@@ -90,7 +90,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set GeometricZoomX(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('GeometricZoomX cannot be NaN.');
+      throw new RangeError('GeometricZoomX cannot be NaN');
     }
     this[DataViewSymbol][5] = attributeValue;
   }
@@ -101,7 +101,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set GeometricZoomY(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('GeometricZoomY cannot be NaN.');
+      throw new RangeError('GeometricZoomY cannot be NaN');
     }
     this[DataViewSymbol][6] = attributeValue;
   }
@@ -112,7 +112,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionPixelX(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionPixelX cannot be NaN.');
+      throw new RangeError('PositionPixelX cannot be NaN');
     }
     this[DataViewSymbol][7] = attributeValue;
   }
@@ -123,7 +123,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionPixelY(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionPixelY cannot be NaN.');
+      throw new RangeError('PositionPixelY cannot be NaN');
     }
     this[DataViewSymbol][8] = attributeValue;
   }
@@ -134,7 +134,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set SizePixelWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('SizePixelWidth cannot be NaN.');
+      throw new RangeError('SizePixelWidth cannot be NaN');
     }
     this[DataViewSymbol][9] = attributeValue;
   }
@@ -145,7 +145,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set SizePixelHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('SizePixelHeight cannot be NaN.');
+      throw new RangeError('SizePixelHeight cannot be NaN');
     }
     this[DataViewSymbol][10] = attributeValue;
   }
@@ -156,7 +156,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set MaxSizePixelWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('MaxSizePixelWidth cannot be NaN.');
+      throw new RangeError('MaxSizePixelWidth cannot be NaN');
     }
     this[DataViewSymbol][11] = attributeValue;
   }
@@ -167,7 +167,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set MaxSizePixelHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('MaxSizePixelHeight cannot be NaN.');
+      throw new RangeError('MaxSizePixelHeight cannot be NaN');
     }
     this[DataViewSymbol][12] = attributeValue;
   }
@@ -178,7 +178,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set MinSizePixelWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('MinSizePixelWidth cannot be NaN.');
+      throw new RangeError('MinSizePixelWidth cannot be NaN');
     }
     this[DataViewSymbol][13] = attributeValue;
   }
@@ -189,7 +189,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set MinSizePixelHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('MinSizePixelHeight cannot be NaN.');
+      throw new RangeError('MinSizePixelHeight cannot be NaN');
     }
     this[DataViewSymbol][14] = attributeValue;
   }
@@ -200,7 +200,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionRelativeX(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionRelativeX cannot be NaN.');
+      throw new RangeError('PositionRelativeX cannot be NaN');
     }
     this[DataViewSymbol][15] = attributeValue;
   }
@@ -211,7 +211,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set PositionRelativeY(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('PositionRelativeY cannot be NaN.');
+      throw new RangeError('PositionRelativeY cannot be NaN');
     }
     this[DataViewSymbol][16] = attributeValue;
   }
@@ -222,7 +222,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set Sides(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('Sides cannot be NaN.');
+      throw new RangeError('Sides cannot be NaN');
     }
     this[DataViewSymbol][17] = attributeValue;
   }
@@ -233,7 +233,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set ShapeTextureU(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('ShapeTextureU cannot be NaN.');
+      throw new RangeError('ShapeTextureU cannot be NaN');
     }
     this[DataViewSymbol][18] = attributeValue;
   }
@@ -244,7 +244,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set ShapeTextureV(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('ShapeTextureV cannot be NaN.');
+      throw new RangeError('ShapeTextureV cannot be NaN');
     }
     this[DataViewSymbol][19] = attributeValue;
   }
@@ -255,7 +255,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set ShapeTextureWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('ShapeTextureWidth cannot be NaN.');
+      throw new RangeError('ShapeTextureWidth cannot be NaN');
     }
     this[DataViewSymbol][20] = attributeValue;
   }
@@ -266,7 +266,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set ShapeTextureHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('ShapeTextureHeight cannot be NaN.');
+      throw new RangeError('ShapeTextureHeight cannot be NaN');
     }
     this[DataViewSymbol][21] = attributeValue;
   }
@@ -277,7 +277,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderRadiusWorld(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderRadiusWorld cannot be NaN.');
+      throw new RangeError('BorderRadiusWorld cannot be NaN');
     }
     this[DataViewSymbol][22] = attributeValue;
   }
@@ -288,7 +288,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderRadiusPixel(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderRadiusPixel cannot be NaN.');
+      throw new RangeError('BorderRadiusPixel cannot be NaN');
     }
     this[DataViewSymbol][23] = attributeValue;
   }
@@ -299,7 +299,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderPlacement(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderPlacement cannot be NaN.');
+      throw new RangeError('BorderPlacement cannot be NaN');
     }
     this[DataViewSymbol][24] = attributeValue;
   }
@@ -310,7 +310,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderColorR(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderColorR cannot be NaN.');
+      throw new RangeError('BorderColorR cannot be NaN');
     }
     this[DataViewSymbol][25] = attributeValue;
   }
@@ -321,7 +321,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderColorG(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderColorG cannot be NaN.');
+      throw new RangeError('BorderColorG cannot be NaN');
     }
     this[DataViewSymbol][26] = attributeValue;
   }
@@ -332,7 +332,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderColorB(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderColorB cannot be NaN.');
+      throw new RangeError('BorderColorB cannot be NaN');
     }
     this[DataViewSymbol][27] = attributeValue;
   }
@@ -343,7 +343,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set BorderColorOpacity(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('BorderColorOpacity cannot be NaN.');
+      throw new RangeError('BorderColorOpacity cannot be NaN');
     }
     this[DataViewSymbol][28] = attributeValue;
   }
@@ -354,7 +354,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillBlend(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillBlend cannot be NaN.');
+      throw new RangeError('FillBlend cannot be NaN');
     }
     this[DataViewSymbol][29] = attributeValue;
   }
@@ -365,7 +365,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillColorR(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillColorR cannot be NaN.');
+      throw new RangeError('FillColorR cannot be NaN');
     }
     this[DataViewSymbol][30] = attributeValue;
   }
@@ -376,7 +376,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillColorG(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillColorG cannot be NaN.');
+      throw new RangeError('FillColorG cannot be NaN');
     }
     this[DataViewSymbol][31] = attributeValue;
   }
@@ -387,7 +387,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillColorB(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillColorB cannot be NaN.');
+      throw new RangeError('FillColorB cannot be NaN');
     }
     this[DataViewSymbol][32] = attributeValue;
   }
@@ -398,7 +398,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillColorOpacity(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillColorOpacity cannot be NaN.');
+      throw new RangeError('FillColorOpacity cannot be NaN');
     }
     this[DataViewSymbol][33] = attributeValue;
   }
@@ -409,7 +409,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillTextureU(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureU cannot be NaN.');
+      throw new RangeError('FillTextureU cannot be NaN');
     }
     this[DataViewSymbol][34] = attributeValue;
   }
@@ -420,7 +420,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillTextureV(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureV cannot be NaN.');
+      throw new RangeError('FillTextureV cannot be NaN');
     }
     this[DataViewSymbol][35] = attributeValue;
   }
@@ -431,7 +431,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillTextureWidth(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureWidth cannot be NaN.');
+      throw new RangeError('FillTextureWidth cannot be NaN');
     }
     this[DataViewSymbol][36] = attributeValue;
   }
@@ -442,7 +442,7 @@ export class SpriteViewImpl implements SpriteView {
 
   set FillTextureHeight(attributeValue: number) {
     if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureHeight cannot be NaN.');
+      throw new RangeError('FillTextureHeight cannot be NaN');
     }
     this[DataViewSymbol][37] = attributeValue;
   }
@@ -451,16 +451,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.PositionWorldX = value[0]!;
+        this.PositionWorldX = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.PositionWorldY = value[1]!;
+        this.PositionWorldY = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionWorld component index values were found.');
+            'No PositionWorld component index values were found');
       }
       return;
     }
@@ -468,37 +468,37 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('x' in value) {
-        this.PositionWorldX = value['x']!;
+        this.PositionWorldX = value['x'] as unknown as number;
         anyComponentSet = true;
       }
       if ('y' in value) {
-        this.PositionWorldY = value['y']!;
+        this.PositionWorldY = value['y'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionWorld component key values were found.');
+            'No PositionWorld component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('PositionWorld setter argument must be an array or object');
   }
 
   set SizeWorld(value: (number[] | {width?: number; height?: number;} | number)) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.SizeWorldWidth = value[0]!;
+        this.SizeWorldWidth = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.SizeWorldHeight = value[1]!;
+        this.SizeWorldHeight = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No SizeWorld component index values were found.');
+            'No SizeWorld component index values were found');
       }
       return;
     }
@@ -506,16 +506,16 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('width' in value) {
-        this.SizeWorldWidth = value['width']!;
+        this.SizeWorldWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.SizeWorldHeight = value['height']!;
+        this.SizeWorldHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No SizeWorld component key values were found.');
+            'No SizeWorld component key values were found');
       }
       return;
     }
@@ -528,16 +528,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.GeometricZoomX = value[0]!;
+        this.GeometricZoomX = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.GeometricZoomY = value[1]!;
+        this.GeometricZoomY = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No GeometricZoom component index values were found.');
+            'No GeometricZoom component index values were found');
       }
       return;
     }
@@ -545,16 +545,16 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('x' in value) {
-        this.GeometricZoomX = value['x']!;
+        this.GeometricZoomX = value['x'] as unknown as number;
         anyComponentSet = true;
       }
       if ('y' in value) {
-        this.GeometricZoomY = value['y']!;
+        this.GeometricZoomY = value['y'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No GeometricZoom component key values were found.');
+            'No GeometricZoom component key values were found');
       }
       return;
     }
@@ -567,16 +567,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.PositionPixelX = value[0]!;
+        this.PositionPixelX = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.PositionPixelY = value[1]!;
+        this.PositionPixelY = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionPixel component index values were found.');
+            'No PositionPixel component index values were found');
       }
       return;
     }
@@ -584,37 +584,37 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('x' in value) {
-        this.PositionPixelX = value['x']!;
+        this.PositionPixelX = value['x'] as unknown as number;
         anyComponentSet = true;
       }
       if ('y' in value) {
-        this.PositionPixelY = value['y']!;
+        this.PositionPixelY = value['y'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionPixel component key values were found.');
+            'No PositionPixel component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('PositionPixel setter argument must be an array or object');
   }
 
   set SizePixel(value: (number[] | {width?: number; height?: number;} | number)) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.SizePixelWidth = value[0]!;
+        this.SizePixelWidth = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.SizePixelHeight = value[1]!;
+        this.SizePixelHeight = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No SizePixel component index values were found.');
+            'No SizePixel component index values were found');
       }
       return;
     }
@@ -622,16 +622,16 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('width' in value) {
-        this.SizePixelWidth = value['width']!;
+        this.SizePixelWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.SizePixelHeight = value['height']!;
+        this.SizePixelHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No SizePixel component key values were found.');
+            'No SizePixel component key values were found');
       }
       return;
     }
@@ -644,16 +644,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.MaxSizePixelWidth = value[0]!;
+        this.MaxSizePixelWidth = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.MaxSizePixelHeight = value[1]!;
+        this.MaxSizePixelHeight = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MaxSizePixel component index values were found.');
+            'No MaxSizePixel component index values were found');
       }
       return;
     }
@@ -661,16 +661,16 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('width' in value) {
-        this.MaxSizePixelWidth = value['width']!;
+        this.MaxSizePixelWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.MaxSizePixelHeight = value['height']!;
+        this.MaxSizePixelHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MaxSizePixel component key values were found.');
+            'No MaxSizePixel component key values were found');
       }
       return;
     }
@@ -683,16 +683,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.MinSizePixelWidth = value[0]!;
+        this.MinSizePixelWidth = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.MinSizePixelHeight = value[1]!;
+        this.MinSizePixelHeight = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MinSizePixel component index values were found.');
+            'No MinSizePixel component index values were found');
       }
       return;
     }
@@ -700,16 +700,16 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('width' in value) {
-        this.MinSizePixelWidth = value['width']!;
+        this.MinSizePixelWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.MinSizePixelHeight = value['height']!;
+        this.MinSizePixelHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MinSizePixel component key values were found.');
+            'No MinSizePixel component key values were found');
       }
       return;
     }
@@ -722,16 +722,16 @@ export class SpriteViewImpl implements SpriteView {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.PositionRelativeX = value[0]!;
+        this.PositionRelativeX = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.PositionRelativeY = value[1]!;
+        this.PositionRelativeY = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionRelative component index values were found.');
+            'No PositionRelative component index values were found');
       }
       return;
     }
@@ -739,45 +739,45 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('x' in value) {
-        this.PositionRelativeX = value['x']!;
+        this.PositionRelativeX = value['x'] as unknown as number;
         anyComponentSet = true;
       }
       if ('y' in value) {
-        this.PositionRelativeY = value['y']!;
+        this.PositionRelativeY = value['y'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionRelative component key values were found.');
+            'No PositionRelative component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('PositionRelative setter argument must be an array or object');
   }
 
   set ShapeTexture(value: (number[] | {u?: number; v?: number; width?: number; height?: number;})) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.ShapeTextureU = value[0]!;
+        this.ShapeTextureU = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.ShapeTextureV = value[1]!;
+        this.ShapeTextureV = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if ('2' in value) {
-        this.ShapeTextureWidth = value[2]!;
+        this.ShapeTextureWidth = value[2] as unknown as number;
         anyComponentSet = true;
       }
       if ('3' in value) {
-        this.ShapeTextureHeight = value[3]!;
+        this.ShapeTextureHeight = value[3] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No ShapeTexture component index values were found.');
+            'No ShapeTexture component index values were found');
       }
       return;
     }
@@ -785,53 +785,53 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('u' in value) {
-        this.ShapeTextureU = value['u']!;
+        this.ShapeTextureU = value['u'] as unknown as number;
         anyComponentSet = true;
       }
       if ('v' in value) {
-        this.ShapeTextureV = value['v']!;
+        this.ShapeTextureV = value['v'] as unknown as number;
         anyComponentSet = true;
       }
       if ('width' in value) {
-        this.ShapeTextureWidth = value['width']!;
+        this.ShapeTextureWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.ShapeTextureHeight = value['height']!;
+        this.ShapeTextureHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No ShapeTexture component key values were found.');
+            'No ShapeTexture component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('ShapeTexture setter argument must be an array or object');
   }
 
   set BorderColor(value: (number[] | {r?: number; g?: number; b?: number; opacity?: number;})) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.BorderColorR = value[0]!;
+        this.BorderColorR = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.BorderColorG = value[1]!;
+        this.BorderColorG = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if ('2' in value) {
-        this.BorderColorB = value[2]!;
+        this.BorderColorB = value[2] as unknown as number;
         anyComponentSet = true;
       }
       if ('3' in value) {
-        this.BorderColorOpacity = value[3]!;
+        this.BorderColorOpacity = value[3] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No BorderColor component index values were found.');
+            'No BorderColor component index values were found');
       }
       return;
     }
@@ -839,53 +839,53 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('r' in value) {
-        this.BorderColorR = value['r']!;
+        this.BorderColorR = value['r'] as unknown as number;
         anyComponentSet = true;
       }
       if ('g' in value) {
-        this.BorderColorG = value['g']!;
+        this.BorderColorG = value['g'] as unknown as number;
         anyComponentSet = true;
       }
       if ('b' in value) {
-        this.BorderColorB = value['b']!;
+        this.BorderColorB = value['b'] as unknown as number;
         anyComponentSet = true;
       }
       if ('opacity' in value) {
-        this.BorderColorOpacity = value['opacity']!;
+        this.BorderColorOpacity = value['opacity'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No BorderColor component key values were found.');
+            'No BorderColor component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('BorderColor setter argument must be an array or object');
   }
 
   set FillColor(value: (number[] | {r?: number; g?: number; b?: number; opacity?: number;})) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.FillColorR = value[0]!;
+        this.FillColorR = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.FillColorG = value[1]!;
+        this.FillColorG = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if ('2' in value) {
-        this.FillColorB = value[2]!;
+        this.FillColorB = value[2] as unknown as number;
         anyComponentSet = true;
       }
       if ('3' in value) {
-        this.FillColorOpacity = value[3]!;
+        this.FillColorOpacity = value[3] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No FillColor component index values were found.');
+            'No FillColor component index values were found');
       }
       return;
     }
@@ -893,53 +893,53 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('r' in value) {
-        this.FillColorR = value['r']!;
+        this.FillColorR = value['r'] as unknown as number;
         anyComponentSet = true;
       }
       if ('g' in value) {
-        this.FillColorG = value['g']!;
+        this.FillColorG = value['g'] as unknown as number;
         anyComponentSet = true;
       }
       if ('b' in value) {
-        this.FillColorB = value['b']!;
+        this.FillColorB = value['b'] as unknown as number;
         anyComponentSet = true;
       }
       if ('opacity' in value) {
-        this.FillColorOpacity = value['opacity']!;
+        this.FillColorOpacity = value['opacity'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No FillColor component key values were found.');
+            'No FillColor component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('FillColor setter argument must be an array or object');
   }
 
   set FillTexture(value: (number[] | {u?: number; v?: number; width?: number; height?: number;})) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
-        this.FillTextureU = value[0]!;
+        this.FillTextureU = value[0] as unknown as number;
         anyComponentSet = true;
       }
       if ('1' in value) {
-        this.FillTextureV = value[1]!;
+        this.FillTextureV = value[1] as unknown as number;
         anyComponentSet = true;
       }
       if ('2' in value) {
-        this.FillTextureWidth = value[2]!;
+        this.FillTextureWidth = value[2] as unknown as number;
         anyComponentSet = true;
       }
       if ('3' in value) {
-        this.FillTextureHeight = value[3]!;
+        this.FillTextureHeight = value[3] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No FillTexture component index values were found.');
+            'No FillTexture component index values were found');
       }
       return;
     }
@@ -947,28 +947,28 @@ export class SpriteViewImpl implements SpriteView {
     if (typeof value === 'object') {
       let anyComponentSet = false;
       if ('u' in value) {
-        this.FillTextureU = value['u']!;
+        this.FillTextureU = value['u'] as unknown as number;
         anyComponentSet = true;
       }
       if ('v' in value) {
-        this.FillTextureV = value['v']!;
+        this.FillTextureV = value['v'] as unknown as number;
         anyComponentSet = true;
       }
       if ('width' in value) {
-        this.FillTextureWidth = value['width']!;
+        this.FillTextureWidth = value['width'] as unknown as number;
         anyComponentSet = true;
       }
       if ('height' in value) {
-        this.FillTextureHeight = value['height']!;
+        this.FillTextureHeight = value['height'] as unknown as number;
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No FillTexture component key values were found.');
+            'No FillTexture component key values were found');
       }
       return;
     }
 
-    throw new TypeError('Argument must be an array or object.');
+    throw new TypeError('FillTexture setter argument must be an array or object');
   }
 }

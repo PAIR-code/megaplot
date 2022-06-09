@@ -20,6 +20,8 @@
  * phases, which are defined here.
  */
 
+import {InternalError} from './internal-error';
+
 export enum LifecyclePhase {
   /**
    * When a SpriteImpl is first created, there may not be capacity to represent
@@ -154,6 +156,6 @@ export function checkLifecyclePhaseTransition(
     toPhase: LifecyclePhase,
 ) {
   if (!(transitionToFlag(fromPhase, toPhase) & ALLOWED_TRANSITION_MASK)) {
-    throw new Error('Illegal sprite lifecycle phase transition.');
+    throw new InternalError('Illegal sprite lifecycle phase transition');
   }
 }

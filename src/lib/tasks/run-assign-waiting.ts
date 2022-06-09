@@ -18,6 +18,7 @@
  * @fileoverview Defines the runAssignWaiting() task of SceneInternal.
  */
 
+import {InternalError} from '../internal-error';
 import {LifecyclePhase} from '../lifecycle-phase';
 import {NumericRange} from '../numeric-range';
 import {SpriteImpl} from '../sprite-impl';
@@ -70,14 +71,14 @@ export function runAssignWaiting(
     // This indicates an error condition in which there was an assign task
     // queued but before it could run the removed index ranges were somehow
     // used up.
-    throw new Error('No removed indices available to assign.');
+    throw new InternalError('No removed indices available to assign');
   }
 
   if (!waitingSprites.length) {
     // This indicates an error condition in which there is additional capacity
     // to dequeue waiting sprites, but somehow there are no waiting sprites to
     // dequeue.
-    throw new Error('No waiting sprites to assign.');
+    throw new InternalError('No waiting sprites to assign');
   }
 
   // Inside the while loop, we'll be iterating through both the removed index
@@ -136,7 +137,8 @@ export function runAssignWaiting(
       // are not in the Removed lifecycle phase. Therefore as we iterate through
       // the range, when we get to the end, it should definitely be a removed
       // sprite whose index and swatch we can reuse.
-      throw new Error('Removed index range ended on a non-removed sprite.');
+      throw new InternalError(
+          'Removed index range ended on a non-removed sprite');
     }
 
     // Now that we've found both a non-abandoned waiting sprite, and a removed
@@ -144,17 +146,27 @@ export function runAssignWaiting(
     // waiting sprite.
     const waitingSprite = waitingSprites[waitingIndex];
     const removedSprite = sprites[removedIndex];
+    const removedProperties = removedSprite[InternalPropertiesSymbol];
+    const waitingProperties = waitingSprite[InternalPropertiesSymbol];
+
+    if (removedProperties.index === undefined) {
+      throw new InternalError('Removed Sprite lacks index');
+    }
+
     coordinator.assignSpriteToIndex(
         waitingSprite,
-        removedSprite[InternalPropertiesSymbol].index!,
+        removedProperties.index,
     );
 
+    if (waitingProperties.index === undefined) {
+      throw new InternalError('Sprite index was not assigned');
+    }
+
     // Upgrade the waiting Sprite's phase from Rest to HasCallback if needed.
-    const waitingProperties = waitingSprite[InternalPropertiesSymbol];
     if (waitingProperties.hasCallback) {
       anyHasCallback = true;
       waitingProperties.lifecyclePhase = LifecyclePhase.HasCallback;
-      coordinator.callbacksIndexRange.expandToInclude(waitingProperties.index!);
+      coordinator.callbacksIndexRange.expandToInclude(waitingProperties.index);
     }
 
     // Increment both the waitingIndex and the removedIndex so that the next

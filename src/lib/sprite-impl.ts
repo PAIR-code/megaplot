@@ -19,6 +19,7 @@
  * SceneImpl.
  */
 
+import {InternalError} from './internal-error';
 import {LifecyclePhase} from './lifecycle-phase';
 import {Sprite, SpriteViewCallback} from './sprite';
 import {SpriteImplProperties} from './sprite-impl-properties';
@@ -38,24 +39,27 @@ export class SpriteImpl {
   /**
    * Create a new Sprite in the associated Scene.
    */
-  constructor(private coordinator: CoordinatorAPI) {
+  constructor(private readonly coordinator: CoordinatorAPI) {
     this[InternalPropertiesSymbol] = new SpriteImplProperties();
   }
 
   enter(enterCallback: SpriteViewCallback): Sprite {
     if (this.isAbandoned) {
-      throw new Error('Cannot add enter callback to abondend sprite.');
+      throw new Error('Cannot add enter callback to abondend sprite');
     }
 
     if (this.isRemoved) {
-      throw new Error('Cannot add enter callback to Removed sprite.');
+      throw new Error('Cannot add enter callback to Removed sprite');
     }
 
     const properties = this[InternalPropertiesSymbol];
     properties.enterCallback = enterCallback;
 
     if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-      this.coordinator.markSpriteCallback(properties.index!);
+      if (properties.index === undefined) {
+        throw new InternalError('Sprite lacks index');
+      }
+      this.coordinator.markSpriteCallback(properties.index);
       properties.lifecyclePhase = LifecyclePhase.HasCallback;
     }
 
@@ -64,18 +68,21 @@ export class SpriteImpl {
 
   update(updateCallback: SpriteViewCallback): Sprite {
     if (this.isAbandoned) {
-      throw new Error('Cannot add update callback to abandoned sprite.');
+      throw new Error('Cannot add update callback to abandoned sprite');
     }
 
     if (this.isRemoved) {
-      throw new Error('Cannot add update callback to Removed sprite.');
+      throw new Error('Cannot add update callback to Removed sprite');
     }
 
     const properties = this[InternalPropertiesSymbol];
     properties.updateCallback = updateCallback;
 
     if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-      this.coordinator.markSpriteCallback(properties.index!);
+      if (properties.index === undefined) {
+        throw new InternalError('Sprite lacks index');
+      }
+      this.coordinator.markSpriteCallback(properties.index);
       properties.lifecyclePhase = LifecyclePhase.HasCallback;
     }
 
@@ -84,11 +91,11 @@ export class SpriteImpl {
 
   exit(exitCallback: SpriteViewCallback): Sprite {
     if (this.isAbandoned) {
-      throw new Error('Cannot add exit callback to abandoned sprite.');
+      throw new Error('Cannot add exit callback to abandoned sprite');
     }
 
     if (this.isRemoved) {
-      throw new Error('Cannot add exit callback to Removed sprite.');
+      throw new Error('Cannot add exit callback to Removed sprite');
     }
 
     const properties = this[InternalPropertiesSymbol];
@@ -96,7 +103,10 @@ export class SpriteImpl {
     properties.toBeRemoved = true;
 
     if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-      this.coordinator.markSpriteCallback(properties.index!);
+      if (properties.index === undefined) {
+        throw new InternalError('Sprite lacks index');
+      }
+      this.coordinator.markSpriteCallback(properties.index);
       properties.lifecyclePhase = LifecyclePhase.HasCallback;
     }
 
@@ -105,15 +115,15 @@ export class SpriteImpl {
 
   abandon() {
     if (this.isAbandoned) {
-      throw new Error('Cannot abandon a Sprite already marked abandoned.');
+      throw new Error('Cannot abandon a Sprite already marked abandoned');
     }
 
     if (this.isRemoved) {
-      throw new Error('Cannot abandon a Sprite that has been removed.');
+      throw new Error('Cannot abandon a Sprite that has been removed');
     }
 
     if (this.isActive) {
-      throw new Error('Cannot abandon an active Sprite.');
+      throw new Error('Cannot abandon an active Sprite');
     }
 
     const properties = this[InternalPropertiesSymbol];

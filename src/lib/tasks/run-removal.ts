@@ -20,6 +20,7 @@
  * values to zero in CPU memory, and marks them for texture sync.
  */
 
+import {InternalError} from '../internal-error';
 import {LifecyclePhase} from '../lifecycle-phase';
 import {NumericRange} from '../numeric-range';
 import {SpriteImpl} from '../sprite-impl';
@@ -63,7 +64,7 @@ export function runRemoval(
     // This signals an error in lifecycle phase change logic of the coordinator.
     // This method should not be invoke until there are sprites slated for
     // removal.
-    throw new Error('No sprites are queued for removal.');
+    throw new InternalError('No sprites are queued for removal');
   }
 
   const currentTimeMs = coordinator.elapsedTimeMs();
@@ -77,7 +78,7 @@ export function runRemoval(
     return true;
   }
 
-  let {lowBound: lowIndex, highBound: highIndex} =
+  const {lowBound: lowIndex, highBound: highIndex} =
       coordinator.toBeRemovedIndexRange;
 
   // Clear the removal index and ts ranges. They will be added to as needed.
@@ -110,21 +111,25 @@ export function runRemoval(
         continue;
       }
 
+      if (!properties.spriteView || properties.index === undefined) {
+        throw new InternalError('Sprite missing required properties')
+      }
+
       // If the sprite's time has not yet finished, then add it back to the
       // index range. We'll reschedule another run after the loop.
-      if (properties.spriteView!.TransitionTimeMs > currentTimeMs) {
+      if (properties.spriteView.TransitionTimeMs > currentTimeMs) {
         coordinator.toBeRemovedIndexRange.expandToInclude(index);
         coordinator.toBeRemovedTsRange.expandToInclude(
-            properties.spriteView!.TransitionTimeMs);
+            properties.spriteView.TransitionTimeMs);
         continue;
       }
 
       // The sprite has been marked for removal, its in the right
       // LifeciclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
-      properties.spriteView![DataViewSymbol].fill(0);
+      properties.spriteView[DataViewSymbol].fill(0);
       properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
-      coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index!);
+      coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index);
     }
   } finally {
     if (coordinator.needsTextureSyncIndexRange.isDefined) {
@@ -144,8 +149,15 @@ export function runRemoval(
         const properties = sprite[InternalPropertiesSymbol];
         if (properties.toBeRemoved === true &&
             properties.lifecyclePhase === LifecyclePhase.Rest) {
+          if (!properties.spriteView) {
+            // Indicates a bug in Megaplot. A Sprite in the Rest lifecycle phase
+            // ought to have been allocated a swatch and thus a SpriteView for
+            // interacting with it.
+            // eslint-disable-next-line no-unsafe-finally
+            throw new InternalError('Sprite lacks a SpriteView');
+          }
           coordinator.toBeRemovedTsRange.expandToInclude(
-              properties.spriteView!.TransitionTimeMs);
+              properties.spriteView.TransitionTimeMs);
         }
       }
     }

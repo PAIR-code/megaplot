@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,31 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Provides a template tag for marking strings of GLSL code.
+ * @fileoverview Configuration for ESLint.
  */
 
-/**
- * Template tag to mark GLSL code fragments, for syntax highlighting in editors
- * which that it.
- */
-export function glsl(
-    strs: TemplateStringsArray, ...args: Array<string|number>) {
-  const interleaved: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    interleaved.push(strs[i], `${args[i]}`);
-  }
-  interleaved.push(strs[strs.length - 1]);
-  return interleaved.join('');
-}
+const OFF = 0;
+const WARN = 1;
+const ERROR = 2;
+
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  plugins:
+  [
+    '@typescript-eslint',
+  ],
+  extends:
+  [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+  ],
+  parserOptions: {
+    project: ['tsconfig.json'],
+    tsconfigRootDir:__dirname,
+  },
+  rules: {
+    '@typescript-eslint/prefer-readonly': ERROR,
+  },
+};

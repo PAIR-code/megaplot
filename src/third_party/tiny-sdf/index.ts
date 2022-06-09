@@ -78,9 +78,14 @@ export class TinySDF {
     this.canvas = document.createElement('canvas');
     this.canvas.width = this.canvas.height = size;
 
-    this.ctx = this.canvas.getContext('2d')!;
-    this.ctx.font =
-        this.fontWeight + ' ' + this.fontSize + 'px ' + this.fontFamily;
+    const ctx = this.canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('Could not get canvas 2d context');
+    }
+
+    this.ctx = ctx;
+    this.ctx.font = `${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
     this.ctx.textBaseline = 'middle';
     this.ctx.fillStyle = 'black';
 
@@ -253,7 +258,12 @@ export function canvasToSDFData(
 ) {
   const {width, height} = canvas;
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Could not get canvas 2d context');
+  }
+
   const imgData = ctx.getImageData(0, 0, width, height);
 
   const gridOuterX = new Float64Array(width * height);

@@ -26,7 +26,10 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene} from '../index';
+import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
+
+import {TransformEvent} from './transform-event';
 
 require('./styles.css');
 
@@ -56,7 +59,7 @@ document.body.style.background = `
 const TEXT_BORDER = d3.color('black') as d3.RGBColor;
 const TEXT_FILL = d3.color('white') as d3.RGBColor;
 
-async function main() {
+function main() {
   // Locate the container element.
   const container = d3.select('body').node() as HTMLElement;
 
@@ -136,9 +139,8 @@ async function main() {
     settings.total = count * count;
 
     // Setup a rainbow color scale.
-    const colorScale = d3.scaleLinear().domain(
+    const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
-    (colorScale as any).range(colors);
 
     selection.onInit(s => {
       s.BorderColorOpacity = 0;
@@ -190,7 +192,11 @@ async function main() {
             Math.floor(Math.random() * glyphs.length) :
             index % glyphs.length;
         const glyph = glyphs[glyphIndex];
-        const coords = glyphMapper.getGlyph(glyph)!;
+        const coords = glyphMapper.getGlyph(glyph);
+
+        if (!coords) {
+          throw new InternalError('Could not find coordinates for glyph');
+        }
 
         s.Sides = 0;
         s.ShapeTexture = coords;
@@ -240,7 +246,7 @@ async function main() {
   // Setup zoom behavior.
   const zoom = d3.zoom<HTMLCanvasElement, unknown>()
                    .scaleExtent([1, 200000])
-                   .on('zoom', (event) => {
+                   .on('zoom', (event: TransformEvent) => {
                      const {x, y, k} = event.transform;
                      scene.scale.x = k;
                      scene.scale.y = k;
@@ -250,7 +256,7 @@ async function main() {
   d3.select(scene.canvas)
       .call(zoom)
       .call(
-          zoom.transform,
+          zoom.transform.bind(zoom),
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
@@ -276,6 +282,4 @@ async function main() {
   });
 }
 
-main().catch(err => {
-  throw err;
-});
+main();
