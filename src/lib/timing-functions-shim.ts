@@ -149,7 +149,7 @@ export class TimingFunctionsShim implements TimingFunctions {
     this.cancelAnimationFrame = function cancelAnimationFrame(
         this: unknown, id: number): void {
       checkThis(this);
-      return boundCancelAnimationFrame(id);
+      boundCancelAnimationFrame(id);
     };
 
     const boundSetTimeout = this.setTimeout.bind(this);
@@ -163,7 +163,7 @@ export class TimingFunctionsShim implements TimingFunctions {
     const boundClearTimeout = this.clearTimeout.bind(this);
     this.clearTimeout = function clearTimeout(this: unknown, id: number): void {
       checkThis(this);
-      return boundClearTimeout(id);
+      boundClearTimeout(id);
     };
 
     /**
