@@ -58,7 +58,7 @@ export function runRemoval(
     coordinator: CoordinatorAPI,
     remaining: RemainingTimeFn,
     stepsBetweenChecks: number,
-) {
+    ): void {
   if (!coordinator.toBeRemovedIndexRange.isDefined ||
       !coordinator.toBeRemovedTsRange.isDefined) {
     // This signals an error in lifecycle phase change logic of the coordinator.
@@ -75,7 +75,7 @@ export function runRemoval(
   // their target times. If not, then we queue a future removal task.
   if (currentTimeMs < lowTs) {
     coordinator.queueRemovalTask();
-    return true;
+    return;
   }
 
   const {lowBound: lowIndex, highBound: highIndex} =
@@ -168,6 +168,4 @@ export function runRemoval(
       coordinator.queueRemovalTask();
     }
   }
-
-  return true;
 }

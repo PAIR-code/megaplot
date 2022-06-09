@@ -78,7 +78,7 @@ function getSwatchRowExpandedRange(
 /**
  * Iterate through the Sprites and push data into the data texture.
  */
-export function runTextureSync(coordinator: CoordinatorAPI) {
+export function runTextureSync(coordinator: CoordinatorAPI): void {
   // Short-circuit of there are no dirty indices to update.
   if (!coordinator.needsTextureSyncIndexRange.isDefined) {
     throw new InternalError('No sprites are in need of texture sync');
@@ -105,7 +105,7 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
       // rebase operation, and then make another attempt at texture sync.
       coordinator.queueRebase();
       coordinator.queueTextureSync();
-      return true;
+      return;
     }
   }
 
@@ -217,6 +217,4 @@ export function runTextureSync(coordinator: CoordinatorAPI) {
     height: rowHeight,
   };
   coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
-
-  return true;
 }

@@ -952,8 +952,9 @@ export class SceneInternal implements Renderer {
    * This method schedules runCallbacks to be invoked if it isn't already.
    */
   queueRunCallbacks() {
-    const runMethod = (remaining: RemainingTimeFn) =>
-        runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) => {
+      runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    };
     this.queueTask(this.runCallbacksTaskId, runMethod);
   }
 
@@ -965,13 +966,16 @@ export class SceneInternal implements Renderer {
    * that the sprite used to command can be reused for another sprite later.
    */
   queueRemovalTask() {
-    const runMethod = (remaining: RemainingTimeFn) =>
-        runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    const runMethod = (remaining: RemainingTimeFn) => {
+      runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+    };
     this.queueTask(this.runRemovalTaskId, runMethod);
   }
 
   queueTextureSync() {
-    this.queueTask(this.textureSyncTaskId, () => runTextureSync(this));
+    this.queueTask(this.textureSyncTaskId, () => {
+      runTextureSync(this);
+    });
   }
 
   createSelection<T>(): Selection<T> {

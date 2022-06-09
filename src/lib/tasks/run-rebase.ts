@@ -52,7 +52,7 @@ interface CoordinatorAPI {
  */
 export function runRebase(
     coordinator: CoordinatorAPI,
-) {
+    ): void {
   // Sanity check: nothing to do if there's nothing in the rebase queue.
   if (!coordinator.needsRebaseIndexRange.isDefined) {
     throw new InternalError('No sprites are queued for rebase');

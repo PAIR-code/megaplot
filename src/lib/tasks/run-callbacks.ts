@@ -66,7 +66,7 @@ export function runCallbacks(
     coordinator: CoordinatorAPI,
     remaining: RemainingTimeFn,
     stepsBetweenChecks: number,
-) {
+    ): void {
   if (!coordinator.callbacksIndexRange.isDefined) {
     // This indicates a timing error in the code.
     throw new InternalError('Running callbacks requires a range of indices');
@@ -261,7 +261,4 @@ export function runCallbacks(
       coordinator.queueDraw();
     }
   }
-
-  // We're done with this task.
-  return true;
 }

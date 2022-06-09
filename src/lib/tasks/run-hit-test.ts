@@ -53,7 +53,7 @@ interface CoordinatorAPI {
  */
 export function runHitTest(
     coordinator: CoordinatorAPI,
-) {
+    ): void {
   // These values are API-user provided, but are already be checked for
   // correctness upstream in SceneInternal.
   const {sprites, width, height, inclusive} = coordinator.hitTestParameters;
