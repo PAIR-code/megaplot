@@ -59,6 +59,16 @@ export class Scene implements Renderer {
   }
 
   /**
+   * Adjust offset and scale to match updated canvas shape.
+   *
+   * @param fixedWorldPoint Optional world point to preserve relative to the
+   * canvas frame. Defaults to the world origin (0,0).
+   */
+  resize(fixedWorldPoint?: {x: number, y: number}) {
+    this[SceneInternalSymbol].resize(fixedWorldPoint);
+  }
+
+  /**
    * This method returns the total elapsed time in milliseconds since the
    * renderer was constructed. Using regular JavaScript timestamps (milliseconds
    * since the Unix epoch) is not feasible because the values need to preserve

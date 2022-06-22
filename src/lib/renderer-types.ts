@@ -48,6 +48,15 @@ export interface Renderer {
   canvas: HTMLCanvasElement;
 
   /**
+   * After the canvas changes size, this method instructs the Scene to adjust
+   * the scale and offset to accommodate the new shape.
+   *
+   * @param fixedWorldPoint Optional world point to preserve relative to the
+   * canvas frame. Defaults to the world origin (0,0).
+   */
+  resize: (fixedWorldPoint?: {x: number, y: number}) => void;
+
+  /**
    * This method returns the total elapsed time in milliseconds since the
    * renderer was constructed. Using regular JavaScript timestamps (milliseconds
    * since the Unix epoch) is not feasible because the values need to preserve

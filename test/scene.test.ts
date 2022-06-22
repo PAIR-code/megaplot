@@ -72,8 +72,8 @@ describe('Scene', () => {
   const timingFunctionsShim = new TimingFunctionsShim();
 
   // Set the timingFunctionsShim starting time to something high. Without the
-  // shim, this would be the value returned by Date.now(), which has 13 digits
-  // of precision.
+  // shim, this would be the value returned by Date.now(), which has at least 13
+  // digits of precision.
   timingFunctionsShim.totalElapsedTimeMs = 1234500000;
 
   const scene = new Scene({
@@ -149,6 +149,194 @@ describe('Scene', () => {
       expect(selection.onEnter).toBeInstanceOf(Function);
       expect(selection.onUpdate).toBeInstanceOf(Function);
       expect(selection.onExit).toBeInstanceOf(Function);
+    });
+  });
+});
+
+describe('Scene', () => {
+  describe('resize()', () => {
+    const section = createSection('Scene::resize()');
+
+    describe('horizontal', () => {
+      const container = document.createElement('div');
+      container.style.width = '100px';
+      container.style.height = '100px';
+      section.querySelector('.content')!.appendChild(container);
+
+      const timingFunctionsShim = new TimingFunctionsShim();
+
+      // Set the timingFunctionsShim starting time to something high. Without
+      // the shim, this would be the value returned by Date.now(), which has at
+      // least 13 digits of precision.
+      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      const canvas = container.querySelector('canvas')!;
+
+      it('should update values when stretched', () => {
+        // Stretch container, which should cause the canvas to change size.
+        container.style.width = '200px';
+
+        // Trigger Scene to recalculate its offset and scale.
+        scene.resize();
+
+        // Canvas should fill container.
+        expect(canvas.width).toEqual(200 * devicePixelRatio);
+        expect(canvas.height).toEqual(100 * devicePixelRatio);
+
+        // After resize, offset should be re-centered, scale still square.
+        expect(scene.offset.x).toEqual(100);
+        expect(scene.offset.y).toEqual(50);
+        expect(scene.scale.x).toEqual(100);
+        expect(scene.scale.y).toEqual(100);
+      });
+
+      it('should update values squished', () => {
+        // Stretch container, which should cause the canvas to change size.
+        container.style.width = '50px';
+
+        // Trigger Scene to recalculate its offset and scale.
+        scene.resize();
+
+        // Canvas should fill container.
+        expect(canvas.width).toEqual(50 * devicePixelRatio);
+        expect(canvas.height).toEqual(100 * devicePixelRatio);
+
+        // After resize, offset should be re-centered, scale still square.
+        expect(scene.offset.x).toEqual(25);
+        expect(scene.offset.y).toEqual(50);
+        expect(scene.scale.x).toEqual(100);
+        expect(scene.scale.y).toEqual(100);
+      });
+    });
+
+    describe('vertical', () => {
+      const container = document.createElement('div');
+      container.style.width = '100px';
+      container.style.height = '100px';
+      section.querySelector('.content')!.appendChild(container);
+
+      const timingFunctionsShim = new TimingFunctionsShim();
+
+      // Set the timingFunctionsShim starting time to something high. Without
+      // the shim, this would be the value returned by Date.now(), which has at
+      // least 13 digits of precision.
+      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      const canvas = container.querySelector('canvas')!;
+
+      it('should update values when stretched', () => {
+        // Stretch container, which should cause the canvas to change size.
+        container.style.height = '200px';
+
+        // Trigger Scene to recalculate its offset and scale.
+        scene.resize();
+
+        // Canvas should fill container.
+        expect(canvas.width).toEqual(100 * devicePixelRatio);
+        expect(canvas.height).toEqual(200 * devicePixelRatio);
+
+        // After resize, offset should be re-centered, scale still square.
+        expect(scene.offset.x).toEqual(50);
+        expect(scene.offset.y).toEqual(100);
+        expect(scene.scale.x).toEqual(100);
+        expect(scene.scale.y).toEqual(100);
+      });
+
+      it('should update values squished', () => {
+        // Stretch container, which should cause the canvas to change size.
+        container.style.height = '50px';
+
+        // Trigger Scene to recalculate its offset and scale.
+        scene.resize();
+
+        // Canvas should fill container.
+        expect(canvas.width).toEqual(100 * devicePixelRatio);
+        expect(canvas.height).toEqual(50 * devicePixelRatio);
+
+        // After resize, offset should be re-centered, scale still square.
+        expect(scene.offset.x).toEqual(50);
+        expect(scene.offset.y).toEqual(25);
+        expect(scene.scale.x).toEqual(100);
+        expect(scene.scale.y).toEqual(100);
+      });
+    });
+
+    it('should resize around a non-origin fixed point when provided', () => {
+      const container = document.createElement('div');
+      container.style.width = '100px';
+      container.style.height = '100px';
+      section.querySelector('.content')!.appendChild(container);
+
+      const timingFunctionsShim = new TimingFunctionsShim();
+
+      // Set the timingFunctionsShim starting time to something high. Without
+      // the shim, this would be the value returned by Date.now(), which has at
+      // least 13 digits of precision.
+      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      const canvas = container.querySelector('canvas')!;
+
+      // Set non-standard offset. Match world origin to canvas top-left.
+      scene.offset.x = 0;
+      scene.offset.y = 0;
+
+      // Stretch container horizontally, which should cause the canvas to change
+      // both size and shape.
+      container.style.width = '200px';
+
+      // Resize preserving world point (1,-1), the bottom-right corner, which
+      // would be at pixel coordinates 100,100.
+      scene.resize({x: 1, y: -1});
+
+      // Canvas should fill container.
+      expect(canvas.width).toEqual(200 * devicePixelRatio);
+      expect(canvas.height).toEqual(100 * devicePixelRatio);
+
+      // After resize, offset should be advanced to (100,0) to preserve
+      // bottom-right corner.
+      expect(scene.offset.x).toEqual(100);
+      expect(scene.offset.y).toEqual(0);
+      expect(scene.scale.x).toEqual(100);
+      expect(scene.scale.y).toEqual(100);
+
+      // Now stretch container vertically.
+      container.style.width = '100px';
+      container.style.height = '200px';
+
+      // Resize preserving world point (1,-1), the bottom-right corner.
+      scene.resize({x: 1, y: -1});
+
+      // Canvas should fill container.
+      expect(canvas.width).toEqual(100 * devicePixelRatio);
+      expect(canvas.height).toEqual(200 * devicePixelRatio);
+
+      // After resize, offset should be advanced to (0,100) to preserve
+      // bottom-right corner.
+      expect(scene.offset.x).toEqual(0);
+      expect(scene.offset.y).toEqual(100);
+      expect(scene.scale.x).toEqual(100);
+      expect(scene.scale.y).toEqual(100);
     });
   });
 });
