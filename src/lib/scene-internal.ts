@@ -657,7 +657,7 @@ export class SceneInternal implements Renderer {
   }
 
   /**
-   * Adjust the offset and scale to match the updated canvas shape.
+   * Adjust the offset and canvas properties to match the updated canvas shape.
    *
    * @param fixedWorldPoint Point in world coordinates which remains fixed
    * proportionally to the canvas frame. Defaults to the origin (0,0).
@@ -665,13 +665,11 @@ export class SceneInternal implements Renderer {
   resize(fixedWorldPoint: {x: number, y: number} = ORIGIN) {
     const previousWidth = this.canvas.width / devicePixelRatio;
     const previousHeight = this.canvas.height / devicePixelRatio;
-    const previousScaleX = this.scale.x;
-    const previousScaleY = this.scale.y;
     const previousOffsetX = this.offset.x;
     const previousOffsetY = this.offset.y;
 
-    const previousPixelX = previousOffsetX + fixedWorldPoint.x * previousScaleX;
-    const previousPixelY = previousOffsetY - fixedWorldPoint.y * previousScaleY;
+    const previousPixelX = previousOffsetX + fixedWorldPoint.x * this.scale.x;
+    const previousPixelY = previousOffsetY - fixedWorldPoint.y * this.scale.y;
 
     const proportionX = previousPixelX / previousWidth;
     const proportionY = previousPixelY / previousHeight;
@@ -683,21 +681,11 @@ export class SceneInternal implements Renderer {
     const newPixelX = rectWidth * proportionX;
     const newPixelY = rectHeight * proportionY;
 
-    const newScaleX = previousScaleX;
-    const newScaleY = previousScaleY;
+    this.canvas.width = rectWidth * devicePixelRatio;
+    this.canvas.height = rectHeight * devicePixelRatio;
 
-    const newOffsetX = newPixelX - fixedWorldPoint.x * newScaleX;
-    const newOffsetY = newPixelY + fixedWorldPoint.y * newScaleY;
-
-    const newWidth = rectWidth * devicePixelRatio;
-    const newHeight = rectHeight * devicePixelRatio;
-
-    this.canvas.width = newWidth;
-    this.canvas.height = newHeight;
-    this.scale.x = newScaleX;
-    this.scale.y = newScaleY;
-    this.offset.x = newOffsetX;
-    this.offset.y = newOffsetY;
+    this.offset.x = newPixelX - fixedWorldPoint.x * this.scale.x;
+    this.offset.y = newPixelY + fixedWorldPoint.y * this.scale.y;
   }
 
   /**

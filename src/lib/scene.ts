@@ -59,7 +59,7 @@ export class Scene implements Renderer {
   }
 
   /**
-   * Adjust offset and scale to match updated canvas shape.
+   * Adjust offset and canvas properties to match updated canvas shape.
    *
    * @param fixedWorldPoint Optional world point to preserve relative to the
    * canvas frame. Defaults to the world origin (0,0).

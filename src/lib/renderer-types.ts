@@ -48,8 +48,8 @@ export interface Renderer {
   canvas: HTMLCanvasElement;
 
   /**
-   * After the canvas changes size, this method instructs the Scene to adjust
-   * the scale and offset to accommodate the new shape.
+   * After the canvas changes shape, this method instructs the Scene to adjust
+   * the offset and canvas properties (width, height) to accommodate.
    *
    * @param fixedWorldPoint Optional world point to preserve relative to the
    * canvas frame. Defaults to the world origin (0,0).
