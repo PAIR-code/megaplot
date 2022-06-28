@@ -27,7 +27,7 @@ export interface HitTestParameters {
   /**
    * List of candidate sprites to test.
    */
-  sprites: Sprite[];
+  sprites: readonly Sprite[];
 
   /**
    * X coordinate in pixels relative to the renderable area (canvas) of the
