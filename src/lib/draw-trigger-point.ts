@@ -30,7 +30,15 @@ export class DrawTriggerPoint {
     return this.xValue;
   }
 
+  /**
+   * Sets the x coordinate of this point.
+   * @param x The x value to set (cannot be NaN).
+   * @throws RangeError If the x value passed is NaN.
+   */
   set x(x: number) {
+    if (isNaN(+x)) {
+      throw new RangeError('x cannot be NaN');
+    }
     this.xValue = x;
     this.coordinator.queueDraw();
   }
@@ -39,7 +47,15 @@ export class DrawTriggerPoint {
     return this.yValue;
   }
 
+  /**
+   * Sets the y coordinate of this point.
+   * @param y The y value to set (cannot be NaN).
+   * @throws RangeError If the y value passed is NaN.
+   */
   set y(y: number) {
+    if (isNaN(+y)) {
+      throw new RangeError('y cannot be NaN');
+    }
     this.yValue = y;
     this.coordinator.queueDraw();
   }
