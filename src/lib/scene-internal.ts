@@ -83,15 +83,19 @@ export class SceneInternal implements Renderer {
 
   /**
    * Number of screen pixels to one world unit in the X and Y dimensions. When
-   * the x or y values are set, queueDraw() will be called.
+   * the x or y values are set, handleViewChange() will be called.
+   *
+   * The scale and offset contribute to the view.
    */
-  scale = new CallbackTriggerPoint(() => this.queueDraw());
+  scale = new CallbackTriggerPoint(() => this.handleViewChange());
 
   /**
-   * Offset (camera) coordinates. When the x or y values are set, queueDraw()
-   * will be called.
+   * Offset (camera) coordinates. When the x or y values are set,
+   * handleViewChange() will be called.
+   *
+   * The scale and offset contribute to the view.
    */
-  offset = new CallbackTriggerPoint(() => this.queueDraw());
+  offset = new CallbackTriggerPoint(() => this.handleViewChange());
 
   /**
    * Collection of Sprites that have been created and have swatches
@@ -430,7 +434,7 @@ export class SceneInternal implements Renderer {
   /**
    * Track whether scale and offset have been initialized.
    */
-  private isScaleInitialized = false;
+  private isViewInitialized = false;
 
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
@@ -488,7 +492,10 @@ export class SceneInternal implements Renderer {
       ],
     });
 
-    this.initScaleAndOffset();
+    // Initialize the scale and offset, which contribute to the view, if
+    // possible. If the canvas has zero width or height (for example if it is
+    // not attached to the DOM), then these properties will not be initialized.
+    this.initView();
 
     // The attribute mapper is responsible for keeping track of how to shuttle
     // data between the Sprite state representation, and data values in
@@ -659,8 +666,8 @@ export class SceneInternal implements Renderer {
    * Initialize the scale and offset of the Scene if possible. If the canvas has
    * zero width or height, then the scale and offset will not be initialized.
    */
-  private initScaleAndOffset() {
-    if (this.isScaleInitialized) {
+  private initView() {
+    if (this.isViewInitialized) {
       return;
     }
 
@@ -680,7 +687,16 @@ export class SceneInternal implements Renderer {
     this.offset.x = width / 2;
     this.offset.y = height / 2;
 
-    this.isScaleInitialized = true;
+    this.isViewInitialized = true;
+  }
+
+  /**
+   * The view is determined by the scale and offset. When any component of scale
+   * or offset is changed, this method is invoked.
+   */
+  private handleViewChange() {
+    this.isViewInitialized = true;
+    this.queueDraw();
   }
 
   /**
