@@ -427,6 +427,11 @@ export class SceneInternal implements Renderer {
    */
   private readonly runCallbacksTaskId = Symbol('runCallbacksTask');
 
+  /**
+   * Track whether scale and offset have been initialized.
+   */
+  private isScaleInitialized = false;
+
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
     const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
@@ -483,13 +488,7 @@ export class SceneInternal implements Renderer {
       ],
     });
 
-    // Initialize scale and offset to put world 0,0 in the center.
-    const defaultScale = Math.min(width, height) || Math.max(width, height) ||
-        Math.min(window.innerWidth, window.innerHeight);
-    this.scale.x = defaultScale;
-    this.scale.y = defaultScale;
-    this.offset.x = width / 2;
-    this.offset.y = height / 2;
+    this.initScaleAndOffset();
 
     // The attribute mapper is responsible for keeping track of how to shuttle
     // data between the Sprite state representation, and data values in
@@ -657,6 +656,34 @@ export class SceneInternal implements Renderer {
   }
 
   /**
+   * Initialize the scale and offset of the Scene if possible. If the canvas has
+   * zero width or height, then the scale and offset will not be initialized.
+   */
+  private initScaleAndOffset() {
+    if (this.isScaleInitialized) {
+      return;
+    }
+
+    const bounds = this.canvas.getBoundingClientRect();
+    const width = bounds.right - bounds.left;
+    const height = bounds.bottom - bounds.top;
+
+    if (!width || !height) {
+      return;
+    }
+
+    // Initialize scale and offset to put world 0,0 in the center.
+    const defaultScale = Math.min(width, height) || Math.max(width, height) ||
+        Math.min(window.innerWidth, window.innerHeight);
+    this.scale.x = defaultScale;
+    this.scale.y = defaultScale;
+    this.offset.x = width / 2;
+    this.offset.y = height / 2;
+
+    this.isScaleInitialized = true;
+  }
+
+  /**
    * Adjust the offset and canvas properties to match the updated canvas shape.
    *
    * @param fixedWorldPoint Point in world coordinates which remains fixed
@@ -665,11 +692,9 @@ export class SceneInternal implements Renderer {
   resize(fixedWorldPoint: {x: number, y: number} = ORIGIN) {
     const previousWidth = this.canvas.width / devicePixelRatio;
     const previousHeight = this.canvas.height / devicePixelRatio;
-    const previousOffsetX = this.offset.x;
-    const previousOffsetY = this.offset.y;
 
-    const previousPixelX = previousOffsetX + fixedWorldPoint.x * this.scale.x;
-    const previousPixelY = previousOffsetY - fixedWorldPoint.y * this.scale.y;
+    const previousPixelX = this.offset.x + fixedWorldPoint.x * this.scale.x;
+    const previousPixelY = this.offset.y - fixedWorldPoint.y * this.scale.y;
 
     const proportionX = previousPixelX / previousWidth;
     const proportionY = previousPixelY / previousHeight;
@@ -686,6 +711,8 @@ export class SceneInternal implements Renderer {
 
     this.offset.x = newPixelX - fixedWorldPoint.x * this.scale.x;
     this.offset.y = newPixelY + fixedWorldPoint.y * this.scale.y;
+
+    this.queueDraw();
   }
 
   /**
