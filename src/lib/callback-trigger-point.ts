@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 /**
- * @fileoverview A DrawTriggerPoint object maintains an x and y coordinate pair
- * and invokes the coordinator object's queueDraw() whenever either are set.
- * Used for the offset and scale properties.
+ * @fileoverview A CallbackTriggerPoint object maintains an x and y coordinate
+ * pair and invokes a provided callback whenever either are set. Used for the
+ * offset and scale properties.
  */
 
-export class DrawTriggerPoint {
+export class CallbackTriggerPoint {
   private xValue = 0;
   private yValue = 0;
 
-  constructor(private readonly coordinator: {queueDraw: () => void;}) {}
+  constructor(private readonly callbackFn: () => unknown) {}
 
   get x(): number {
     return this.xValue;
@@ -40,7 +40,7 @@ export class DrawTriggerPoint {
       throw new RangeError('x cannot be NaN');
     }
     this.xValue = x;
-    this.coordinator.queueDraw();
+    this.callbackFn();
   }
 
   get y(): number {
@@ -57,6 +57,6 @@ export class DrawTriggerPoint {
       throw new RangeError('y cannot be NaN');
     }
     this.yValue = y;
-    this.coordinator.queueDraw();
+    this.callbackFn();
   }
 }

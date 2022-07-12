@@ -20,11 +20,11 @@
 import REGL from 'regl';
 
 import {AttributeMapper} from './attribute-mapper';
+import {CallbackTriggerPoint} from './callback-trigger-point';
 import {setupDrawCommand} from './commands/setup-draw-command';
 import {setupHitTestCommand} from './commands/setup-hit-test-command';
 import {setupRebaseCommand} from './commands/setup-rebase-command';
 import {DEFAULT_SCENE_SETTINGS, SceneSettings} from './default-scene-settings';
-import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
 import {HitTestParameters} from './hit-test-types';
@@ -85,13 +85,13 @@ export class SceneInternal implements Renderer {
    * Number of screen pixels to one world unit in the X and Y dimensions. When
    * the x or y values are set, queueDraw() will be called.
    */
-  scale = new DrawTriggerPoint(this);
+  scale = new CallbackTriggerPoint(() => this.queueDraw());
 
   /**
    * Offset (camera) coordinates. When the x or y values are set, queueDraw()
    * will be called.
    */
-  offset = new DrawTriggerPoint(this);
+  offset = new CallbackTriggerPoint(() => this.queueDraw());
 
   /**
    * Collection of Sprites that have been created and have swatches

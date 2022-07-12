@@ -15,80 +15,64 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Tests for the Scene.
+ * @fileoverview Tests for the CallbackTriggerPoint.
  */
 
-import {DrawTriggerPoint} from '../src/lib/draw-trigger-point';
+import {CallbackTriggerPoint} from '../src/lib/callback-trigger-point';
 
-describe('DrawTriggerPoint', () => {
+describe('CallbackTriggerPoint', () => {
   it('should exist', () => {
-    expect(DrawTriggerPoint).toBeInstanceOf(Function);
+    expect(CallbackTriggerPoint).toBeInstanceOf(Function);
   });
 
   describe('x', () => {
     it('should should trigger a draw when setting x coordinate', () => {
-      const coordinator = {
-        triggerCount: 0,
-        queueDraw: function() {
-          this.triggerCount++;
-        },
-      };
+      let triggerCount = 0;
+      const callbackFn = () => triggerCount++;
 
-      const point = new DrawTriggerPoint(coordinator);
+      const point = new CallbackTriggerPoint(callbackFn);
 
       point.x = 5;
 
-      expect(coordinator.triggerCount).toBe(1);
+      expect(triggerCount).toBe(1);
       expect(point.x).toBe(5);
     });
 
     it('should throw when attempting to set x coordinate to NaN', () => {
-      const coordinator = {
-        triggerCount: 0,
-        queueDraw: function() {
-          this.triggerCount++;
-        },
-      };
+      let triggerCount = 0;
+      const callbackFn = () => triggerCount++;
 
-      const point = new DrawTriggerPoint(coordinator);
+      const point = new CallbackTriggerPoint(callbackFn);
 
       expect(() => point.x = +'banana').toThrowError(RangeError);
 
-      expect(coordinator.triggerCount).toBe(0);
+      expect(triggerCount).toBe(0);
       expect(point.x).toBe(0);
     });
   });
 
   describe('y', () => {
     it('should should trigger a draw when setting y coordinate', () => {
-      const coordinator = {
-        triggerCount: 0,
-        queueDraw: function() {
-          this.triggerCount++;
-        },
-      };
+      let triggerCount = 0;
+      const callbackFn = () => triggerCount++;
 
-      const point = new DrawTriggerPoint(coordinator);
+      const point = new CallbackTriggerPoint(callbackFn);
 
       point.y = 9;
 
-      expect(coordinator.triggerCount).toBe(1);
+      expect(triggerCount).toBe(1);
       expect(point.y).toBe(9);
     });
 
     it('should throw when attempting to set y coordinate to NaN', () => {
-      const coordinator = {
-        triggerCount: 0,
-        queueDraw: function() {
-          this.triggerCount++;
-        },
-      };
+      let triggerCount = 0;
+      const callbackFn = () => triggerCount++;
 
-      const point = new DrawTriggerPoint(coordinator);
+      const point = new CallbackTriggerPoint(callbackFn);
 
       expect(() => point.y = +'clover').toThrowError(RangeError);
 
-      expect(coordinator.triggerCount).toBe(0);
+      expect(triggerCount).toBe(0);
       expect(point.x).toBe(0);
     });
   });
