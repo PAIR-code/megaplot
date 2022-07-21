@@ -305,9 +305,10 @@ describe('Scene', () => {
       // both size and shape.
       container.style.width = '200px';
 
-      // Resize preserving world point (1,-1), the bottom-right corner, which
-      // would be at pixel coordinates 100,100.
-      scene.resize({x: 1, y: -1});
+      // Resize preserving old canvas point (100,100), which was previously the
+      // bottom-right corner when the canvas was 100x100 square. This equates to
+      // world coordinates (1,-1).
+      scene.resize({x: 100, y: 100});
 
       // Canvas should fill container.
       expect(canvas.width).toEqual(200 * devicePixelRatio);
@@ -324,8 +325,10 @@ describe('Scene', () => {
       container.style.width = '100px';
       container.style.height = '200px';
 
-      // Resize preserving world point (1,-1), the bottom-right corner.
-      scene.resize({x: 1, y: -1});
+      // Resize preserving old canvas point (200,100), which was previously the
+      // bottom-right corner when the canvas was 200x100 stretched. As with the
+      // previous resize, this equates to world coordinates (1,-1).
+      scene.resize({x: 200, y: 100});
 
       // Canvas should fill container.
       expect(canvas.width).toEqual(100 * devicePixelRatio);

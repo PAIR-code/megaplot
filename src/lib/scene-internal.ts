@@ -57,8 +57,6 @@ import {WorkTaskId} from './work-task';
  */
 const STEPS_BETWEEN_REMAINING_TIME_CHECKS = 500;
 
-const ORIGIN = Object.freeze({x: 0, y: 0});
-
 export class SceneInternal implements Renderer {
   /**
    * Container element to pass to Regl for rendering. Regl will place a canvas
@@ -701,32 +699,38 @@ export class SceneInternal implements Renderer {
 
   /**
    * Adjust the offset and canvas properties to match the updated canvas shape.
+   * This operation does not affect the scale of the Scene, the relationship
+   * between world coordinate size and pixels.
    *
-   * @param fixedWorldPoint Point in world coordinates which remains fixed
-   * proportionally to the canvas frame. Defaults to the origin (0,0).
+   * The optional fixedCanvasPoint will remain stationary before and after the
+   * resizing operation. For example, (0,0) would preserve the top left corner.
+   * If left unspecified, the center point will be preserved.
+   *
+   * @param fixedCanvasPoint Point in canvas coordinates which remains fixed
+   * after resize (defaults to center).
    */
-  resize(fixedWorldPoint: {x: number, y: number} = ORIGIN) {
+  resize(fixedCanvasPoint?: {x: number, y: number}) {
     const previousWidth = this.canvas.width / devicePixelRatio;
     const previousHeight = this.canvas.height / devicePixelRatio;
 
-    const previousPixelX = this.offset.x + fixedWorldPoint.x * this.scale.x;
-    const previousPixelY = this.offset.y - fixedWorldPoint.y * this.scale.y;
+    fixedCanvasPoint =
+        fixedCanvasPoint || {x: previousWidth / 2, y: previousHeight / 2};
 
-    const proportionX = previousPixelX / previousWidth;
-    const proportionY = previousPixelY / previousHeight;
+    // Avoid NaN on division by checking first.
+    const proportionX =
+        previousWidth > 0 ? fixedCanvasPoint.x / previousWidth : .5;
+    const proportionY =
+        previousHeight > 0 ? fixedCanvasPoint.y / previousHeight : .5;
 
     const canvasRect = this.canvas.getBoundingClientRect();
     const rectWidth = canvasRect.right - canvasRect.left;
     const rectHeight = canvasRect.bottom - canvasRect.top;
 
-    const newPixelX = rectWidth * proportionX;
-    const newPixelY = rectHeight * proportionY;
-
     this.canvas.width = rectWidth * devicePixelRatio;
     this.canvas.height = rectHeight * devicePixelRatio;
 
-    this.offset.x = newPixelX - fixedWorldPoint.x * this.scale.x;
-    this.offset.y = newPixelY + fixedWorldPoint.y * this.scale.y;
+    this.offset.x += proportionX * (rectWidth - previousWidth);
+    this.offset.y += proportionY * (rectHeight - previousHeight);
 
     this.queueDraw();
   }
