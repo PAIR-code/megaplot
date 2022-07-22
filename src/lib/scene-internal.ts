@@ -677,6 +677,9 @@ export class SceneInternal implements Renderer {
       return;
     }
 
+    this.canvas.width = width * devicePixelRatio;
+    this.canvas.height = height * devicePixelRatio;
+
     // Initialize scale and offset to put world 0,0 in the center.
     const defaultScale = Math.min(width, height) || Math.max(width, height) ||
         Math.min(window.innerWidth, window.innerHeight);
@@ -710,6 +713,12 @@ export class SceneInternal implements Renderer {
    * after resize (defaults to center).
    */
   resize(fixedCanvasPoint?: {x: number, y: number}) {
+    // Initialize view if it hasn't been initialized already.
+    if (!this.isViewInitialized) {
+      this.initView();
+      return;
+    }
+
     const previousWidth = this.canvas.width / devicePixelRatio;
     const previousHeight = this.canvas.height / devicePixelRatio;
 
@@ -781,6 +790,9 @@ export class SceneInternal implements Renderer {
   }
 
   doDraw() {
+    // Initialize view if it hasn't been already.
+    this.initView();
+
     const currentTimeMs = this.elapsedTimeMs();
 
     this.drawCommand();

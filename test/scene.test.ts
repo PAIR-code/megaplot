@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,14 +154,58 @@ describe('Scene', () => {
 });
 
 describe('Scene', () => {
+  describe('initialization', () => {
+    const section = createSection('Scene initialization');
+    const sectionContent = section.querySelector('.content')!;
+
+    it('should delay initalizing view until canvas has non-zero size', () => {
+      // Initialize container with zero size.
+      const container = document.createElement('div');
+      container.style.width = '0';
+      container.style.height = '0';
+      sectionContent.appendChild(container);
+
+      const timingFunctionsShim = new TimingFunctionsShim();
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      // Scene view (offset and scale) should be uninitialized.
+      expect(scene.offset.x).toEqual(0);
+      expect(scene.offset.y).toEqual(0);
+      expect(scene.scale.x).toEqual(0);
+      expect(scene.scale.y).toEqual(0);
+
+      // Expand container to have positive size.
+      container.style.width = '20px';
+      container.style.height = '20px';
+
+      // Trigger scene resize, which in turn causes view initialization.
+      scene.resize();
+
+      // Scene view should now be initialized.
+      expect(scene.offset.x).toEqual(10);
+      expect(scene.offset.y).toEqual(10);
+      expect(scene.scale.x).toEqual(20);
+      expect(scene.scale.y).toEqual(20);
+    });
+  });
+});
+
+describe('Scene', () => {
   describe('resize()', () => {
     const section = createSection('Scene::resize()');
+    const sectionContent = section.querySelector('.content')!;
 
     describe('horizontal', () => {
       const container = document.createElement('div');
       container.style.width = '100px';
       container.style.height = '100px';
-      section.querySelector('.content')!.appendChild(container);
+      sectionContent.appendChild(container);
 
       const timingFunctionsShim = new TimingFunctionsShim();
 
@@ -220,7 +264,7 @@ describe('Scene', () => {
       const container = document.createElement('div');
       container.style.width = '100px';
       container.style.height = '100px';
-      section.querySelector('.content')!.appendChild(container);
+      sectionContent.appendChild(container);
 
       const timingFunctionsShim = new TimingFunctionsShim();
 
@@ -279,7 +323,7 @@ describe('Scene', () => {
       const container = document.createElement('div');
       container.style.width = '100px';
       container.style.height = '100px';
-      section.querySelector('.content')!.appendChild(container);
+      sectionContent.appendChild(container);
 
       const timingFunctionsShim = new TimingFunctionsShim();
 
