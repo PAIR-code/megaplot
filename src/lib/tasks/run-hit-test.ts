@@ -93,7 +93,7 @@ export function runHitTest(coordinator: CoordinatorAPI): void {
       indexActive.subarray(0, coordinator.hitTestCount * 2));
 
   // Invoke the hit test command.
-  coordinator.hitTestCommand();
+  coordinator.hitTestCommand.apply(null);
 
   const readHeight = Math.ceil(
       coordinator.hitTestCount /

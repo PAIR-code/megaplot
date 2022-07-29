@@ -456,12 +456,15 @@ export class SceneInternal implements Renderer {
     }
 
     const regl = this.regl = createREGL({
-      container: this.container,
-      extensions: [
+      'container': this.container,
+      'extensions': [
         'angle_instanced_arrays',
         'OES_texture_float',
         'OES_texture_float_linear',
       ],
+      'attributes': {
+        'preserveDrawingBuffer': false,
+      },
     });
 
     const insertedChildren =
@@ -694,7 +697,7 @@ export class SceneInternal implements Renderer {
   doDraw() {
     const currentTimeMs = this.elapsedTimeMs();
 
-    this.drawCommand();
+    this.drawCommand.apply(null);
 
     if (this.toDrawTsRange.isDefined) {
       this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
@@ -713,7 +716,7 @@ export class SceneInternal implements Renderer {
    * the canvas to convert it to a blob.
    */
   async snapshot(): Promise<Blob> {
-    this.drawCommand();
+    this.drawCommand.apply(null);
     return new Promise((resolve, reject) => {
       this.canvas.toBlob(blob => {
         blob ? resolve(blob) : reject(blob);
