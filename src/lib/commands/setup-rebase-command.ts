@@ -47,17 +47,19 @@ interface CoordinatorAPI {
  */
 export function setupRebaseCommand(
     coordinator: CoordinatorAPI,
-    ): REGL.DrawCommand {
-  const {regl, attributeMapper} = coordinator;
+    ): () => void {
+  // Calling regl() requires a DrawConfig and returns a DrawCommand. The
+  // property names are used in dynamically compiled code using the native
+  // Function constructor, and therefore need to remain unchanged by JavaScript
+  // minifiers/uglifiers.
+  const drawConfig: REGL.DrawConfig = {
+    'frag': fragmentShader(coordinator.attributeMapper),
 
-  return regl({
-    frag: fragmentShader(attributeMapper),
+    'vert': vertexShader(coordinator.attributeMapper),
 
-    vert: vertexShader(attributeMapper),
-
-    attributes: {
+    'attributes': {
       // Corners and uv coords of the rectangle, same for each sprite.
-      vertexCoordinates: [
+      'vertexCoordinates': [
         [-0.5, -0.5],
         [0.5, -0.5],
         [-0.5, 0.5],
@@ -65,22 +67,29 @@ export function setupRebaseCommand(
       ],
 
       // Instance swatch UV coordinates.
-      instanceRebaseUv: {
-        buffer: () => coordinator.instanceRebaseUvBuffer,
-        divisor: 1,
+      'instanceRebaseUv': {
+        'buffer': () => coordinator.instanceRebaseUvBuffer,
+        'divisor': 1,
       },
     },
 
-    uniforms: {
-      ts: () => coordinator.elapsedTimeMs(),
-      targetValuesTexture: coordinator.targetValuesTexture,
-      previousValuesTexture: coordinator.previousValuesTexture,
+    'uniforms': {
+      'ts': () => coordinator.elapsedTimeMs(),
+      'targetValuesTexture': coordinator.targetValuesTexture,
+      'previousValuesTexture': coordinator.previousValuesTexture,
     },
 
-    primitive: 'triangle strip',
-    count: 4,                                  // Only four vertices in total.
-    instances: () => coordinator.rebaseCount,  // But many sprite instances.
+    'primitive': 'triangle strip',
+    'count': 4,                                  // Only four vertices in total.
+    'instances': () => coordinator.rebaseCount,  // But many sprite instances.
 
-    framebuffer: () => coordinator.previousValuesFramebuffer,
-  });
+    'framebuffer': () => coordinator.previousValuesFramebuffer,
+  };
+
+  const drawCommand = coordinator.regl(drawConfig);
+
+  // Wrapping ensures that the caller will not pass in `this`.
+  return () => {
+    drawCommand();
+  };
 }

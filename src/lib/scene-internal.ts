@@ -392,17 +392,17 @@ export class SceneInternal implements Renderer {
   /**
    * Regl command to capture the current value and velocity of attributes.
    */
-  readonly rebaseCommand: REGL.DrawCommand;
+  readonly rebaseCommand: () => void;
 
   /**
    * Regl command to render the current world to the viewable canvas.
    */
-  private readonly drawCommand: REGL.DrawCommand;
+  private readonly drawCommand: () => void;
 
   /**
    * Regl command to capture the current hit test values.
    */
-  hitTestCommand: REGL.DrawCommand;
+  hitTestCommand: () => void;
 
   /**
    * Task id to uniquely identify the removal task.
@@ -456,8 +456,11 @@ export class SceneInternal implements Renderer {
     }
 
     const regl = this.regl = createREGL({
-      container: this.container,
-      extensions: [
+      'attributes': {
+        'preserveDrawingBuffer': true,
+      },
+      'container': this.container,
+      'extensions': [
         'angle_instanced_arrays',
         'OES_texture_float',
         'OES_texture_float_linear',
@@ -713,7 +716,6 @@ export class SceneInternal implements Renderer {
    * the canvas to convert it to a blob.
    */
   async snapshot(): Promise<Blob> {
-    this.drawCommand();
     return new Promise((resolve, reject) => {
       this.canvas.toBlob(blob => {
         blob ? resolve(blob) : reject(blob);

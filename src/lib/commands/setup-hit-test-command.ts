@@ -50,19 +50,22 @@ interface CoordinatorAPI {
  *
  * @param coordinator Upstream renderer implementation.
  */
-export function setupHitTestCommand(
-    coordinator: CoordinatorAPI,
-    ): REGL.DrawCommand {
-  const {regl, attributeMapper, hitTestAttributeMapper} = coordinator;
+export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
+  // Calling regl() requires a DrawConfig and returns a DrawCommand. The
+  // property names are used in dynamically compiled code using the native
+  // Function constructor, and therefore need to remain unchanged by JavaScript
+  // minifiers/uglifiers.
+  const drawConfig: REGL.DrawConfig = {
+    'frag': fragmentShader(),
 
-  return regl({
-    frag: fragmentShader(),
+    'vert': vertexShader(
+        coordinator.hitTestAttributeMapper,
+        coordinator.attributeMapper,
+        ),
 
-    vert: vertexShader(hitTestAttributeMapper, attributeMapper),
-
-    attributes: {
+    'attributes': {
       // Corners and UV coords of the rectangle, same for each sprite.
-      vertexCoordinates: [
+      'vertexCoordinates': [
         [-0.5, -0.5],
         [0.5, -0.5],
         [-0.5, 0.5],
@@ -71,44 +74,51 @@ export function setupHitTestCommand(
 
       // Swatch UV coordinates for retrieving previous and target texture
       // values.
-      inputUv: {
-        buffer: () => coordinator.instanceHitTestInputUvBuffer,
-        divisor: 1,
+      'inputUv': {
+        'buffer': () => coordinator.instanceHitTestInputUvBuffer,
+        'divisor': 1,
       },
 
       // Index and active flag for each Sprite.
-      indexActive: {
-        buffer: () => coordinator.instanceHitTestInputIndexActiveBuffer,
-        divisor: 1,
+      'indexActive': {
+        'buffer': () => coordinator.instanceHitTestInputIndexActiveBuffer,
+        'divisor': 1,
       },
 
       // Output UVs for where to write the result.
-      outputUv: {
-        buffer: coordinator.instanceHitTestOutputUvBuffer,
-        divisor: 1,
+      'outputUv': {
+        'buffer': coordinator.instanceHitTestOutputUvBuffer,
+        'divisor': 1,
       },
     },
 
-    uniforms: {
-      ts: () => coordinator.elapsedTimeMs(),
-      capacity: () => coordinator.hitTestAttributeMapper.totalSwatches,
-      hitTestCoordinates: () => ([
+    'uniforms': {
+      'ts': () => coordinator.elapsedTimeMs(),
+      'capacity': () => coordinator.hitTestAttributeMapper.totalSwatches,
+      'hitTestCoordinates': () => ([
         coordinator.hitTestParameters.x,
         coordinator.hitTestParameters.y,
         coordinator.hitTestParameters.width,
         coordinator.hitTestParameters.height,
       ]),
-      inclusive: () => !!coordinator.hitTestParameters.inclusive,
-      viewMatrix: () => coordinator.getViewMatrix(),
-      viewMatrixScale: () => coordinator.getViewMatrixScale(),
-      targetValuesTexture: coordinator.targetValuesTexture,
-      previousValuesTexture: coordinator.previousValuesTexture,
+      'inclusive': () => !!coordinator.hitTestParameters.inclusive,
+      'viewMatrix': () => coordinator.getViewMatrix(),
+      'viewMatrixScale': () => coordinator.getViewMatrixScale(),
+      'targetValuesTexture': coordinator.targetValuesTexture,
+      'previousValuesTexture': coordinator.previousValuesTexture,
     },
 
-    primitive: 'triangle strip',
-    count: 4,                                   // Only four vertices in total.
-    instances: () => coordinator.hitTestCount,  // But many sprite instances.
+    'primitive': 'triangle strip',
+    'count': 4,                                   // Only four vertices.
+    'instances': () => coordinator.hitTestCount,  // Many sprite instances.
 
-    framebuffer: () => coordinator.hitTestOutputValuesFramebuffer,
-  });
+    'framebuffer': () => coordinator.hitTestOutputValuesFramebuffer,
+  };
+
+  const drawCommand = coordinator.regl(drawConfig);
+
+  // Wrapping ensures that the caller will not pass in `this`.
+  return () => {
+    drawCommand();
+  };
 }

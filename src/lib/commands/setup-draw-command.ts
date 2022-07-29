@@ -51,33 +51,35 @@ interface CoordinatorAPI {
  */
 export function setupDrawCommand(
     coordinator: CoordinatorAPI,
-    ): REGL.DrawCommand {
-  const regl = coordinator.regl;
-
-  return regl({
-    // TODO(jimbo): Expose a mechansim to allow the API user to override these.
-    blend: {
-      enable: true,
-      func: {
-        srcRGB: 'src alpha',
-        srcAlpha: 1,
-        dstRGB: 'one minus src alpha',
-        dstAlpha: 1
+    ): () => void {
+  // Calling regl() requires a DrawConfig and returns a DrawCommand. The
+  // property names are used in dynamically compiled code using the native
+  // Function constructor, and therefore need to remain unchanged by JavaScript
+  // minifiers/uglifiers.
+  const drawConfig: REGL.DrawConfig = {
+    // TODO(jimbo): Expose a mechanism to allow the API user to override these.
+    'blend': {
+      'enable': true,
+      'func': {
+        'srcRGB': 'src alpha',
+        'srcAlpha': 1,
+        'dstRGB': 'one minus src alpha',
+        'dstAlpha': 1
       },
-      equation: {
-        rgb: 'add',
-        alpha: 'add',
+      'equation': {
+        'rgb': 'add',
+        'alpha': 'add',
       },
-      color: [0, 0, 0, 0]
+      'color': [0, 0, 0, 0]
     },
 
-    frag: fragmentShader(),
+    'frag': fragmentShader(),
 
-    vert: vertexShader(coordinator.attributeMapper),
+    'vert': vertexShader(coordinator.attributeMapper),
 
-    attributes: {
+    'attributes': {
       // Corners and uv coords of the rectangle, same for each sprite.
-      vertexCoordinates: [
+      'vertexCoordinates': [
         [-0.5, -0.5, 0, 1],
         [0.5, -0.5, 1, 1],
         [-0.5, 0.5, 0, 0],
@@ -85,31 +87,46 @@ export function setupDrawCommand(
       ],
 
       // Swatch uv coordinates for retrieving data texture values.
-      instanceSwatchUv: {
-        buffer: coordinator.instanceSwatchUvBuffer,
-        divisor: 1,
+      'instanceSwatchUv': {
+        'buffer': coordinator.instanceSwatchUvBuffer,
+        'divisor': 1,
       },
 
       // Instance indices for computing default z-ordering.
-      instanceIndex: {
-        buffer: coordinator.instanceIndexBuffer,
-        divisor: 1,
+      'instanceIndex': {
+        'buffer': coordinator.instanceIndexBuffer,
+        'divisor': 1,
       },
     },
 
-    uniforms: {
-      ts: () => coordinator.elapsedTimeMs(),
-      instanceZ: () => 1 / (1 + coordinator.instanceCount),
-      viewMatrix: () => coordinator.getViewMatrix(),
-      viewMatrixScale: () => coordinator.getViewMatrixScale(),
-      projectionMatrix: context => coordinator.getProjectionMatrix(context),
-      sdfTexture: coordinator.sdfTexture,
-      previousValuesTexture: coordinator.previousValuesFramebuffer,
-      targetValuesTexture: coordinator.targetValuesTexture,
+    'uniforms': {
+      'ts': () => coordinator.elapsedTimeMs(),
+      'instanceZ': () => 1 / (1 + coordinator.instanceCount),
+      'viewMatrix': () => coordinator.getViewMatrix(),
+      'viewMatrixScale': () => coordinator.getViewMatrixScale(),
+      'projectionMatrix': (context: REGL.DefaultContext) => {
+        return coordinator.getProjectionMatrix(context);
+      },
+      'sdfTexture': coordinator.sdfTexture,
+      'previousValuesTexture': coordinator.previousValuesFramebuffer,
+      'targetValuesTexture': coordinator.targetValuesTexture,
     },
 
-    primitive: 'triangle strip',
-    count: 4,                                    // Only four vertices in total.
-    instances: () => coordinator.instanceCount,  // But many sprite instances.
-  });
+    'primitive': 'triangle strip',
+    'count': 4,                                    // Only four vertices.
+    'instances': () => coordinator.instanceCount,  // Many sprite instances.
+  };
+
+  const drawCommand = coordinator.regl(drawConfig);
+
+  return () => {
+    // Explicitly clear the drawing buffer before rendering.
+    coordinator.regl.clear({
+      'color': [0, 0, 0, 0],
+      'depth': 1,
+      'framebuffer': null,
+      'stencil': 0,
+    });
+    drawCommand.apply(null);
+  };
 }
