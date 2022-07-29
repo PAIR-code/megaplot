@@ -109,8 +109,8 @@ export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
     },
 
     'primitive': 'triangle strip',
-    'count': 4,  // Only four vertices in total.
-    'instances': () => coordinator.hitTestCount,  // But many sprite instances.
+    'count': 4,                                   // Only four vertices.
+    'instances': () => coordinator.hitTestCount,  // Many sprite instances.
 
     'framebuffer': () => coordinator.hitTestOutputValuesFramebuffer,
   };
