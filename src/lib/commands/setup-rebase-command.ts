@@ -89,5 +89,7 @@ export function setupRebaseCommand(
   const drawCommand = coordinator.regl(drawConfig);
 
   // Wrapping ensures that the caller will not pass in `this`.
-  return () => drawCommand();
+  return () => {
+    drawCommand();
+  };
 }
