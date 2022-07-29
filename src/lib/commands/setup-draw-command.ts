@@ -51,7 +51,7 @@ interface CoordinatorAPI {
  */
 export function setupDrawCommand(
     coordinator: CoordinatorAPI,
-    ): REGL.DrawCommand {
+    ): () => void {
   // Calling regl() requires a DrawConfig and returns a DrawCommand. The
   // property names are used in dynamically compiled code using the native
   // Function constructor, and therefore need to remain unchanged by JavaScript
@@ -117,5 +117,16 @@ export function setupDrawCommand(
     'instances': () => coordinator.instanceCount,  // Many sprite instances.
   };
 
-  return coordinator.regl(drawConfig);
+  const drawCommand = coordinator.regl(drawConfig);
+
+  return () => {
+    // Explicitly clear the drawing buffer before rendering.
+    coordinator.regl.clear({
+      'color': [0, 0, 0, 0],
+      'depth': 1,
+      'framebuffer': null,
+      'stencil': 0,
+    });
+    drawCommand.apply(null);
+  };
 }

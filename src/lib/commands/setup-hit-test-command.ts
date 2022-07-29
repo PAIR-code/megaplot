@@ -50,9 +50,7 @@ interface CoordinatorAPI {
  *
  * @param coordinator Upstream renderer implementation.
  */
-export function setupHitTestCommand(
-    coordinator: CoordinatorAPI,
-    ): REGL.DrawCommand {
+export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
   // Calling regl() requires a DrawConfig and returns a DrawCommand. The
   // property names are used in dynamically compiled code using the native
   // Function constructor, and therefore need to remain unchanged by JavaScript
@@ -117,5 +115,8 @@ export function setupHitTestCommand(
     'framebuffer': () => coordinator.hitTestOutputValuesFramebuffer,
   };
 
-  return coordinator.regl(drawConfig);
+  const drawCommand = coordinator.regl(drawConfig);
+
+  // Wrapping ensures that the caller will not pass in `this`.
+  return () => drawCommand();
 }

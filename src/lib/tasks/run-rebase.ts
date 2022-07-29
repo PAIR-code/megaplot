@@ -98,7 +98,7 @@ export function runRebase(coordinator: CoordinatorAPI): void {
 
   // Render using the rebase shader. This should leave intact any swatches
   // for sprites that are not being rebased.
-  coordinator.rebaseCommand.apply(null);
+  coordinator.rebaseCommand();
 
   // Flash values back to 'input' previous texture.
   coordinator.previousValuesFramebuffer.use(
