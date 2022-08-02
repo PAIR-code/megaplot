@@ -482,7 +482,7 @@ export class SceneInternal implements Renderer {
       'attributes': {
         'preserveDrawingBuffer': true,
       },
-      'container': this.container,
+      'canvas': this.canvas,
       'extensions': [
         'angle_instanced_arrays',
         'OES_texture_float',
