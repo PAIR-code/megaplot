@@ -170,6 +170,52 @@ describe('TimingFunctionsShim', () => {
   });
 
   describe('runAnimationFrameCallbacks', () => {
+    it('should advance multiple frames when frameCount is provided', () => {
+      const timingFunctionsShim = new TimingFunctionsShim();
+      const {requestAnimationFrame} = timingFunctionsShim;
+
+      let counter = 0;
+      const incrementAndQueue = () => {
+        counter++;
+        requestAnimationFrame(incrementAndQueue);
+      };
+
+      requestAnimationFrame(incrementAndQueue);
+      expect(counter).toBe(0);
+
+      timingFunctionsShim.runAnimationFrameCallbacks(100);
+      expect(counter).toBe(100);
+    });
+
+    it('should throw when frameCount is invalid', () => {
+      const timingFunctionsShim = new TimingFunctionsShim();
+      const {requestAnimationFrame} = timingFunctionsShim;
+
+      let counter = 0;
+      const incrementAndQueue = () => {
+        counter++;
+        requestAnimationFrame(incrementAndQueue);
+      };
+
+      requestAnimationFrame(incrementAndQueue);
+      expect(counter).toBe(0);
+
+      expect(() => {
+        timingFunctionsShim.runAnimationFrameCallbacks(0);
+      }).toThrow();
+      expect(() => {
+        timingFunctionsShim.runAnimationFrameCallbacks(-1);
+      }).toThrow();
+      expect(() => {
+        timingFunctionsShim.runAnimationFrameCallbacks(NaN);
+      }).toThrow();
+      expect(() => {
+        timingFunctionsShim.runAnimationFrameCallbacks(Infinity);
+      }).toThrow();
+
+      expect(counter).toBe(0);
+    });
+
     it('should not allow an error to prevent other callbacks', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
       const {requestAnimationFrame} = timingFunctionsShim;

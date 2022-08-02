@@ -32,6 +32,7 @@ import {vertexShader} from '../shaders/scene-vertex-shader';
  */
 interface CoordinatorAPI {
   attributeMapper: AttributeMapper;
+  canvas: HTMLCanvasElement;
   elapsedTimeMs: () => number;
   getProjectionMatrix: (context: ReglContext) => number[];
   getViewMatrix: () => number[];
@@ -72,6 +73,13 @@ export function setupDrawCommand(
       },
       'color': [0, 0, 0, 0]
     },
+
+    'viewport': () => ({
+      'x': 0,
+      'y': 0,
+      'width': coordinator.canvas.width,
+      'height': coordinator.canvas.height,
+    }),
 
     'frag': fragmentShader(),
 

@@ -20,12 +20,6 @@
  */
 
 /**
- * Casting setTimeout() here to satisfy obscure TypeScript compiler complaint
- * about missing '__promisify__' property.
- */
-export type ClearTimeoutType = (this: unknown, id: number) => void;
-
-/**
  * Generic Function which can be invoked as a callback.
  */
 export type CallbackFunctionType = (...args: unknown[]) => unknown;
@@ -36,14 +30,15 @@ export type CallbackFunctionType = (...args: unknown[]) => unknown;
  * should not be of interest to API consumers.
  */
 export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
-  requestAnimationFrame: window.requestAnimationFrame.bind(window),
-  cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
+  requestAnimationFrame: (callbackFn: FrameRequestCallback) =>
+      window.requestAnimationFrame(callbackFn),
+  cancelAnimationFrame: (handle: number) => window.cancelAnimationFrame(handle),
   setTimeout:
       (callbackFn: CallbackFunctionType, delay = 0, ...args: unknown[]) => {
         return window.setTimeout(callbackFn, delay, ...args);
       },
-  clearTimeout: window.clearTimeout.bind(window) as ClearTimeoutType,
-  now: Date.now.bind(Date),
+  clearTimeout: (id: number) => window.clearTimeout(id),
+  now: () => Date.now(),
 });
 
 /** Timing functions for WorkScheduler. */
@@ -57,7 +52,7 @@ export interface TimingFunctions {
       (callbackFn: CallbackFunctionType, delay?: number,
        ...args: unknown[]) => number;
   /** Function to clear a scheduled timeout. */
-  readonly clearTimeout: ClearTimeoutType;
+  readonly clearTimeout: (id: number) => void;
   /** Function to get number of milliseconds elapsed since 1 Jan 1970. */
-  readonly now: () => number;
+  readonly now: typeof Date.now;
 }

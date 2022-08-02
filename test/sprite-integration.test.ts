@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,22 @@ function filledColorArray(
     array[i] = fillColor[i % fillColor.length];
   }
   return array;
+}
+
+/**
+ * Compare two color arrays and return the proportion of matching pixels.
+ */
+function compareColorArrays(
+    actual: Uint8ClampedArray, expected: Uint8ClampedArray): number {
+  let matches = 0;
+  for (let i = 0; i < expected.length; i += 4) {
+    if (expected[i] === actual[i] && expected[i + 1] === actual[i + 1] &&
+        expected[i + 2] === actual[i + 2] &&
+        expected[i + 3] === actual[i + 3]) {
+      matches++;
+    }
+  }
+  return matches / (expected.length / 4);
 }
 
 describe('Sprite', () => {
@@ -229,7 +245,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(topLeftSample.data).toEqual(solidGreen);
+      expect(compareColorArrays(topLeftSample.data, solidGreen)).toEqual(1);
 
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
@@ -239,7 +255,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(bottomRightSample.data).toEqual(solidGreen);
+      expect(compareColorArrays(bottomRightSample.data, solidGreen)).toEqual(1);
 
       // Lastly, sample a chunk of the middle of the image and compare it to the
       // solid magenta patch.
@@ -249,7 +265,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(centerSample.data).toEqual(solidMagenta);
+      expect(compareColorArrays(centerSample.data, solidMagenta)).toEqual(1);
     });
   });
 
@@ -419,8 +435,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(topCenterSample.data.length).toEqual(pixelCount * 4);
-      expect(topCenterSample.data).toEqual(solidBlue);
+      expect(compareColorArrays(topCenterSample.data, solidBlue)).toEqual(1);
 
       const bottomCenterSample = ctx.getImageData(
           Math.floor(copy.width * .5 - sampleWidth * .5),
@@ -428,8 +443,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(bottomCenterSample.data.length).toEqual(pixelCount * 4);
-      expect(bottomCenterSample.data).toEqual(solidBlue);
+      expect(compareColorArrays(bottomCenterSample.data, solidBlue)).toEqual(1);
 
       const centerSample = ctx.getImageData(
           Math.floor(copy.width * .5 - sampleWidth * .5),
@@ -437,8 +451,7 @@ describe('Sprite', () => {
           sampleWidth,
           sampleHeight,
       );
-      expect(centerSample.data.length).toEqual(pixelCount * 4);
-      expect(centerSample.data).toEqual(solidYellow);
+      expect(compareColorArrays(centerSample.data, solidYellow)).toEqual(1);
     });
   });
 
