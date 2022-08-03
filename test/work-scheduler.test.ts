@@ -17,9 +17,9 @@
 /**
  * @fileoverview Tests for the WorkScheduler. Most tests use the
  * TimingFunctionsShim to emulate time passing synchronously. As a sanity check,
- * a few simple tests use native animation frames and timeouts. These later
- * tests require a live, visible, focused browser window or they'll time out
- * since animation frames do not run in a backgrounded browser.
+ * a few simple tests use native animation frames. These later tests require a
+ * live, visible, focused browser window or they'll time out since animation
+ * frames do not run in a backgrounded browser.
  */
 
 import {DEFAULT_TIMING_FUNCTIONS} from '../src/lib/default-timing-functions';
@@ -36,6 +36,20 @@ describe('WorkScheduler', () => {
     const workScheduler = new WorkScheduler({
       timingFunctions: timingFunctionsShim as {} as
           typeof DEFAULT_TIMING_FUNCTIONS
+    });
+
+    expect(typeof workScheduler).toBe('object');
+  });
+
+  it('should allow setting legacy timing functions', () => {
+    const workScheduler = new WorkScheduler({
+      timingFunctions: {
+        requestAnimationFrame: (_: FrameRequestCallback) => 0,
+        cancelAnimationFrame: (_: number) => {},
+        setTimeout: (_: (...args: unknown[]) => unknown) => 0,
+        clearTimeout: (_: number) => {},
+        now: () => 0,
+      }
     });
 
     expect(typeof workScheduler).toBe('object');
@@ -286,68 +300,6 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.runAnimationFrameCallbacks();
         expect(counterA).toBe(1);
         expect(counterB).toBe(1);
-      });
-
-      it('should run animationOnly=false tasks on timeout', () => {
-        const timingFunctionsShim = new TimingFunctionsShim();
-
-        timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-        const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
-          maxWorkTimeMs: 10,
-        });
-
-        // Define simple counting callback functons.
-        let counter = 0;
-        const incrementCounter = () => ++counter;
-
-        // By specifying a WorkTask object with animationOnly set to false, we
-        // expect this to run when timeouts execute, not just on animation
-        // frames..
-        workScheduler.scheduleTask({
-          callback: incrementCounter,
-          animationOnly: false,
-        });
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Run the timeouts. Callback should be invoked.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(counter).toBe(1);
-
-        // Since the incrementer has finished, running timer callbacks again
-        // should have no effect on the counter.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(counter).toBe(1);
-      });
-
-      it('should run callbacks using native timeouts', async () => {
-        const workScheduler = new WorkScheduler({maxWorkTimeMs: 10});
-
-        let counter = 0;
-        const incrementCounter = () => ++counter;
-
-        // By scheduling a WorkTask with animationOnly set to false, we expect
-        // this to run on timeouts, not just animation frames.
-        workScheduler.scheduleTask({
-          callback: incrementCounter,
-          animationOnly: false,
-        });
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Advance by 10ms. Callback should have been invoked.
-        await new Promise(resolve => window.setTimeout(resolve, 10));
-        expect(counter).toBe(1);
-
-        // Since the incrementer has finished, additional passing time should
-        // not cause the incrementer to run.
-        await new Promise(resolve => window.setTimeout(resolve, 10));
-        expect(counter).toBe(1);
       });
 
       it('should preserve other callbacks even if one throws', () => {

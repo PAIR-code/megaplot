@@ -22,41 +22,51 @@
 /**
  * Generic Function which can be invoked as a callback.
  */
-export type CallbackFunctionType = (...args: unknown[]) => unknown;
+// export type CallbackFunctionType = (...args: unknown[]) => unknown;
+
+/**
+ * Timing functions for WorkScheduler.
+ */
+export interface TimingFunctions {
+  /**
+   * Function that updates an animation before the browser's next repaint.
+   */
+  readonly requestAnimationFrame: (callback: FrameRequestCallback) => number;
+
+  /**
+   * Function to cancel a scehduled animation frame.
+   */
+  readonly cancelAnimationFrame: (handle: number) => void;
+
+  /**
+   * Function to get number of milliseconds elapsed since 1 Jan 1970.
+   */
+  readonly now: typeof Date.now;
+}
+
+/**
+ * For compatibility during migration, allow callers to supply setTimout()
+ * and/or clearTimeout() implementations even though neither are used by
+ * Megaplot. In the future, specifying these properties will trigger TypeScript
+ * compilation errors.
+ */
+export interface LegacyTimingFunctions extends TimingFunctions {
+  setTimeout?: (callback: ((...args: unknown[]) => unknown)) => void;
+  clearTimeout?: (id: number) => void;
+}
 
 /**
  * To enhance testability, the timing functions are constructor parameters to
- * the WorkScheduler. This is exported for testing purposes, but generally
+ * the WorkScheduler. This is exported only for testing purposes, and generally
  * should not be of interest to API consumers.
  */
-export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
+export const DEFAULT_TIMING_FUNCTIONS: LegacyTimingFunctions = Object.freeze({
   requestAnimationFrame: (callbackFn: FrameRequestCallback) =>
       window.requestAnimationFrame(callbackFn),
+
   cancelAnimationFrame: (handle: number) => {
     window.cancelAnimationFrame(handle);
   },
-  setTimeout:
-      (callbackFn: CallbackFunctionType, delay = 0, ...args: unknown[]) => {
-        return window.setTimeout(callbackFn, delay, ...args);
-      },
-  clearTimeout: (id: number) => {
-    window.clearTimeout(id);
-  },
+
   now: () => Date.now(),
 });
-
-/** Timing functions for WorkScheduler. */
-export interface TimingFunctions {
-  /** Function that updates an animation before the browser's next repaint. */
-  readonly requestAnimationFrame: (callback: FrameRequestCallback) => number;
-  /** Function to cancel a scehdule animation frame. */
-  readonly cancelAnimationFrame: (handle: number) => void;
-  /** Sets a timer to execute a function or piece of code when it expires. */
-  readonly setTimeout:
-      (callbackFn: CallbackFunctionType, delay?: number,
-       ...args: unknown[]) => number;
-  /** Function to clear a scheduled timeout. */
-  readonly clearTimeout: (id: number) => void;
-  /** Function to get number of milliseconds elapsed since 1 Jan 1970. */
-  readonly now: typeof Date.now;
-}

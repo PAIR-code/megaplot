@@ -21,7 +21,7 @@
  * requestAnimationFrame() and setTimeout().
  */
 
-import {CallbackFunctionType, TimingFunctions} from './default-timing-functions';
+import {TimingFunctions} from './default-timing-functions';
 import {InternalError} from './internal-error';
 
 /**
@@ -51,7 +51,7 @@ interface TimeoutCallback {
   /**
    * Function to be invoked.
    */
-  callback: CallbackFunctionType;
+  callback: FrameRequestCallback;
 
   /**
    * Earliest time when this timeout is executable.
@@ -152,20 +152,6 @@ export class TimingFunctionsShim implements TimingFunctions {
       boundCancelAnimationFrame(id);
     };
 
-    const boundSetTimeout = this.setTimeout.bind(this);
-    this.setTimeout = function setTimeout(
-        this: unknown, callback: CallbackFunctionType, delay: number,
-        ...args: unknown[]): number {
-      checkThis(this);
-      return boundSetTimeout(callback, delay, ...args);
-    };
-
-    const boundClearTimeout = this.clearTimeout.bind(this);
-    this.clearTimeout = function clearTimeout(this: unknown, id: number): void {
-      checkThis(this);
-      boundClearTimeout(id);
-    };
-
     /**
      * Date.now() does not seem to care whether the 'this' object provided is in
      * fact the Date global.
@@ -215,49 +201,6 @@ export class TimingFunctionsShim implements TimingFunctions {
   }
 
   /**
-   * Emulate window.setTimeout().
-   */
-  setTimeout(callback: CallbackFunctionType, delay = 0, ...args: unknown[]):
-      number {
-    if (!(callback instanceof Function)) {
-      // Upstream setTimout() doesn't throw, but since this class is for
-      // testing, we'll check it anyway.
-      throw new TypeError(
-          'Failed to execute \'setTimeout\': ' +
-          'The callback provided as parameter 1 is not a function');
-    }
-
-    const id = this.nextTimeoutId;
-
-    // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers');
-    }
-
-    this.nextTimeoutId += 2;
-    const thresholdTimeMs = this.totalElapsedTimeMs + (+delay || 0);
-    const callbackObject = {id, callback, thresholdTimeMs, args};
-    this.timeoutCallbackQueue.push(callbackObject);
-    return id;
-  }
-
-  /**
-   * Emulate window.clearTimeout().
-   */
-  clearTimeout(id: number): void {
-    // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers');
-    }
-
-    for (let i = this.timeoutCallbackQueue.length - 1; i >= 0; i--) {
-      if (this.timeoutCallbackQueue[i].id === id) {
-        this.timeoutCallbackQueue.splice(i, 1);
-      }
-    }
-  }
-
-  /**
    * Emulate Date.now().
    */
   now(): number {
@@ -274,7 +217,7 @@ export class TimingFunctionsShim implements TimingFunctions {
    */
   runAnimationFrameCallbacks(frameCount = 1) {
     if (!Number.isInteger(frameCount) || frameCount <= 0) {
-      throw new RangeError('frameCount must be a positive, finite value');
+      throw new RangeError('frameCount must be a positive integer');
     }
 
     for (let i = 0; i < frameCount; i++) {
@@ -315,56 +258,6 @@ export class TimingFunctionsShim implements TimingFunctions {
             ...futureCallbackQueue,
         );
       }
-    }
-  }
-
-  /**
-   * Provide a mechanism for running down queued timer callbacks.
-   */
-  runTimerCallbacks() {
-    // Remove all callbacks from the canonical timer callback queue.
-    // This local version will be the one we run down so that we can track any
-    // that were blocked by earlier exceptions. This also ensures that we don't
-    // accidentally start executing future queued callbacks (those put onto the
-    // canonical queue as a side effect of this run).
-    const presentCallbackQueue =
-        this.timeoutCallbackQueue.splice(0, this.timeoutCallbackQueue.length);
-
-    // Some timeouts may not yet be ready to run. Queue these up to re-add to
-    // the canonical queue after we've tried to run the present queue.
-    const delayedCallbackQueue: TimeoutCallback[] = [];
-
-    try {
-      // Dequeue present callbacks and run any with hit thresholds.
-      while (presentCallbackQueue.length) {
-        const timeoutCallback = presentCallbackQueue.shift();
-
-        if (!timeoutCallback) {
-          throw new InternalError('Falsey value found in callback queue');
-        }
-
-        if (this.now() < timeoutCallback.thresholdTimeMs) {
-          delayedCallbackQueue.push(timeoutCallback);
-          continue;
-        }
-
-        timeoutCallback.callback.apply(null, timeoutCallback.args);
-      }
-
-    } finally {
-      // Collect any callbacks that were added to the canonical queue during the
-      // running of present callbacks.
-      const futureCallbackQueue =
-          this.timeoutCallbackQueue.splice(0, this.timeoutCallbackQueue.length);
-
-      // Update the canonical queue to include, in order, any explicitly delayed
-      // callbacks, then any remaining present callbacks, then any newly added
-      // (future) callbacks.
-      this.timeoutCallbackQueue.push(
-          ...delayedCallbackQueue,
-          ...presentCallbackQueue,
-          ...futureCallbackQueue,
-      );
     }
   }
 }

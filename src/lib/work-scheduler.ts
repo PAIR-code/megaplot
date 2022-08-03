@@ -56,12 +56,6 @@ const DEFAULT_WORK_SCHEDULER_SETTINGS = Object.freeze({
    * control back to the caller.
    */
   maxWorkTimeMs: 20,
-
-  /**
-   * When using setTimout() to schedule future off-screen runnable tasks, use
-   * this number of milliseconds.
-   */
-  timeoutMs: 0,
 });
 
 /**
@@ -80,15 +74,9 @@ export class WorkScheduler {
   maxWorkTimeMs: number;
 
   /**
-   * Timeout in milliseconds to use when scheduling future callbacks with
-   * setTimeout().
-   */
-  timeoutMs: number;
-
-  /**
    * Timing functions provided at construction time. Generally these will be the
-   * browser default timing functions (setTimeout, etc.) but they're optionally
-   * supplied in the constructor to facilitate fine-grained unit testing.
+   * browser default timing functions but they're optionally supplied in the
+   * constructor to facilitate fine-grained unit testing.
    */
   private readonly timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
 
@@ -96,11 +84,6 @@ export class WorkScheduler {
    * Timer for the animation frame (number returned by requestAnimationFrame).
    */
   private animationFrameTimer: number|undefined;
-
-  /**
-   * Timer for the timeout (number returned by setTimout).
-   */
-  private timeoutTimer: number|undefined;
 
   /**
    * Flag indicating whether the WorkScheduler is currently enabled. When it is
@@ -115,18 +98,6 @@ export class WorkScheduler {
    * detect and prevent nested calls.
    */
   private isPerformingWork = false;
-
-  /**
-   * Flag indicating whether work is currently being performed in the midst of
-   * an animation frame. This is to detect and prevent nested calls.
-   */
-  private isPerformingAnimationFrameWork = false;
-
-  /**
-   * Flag indicating whether work is currently being performed in the midst of
-   * a timeout callback. This is to detect and prevent nested calls.
-   */
-  private isPerformingTimoutWork = false;
 
   /**
    * Queue of work tasks to complete.
@@ -156,7 +127,6 @@ export class WorkScheduler {
 
     // Copy other settings.
     this.maxWorkTimeMs = settings.maxWorkTimeMs;
-    this.timeoutMs = settings.timeoutMs;
 
     // Enable the work scheduler.
     this.enable();
@@ -294,8 +264,6 @@ export class WorkScheduler {
     const {
       requestAnimationFrame,
       cancelAnimationFrame,
-      setTimeout,
-      clearTimeout,
     } = this.timingFunctions;
 
     // If the WorkScheduler is disabled, or there's no work left to do, then
@@ -305,10 +273,6 @@ export class WorkScheduler {
       if (this.animationFrameTimer !== undefined) {
         cancelAnimationFrame(this.animationFrameTimer);
         this.animationFrameTimer = undefined;
-      }
-      if (this.timeoutTimer !== undefined) {
-        clearTimeout(this.timeoutTimer);
-        this.timeoutTimer = undefined;
       }
       return;
     }
@@ -323,21 +287,9 @@ export class WorkScheduler {
         }
         this.animationFrameTimer =
             requestAnimationFrame(animationFrameCallback);
-        this.performAnimationFrameWork();
+        this.performWork();
       };
       this.animationFrameTimer = requestAnimationFrame(animationFrameCallback);
-    }
-
-    if (this.timeoutTimer === undefined) {
-      const timeoutCallback = () => {
-        if (!this.isEnabled) {
-          this.timeoutTimer = undefined;
-          return;
-        }
-        this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
-        this.performTimeoutWork();
-      };
-      this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
     }
   }
 
@@ -374,16 +326,8 @@ export class WorkScheduler {
 
         const task = this.presentWorkQueue.dequeueTask();
 
-        if (!this.isPerformingAnimationFrameWork &&
-            (task.animationOnly === undefined || task.animationOnly)) {
-          // Unfortunately, this task is set to only run on animation frames,
-          // and we're not currently in one. Add the task to the future work
-          // queue and continue.
-          this.futureWorkQueue.enqueueTask(task);
-          continue;
-        }
-
         tasksRan++;
+
         const result = task.callback.call(null, remaining);
 
         if (!task.runUntilDone || result) {
@@ -416,41 +360,6 @@ export class WorkScheduler {
     while (this.futureWorkQueue.length) {
       const futureTask = this.futureWorkQueue.dequeueTask();
       this.scheduleTask(futureTask);
-    }
-  }
-
-  /**
-   * Perform work that is suitable for an animation frame.
-   */
-  private performAnimationFrameWork() {
-    if (this.isPerformingAnimationFrameWork) {
-      throw new Error(
-          'Only one invocation of performAnimationFrameWork at a time');
-    }
-
-    this.isPerformingAnimationFrameWork = true;
-
-    try {
-      this.performWork();
-    } finally {
-      this.isPerformingAnimationFrameWork = false;
-    }
-  }
-
-  /**
-   * Perform work that is suitable for a timeout callback.
-   */
-  private performTimeoutWork() {
-    if (this.isPerformingTimoutWork) {
-      throw new Error('Only one invocation of performTimoutWork at a time');
-    }
-
-    this.isPerformingTimoutWork = true;
-
-    try {
-      this.performWork();
-    } finally {
-      this.isPerformingTimoutWork = false;
     }
   }
 }

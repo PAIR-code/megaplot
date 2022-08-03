@@ -66,13 +66,6 @@ export interface WorkTask {
   id?: WorkTaskId;
 
   /**
-   * Whether this task is only relevant in an animation context. By default,
-   * work tasks will only run on animation frames. To run even when the page is
-   * not focused, set this to false.
-   */
-  animationOnly?: boolean;
-
-  /**
    * Whether this task may begin immediately, in the same execution thread when
    * given to the WorkScheduler. By default, work tasks are assumed to be
    * delayed, running on the next animation frame or timeout.
