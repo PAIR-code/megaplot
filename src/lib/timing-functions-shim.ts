@@ -266,44 +266,55 @@ export class TimingFunctionsShim implements TimingFunctions {
 
   /**
    * Provide a mechanism for running down queued animation frame callbacks.
+   * Since callbacks may schedule more animation frame callbacks, this method
+   * takes an optional frameCount parameter in indicate how many frames to
+   * advance.
+   *
+   * @param frameCount Number of frames to advance.
    */
-  runAnimationFrameCallbacks() {
-    // Remove all callbacks from the canonical animation frame callback queue.
-    // This local version will be the one we run down so that we can track any
-    // that were blocked by earlier exceptions. This also ensures that we don't
-    // accidentally start executing future queued callbacks (those put onto the
-    // canonical queue as a side effect of this run).
-    const presentCallbackQueue = this.animationFrameCallbackQueue.splice(
-        0, this.animationFrameCallbackQueue.length);
+  runAnimationFrameCallbacks(frameCount = 1) {
+    if (!Number.isInteger(frameCount) || frameCount <= 0) {
+      throw new RangeError('frameCount must be a positive, finite value');
+    }
 
-    // Each callback run in the same frame will be provided the same timestamp
-    // even though time may have elapsed during execution.
-    const currentTimestamp = this.now();
-
-    try {
-      // Dequeue present callbacks and run them in order.
-      while (presentCallbackQueue.length) {
-        const item = presentCallbackQueue.shift();
-
-        if (!item) {
-          throw new InternalError('Falsey value found in callback queue');
-        }
-
-        item.callback.call(null, currentTimestamp);
-      }
-
-    } finally {
-      // Collect any callbacks that were added to the canonical queue during the
-      // running of present callbacks.
-      const futureCallbackQueue = this.animationFrameCallbackQueue.splice(
+    for (let i = 0; i < frameCount; i++) {
+      // Remove all callbacks from the canonical animation frame callback queue.
+      // This local version will be the one we run down so that we can track any
+      // that were blocked by earlier exceptions. This also ensures that we
+      // don't accidentally start executing future queued callbacks (those put
+      // onto the canonical queue as a side effect of this run).
+      const presentCallbackQueue = this.animationFrameCallbackQueue.splice(
           0, this.animationFrameCallbackQueue.length);
 
-      // Update the canonical queue to include, in order, any remaining present
-      // callbacks, then any newly added callbacks.
-      this.animationFrameCallbackQueue.push(
-          ...presentCallbackQueue,
-          ...futureCallbackQueue,
-      );
+      // Each callback run in the same frame will be provided the same timestamp
+      // even though time may have elapsed during execution.
+      const currentTimestamp = this.now();
+
+      try {
+        // Dequeue present callbacks and run them in order.
+        while (presentCallbackQueue.length) {
+          const item = presentCallbackQueue.shift();
+
+          if (!item) {
+            throw new InternalError('Falsey value found in callback queue');
+          }
+
+          item.callback.call(null, currentTimestamp);
+        }
+
+      } finally {
+        // Collect any callbacks that were added to the canonical queue during
+        // the running of present callbacks.
+        const futureCallbackQueue = this.animationFrameCallbackQueue.splice(
+            0, this.animationFrameCallbackQueue.length);
+
+        // Update the canonical queue to include, in order, any remaining
+        // present callbacks, then any newly added callbacks.
+        this.animationFrameCallbackQueue.push(
+            ...presentCallbackQueue,
+            ...futureCallbackQueue,
+        );
+      }
     }
   }
 

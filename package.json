@@ -13,11 +13,13 @@
   },
   "scripts": {
     "build": "rollup -c",
+    "debugging-demo": "webpack serve --open --entry ./src/demo/debugging-demo.ts",
     "generate": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node util/generate-code.ts",
     "http": "http-server --port 8081",
     "lint": "eslint src --ext .ts --config eslint.config.js",
-    "start": "webpack serve --open",
-    "test": "karma start karma.conf.ts"
+    "start": "npm run debugging-demo",
+    "test": "karma start karma.conf.ts",
+    "text-demo": "webpack serve --open --entry ./src/demo/text-demo.ts"
   },
   "author": "People + AI Research",
   "license": "Apache-2.0",

@@ -260,7 +260,8 @@ function main() {
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
 
-  container.addEventListener('mousemove', (event) => {
+  // Setup hover behavior.
+  d3.select(scene.canvas).on('mousemove', (event: MouseEvent) => {
     if (!settings.hitTestOnMove) {
       if (hoveredIndices.size) {
         hoveredIndices = new Set();
@@ -270,8 +271,8 @@ function main() {
     }
 
     const results = selection.hitTest({
-      x: event.x,
-      y: event.y,
+      x: event.offsetX,
+      y: event.offsetY,
       width: settings.brush ? 100 : 0,
       height: settings.brush ? 100 : 0,
       inclusive: settings.inclusive,
@@ -280,6 +281,12 @@ function main() {
     hoveredIndices = new Set(results);
     update();
   });
+
+  // Setup resize observer.
+  const observer = new ResizeObserver(() => {
+    scene.resize();
+  });
+  observer.observe(scene.canvas);
 }
 
 main();

@@ -20,11 +20,11 @@
 import REGL from 'regl';
 
 import {AttributeMapper} from './attribute-mapper';
+import {CallbackTriggerPoint} from './callback-trigger-point';
 import {setupDrawCommand} from './commands/setup-draw-command';
 import {setupHitTestCommand} from './commands/setup-hit-test-command';
 import {setupRebaseCommand} from './commands/setup-rebase-command';
 import {DEFAULT_SCENE_SETTINGS, SceneSettings} from './default-scene-settings';
-import {DrawTriggerPoint} from './draw-trigger-point';
 import {SpriteViewImpl} from './generated/sprite-view-impl';
 import {GlyphMapper} from './glyph-mapper';
 import {HitTestParameters} from './hit-test-types';
@@ -81,15 +81,23 @@ export class SceneInternal implements Renderer {
 
   /**
    * Number of screen pixels to one world unit in the X and Y dimensions. When
-   * the x or y values are set, queueDraw() will be called.
+   * the x or y values are set, handleViewChange() will be called.
+   *
+   * The scale and offset contribute to the view.
    */
-  scale = new DrawTriggerPoint(this);
+  scale = new CallbackTriggerPoint(() => {
+    this.handleViewChange();
+  });
 
   /**
-   * Offset (camera) coordinates. When the x or y values are set, queueDraw()
-   * will be called.
+   * Offset (camera) coordinates. When the x or y values are set,
+   * handleViewChange() will be called.
+   *
+   * The scale and offset contribute to the view.
    */
-  offset = new DrawTriggerPoint(this);
+  offset = new CallbackTriggerPoint(() => {
+    this.handleViewChange();
+  });
 
   /**
    * Collection of Sprites that have been created and have swatches
@@ -425,6 +433,11 @@ export class SceneInternal implements Renderer {
    */
   private readonly runCallbacksTaskId = Symbol('runCallbacksTask');
 
+  /**
+   * Track whether scale and offset have been initialized.
+   */
+  private isViewInitialized = false;
+
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
     const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
@@ -441,10 +454,6 @@ export class SceneInternal implements Renderer {
     this.container = settings.container;
     this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
 
-    // Take note of the container element's children before Regl inserts its
-    // canvas.
-    const previousChildren = new Set(Array.from(this.container.children));
-
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
     const win = window as unknown as {[key: string]: unknown};
@@ -455,11 +464,27 @@ export class SceneInternal implements Renderer {
       throw new Error('Could not find REGL');
     }
 
+    this.canvas = document.createElement('canvas');
+    Object.assign(this.canvas.style, {
+      border: 0,
+      height: '100%',
+      left: 0,
+      margin: 0,
+      padding: 0,
+      top: 0,
+      width: '100%',
+    });
+    this.container.appendChild(this.canvas);
+
+    const {width, height} = this.canvas.getBoundingClientRect();
+    this.canvas.height = height * devicePixelRatio;
+    this.canvas.width = width * devicePixelRatio;
+
     const regl = this.regl = createREGL({
       'attributes': {
         'preserveDrawingBuffer': true,
       },
-      'container': this.container,
+      'canvas': this.canvas,
       'extensions': [
         'angle_instanced_arrays',
         'OES_texture_float',
@@ -467,29 +492,14 @@ export class SceneInternal implements Renderer {
       ],
     });
 
-    const insertedChildren =
-        Array.from(this.container.children).filter(child => {
-          return child instanceof HTMLCanvasElement &&
-              !previousChildren.has(child);
-        });
-    if (!insertedChildren.length) {
-      throw new Error('Container is missing an inserted canvas');
-    }
-    this.canvas = insertedChildren[0] as HTMLCanvasElement;
-
-    // Initialize scale and offset to put world 0,0 in the center.
-    // TODO(jimbo): Confirm initial scale/offset for all device pixel ratios.
-    const {width, height} = this.canvas.getBoundingClientRect();
-    const defaultScale = Math.min(width, height) || Math.max(width, height) ||
-        Math.min(window.innerWidth, window.innerHeight);
-    this.scale.x = defaultScale;
-    this.scale.y = defaultScale;
-    this.offset.x = width / 2;
-    this.offset.y = height / 2;
+    // Initialize the scale and offset, which contribute to the view, if
+    // possible. If the canvas has zero width or height (for example if it is
+    // not attached to the DOM), then these properties will not be initialized.
+    this.initView();
 
     // The attribute mapper is responsible for keeping track of how to shuttle
-    // data between the Sprite state representation, and data values in channels
-    // in the data textures.
+    // data between the Sprite state representation, and data values in
+    // channels in the data textures.
     const attributeMapper = this.attributeMapper = new AttributeMapper({
       maxTextureSize: regl.limits.maxTextureSize,
       desiredSwatchCapacity: settings.desiredSpriteCapacity,
@@ -511,8 +521,8 @@ export class SceneInternal implements Renderer {
     });
 
     // The previousValuesTexture contains the same data as the
-    // previousValuesFramebuffer, but after a delay. It is used as the input to
-    // the rebase command.
+    // previousValuesFramebuffer, but after a delay. It is used as the input
+    // to the rebase command.
     this.previousValuesTexture = regl.texture({
       width: attributeMapper.textureWidth,
       height: attributeMapper.textureHeight,
@@ -524,9 +534,10 @@ export class SceneInternal implements Renderer {
 
     this.targetValuesArray = new Float32Array(attributeMapper.totalValues);
 
-    // Ultimately, to render the sprites, the GPU needs to be able to access the
-    // data, and so it is flashed over to a texture. This texture is written to
-    // only by the CPU via subimage write calls, and read from by the GPU.
+    // Ultimately, to render the sprites, the GPU needs to be able to access
+    // the data, and so it is flashed over to a texture. This texture is
+    // written to only by the CPU via subimage write calls, and read from by
+    // the GPU.
     this.targetValuesTexture = regl.texture({
       width: attributeMapper.textureWidth,
       height: attributeMapper.textureHeight,
@@ -564,21 +575,23 @@ export class SceneInternal implements Renderer {
         this.hitTestAttributeMapper.generateInstanceSwatchUvValues();
 
     // Just before running a hit test, the specific list of candidate Sprites'
-    // swatch UVs will be copied here, so that when the shader runs, it'll know
-    // where to look for the previous and target values. The output UVs however
-    // do not change. The Nth sprite in the HitTestParameters's sprites array
-    // will always write to the Nth texel of the output framebuffer.
+    // swatch UVs will be copied here, so that when the shader runs, it'll
+    // know where to look for the previous and target values. The output UVs
+    // however do not change. The Nth sprite in the HitTestParameters's
+    // sprites array will always write to the Nth texel of the output
+    // framebuffer.
     this.instanceHitTestInputUvValues =
         new Float32Array(this.instanceSwatchUvValues.length);
 
     // To accommodate the possibility of performing a hit test on all sprites
-    // that have swatches, we allocate enough space for the index and the active
-    // flag of a full complement. In the hit test shader, these values will be
-    // mapped to a vec2 attribute.
+    // that have swatches, we allocate enough space for the index and the
+    // active flag of a full complement. In the hit test shader, these values
+    // will be mapped to a vec2 attribute.
     this.instanceHitTestInputIndexActiveValues =
         new Float32Array(attributeMapper.totalSwatches * 2);
 
-    // The hitTestOutputValuesFramebuffer is written to by the hit test command.
+    // The hitTestOutputValuesFramebuffer is written to by the hit test
+    // command.
     this.hitTestOutputValuesFramebuffer = regl.framebuffer({
       color: regl.texture({
         width: hitTestAttributeMapper.textureWidth,
@@ -631,8 +644,8 @@ export class SceneInternal implements Renderer {
     this.instanceHitTestOutputUvBuffer =
         this.regl.buffer(this.instanceHitTestOutputUvValues);
 
-    // Rebase UV array is long enough to accomodate all sprites, but usually it
-    // won't have this many.
+    // Rebase UV array is long enough to accomodate all sprites, but usually
+    // it won't have this many.
     this.instanceRebaseUvValues =
         new Float32Array(this.instanceSwatchUvValues.length);
 
@@ -645,6 +658,87 @@ export class SceneInternal implements Renderer {
     this.drawCommand = setupDrawCommand(this);
     this.rebaseCommand = setupRebaseCommand(this);
     this.hitTestCommand = setupHitTestCommand(this);
+
+    this.queueDraw();
+  }
+
+  /**
+   * Initialize the scale and offset of the Scene if possible. If the canvas has
+   * zero width or height, then the scale and offset will not be initialized.
+   */
+  private initView() {
+    if (this.isViewInitialized) {
+      return;
+    }
+
+    const {width, height} = this.canvas.getBoundingClientRect();
+
+    if (!width || !height) {
+      return;
+    }
+
+    this.canvas.width = width * devicePixelRatio;
+    this.canvas.height = height * devicePixelRatio;
+
+    // Initialize scale and offset to put world 0,0 in the center.
+    const defaultScale = Math.min(width, height) || Math.max(width, height) ||
+        Math.min(window.innerWidth, window.innerHeight);
+    this.scale.x = defaultScale;
+    this.scale.y = defaultScale;
+    this.offset.x = width / 2;
+    this.offset.y = height / 2;
+
+    this.isViewInitialized = true;
+  }
+
+  /**
+   * The view is determined by the scale and offset. When any component of scale
+   * or offset is changed, this method is invoked.
+   */
+  private handleViewChange() {
+    this.isViewInitialized = true;
+    this.queueDraw();
+  }
+
+  /**
+   * Adjust the offset and canvas properties to match the updated canvas shape.
+   * This operation does not affect the scale of the Scene, the relationship
+   * between world coordinate size and pixels.
+   *
+   * The optional fixedCanvasPoint will remain stationary before and after the
+   * resizing operation. For example, (0,0) would preserve the top left corner.
+   * If left unspecified, the center point will be preserved.
+   *
+   * @param fixedCanvasPoint Point in canvas coordinates which remains fixed
+   * after resize (defaults to center).
+   */
+  resize(fixedCanvasPoint?: {x: number, y: number}) {
+    // Initialize view if it hasn't been initialized already.
+    if (!this.isViewInitialized) {
+      this.initView();
+      return;
+    }
+
+    const previousWidth = this.canvas.width / devicePixelRatio;
+    const previousHeight = this.canvas.height / devicePixelRatio;
+
+    fixedCanvasPoint =
+        fixedCanvasPoint || {x: previousWidth / 2, y: previousHeight / 2};
+
+    // Avoid NaN on division by checking first.
+    const proportionX =
+        previousWidth > 0 ? fixedCanvasPoint.x / previousWidth : .5;
+    const proportionY =
+        previousHeight > 0 ? fixedCanvasPoint.y / previousHeight : .5;
+
+    const {width: rectWidth, height: rectHeight} =
+        this.canvas.getBoundingClientRect();
+
+    this.canvas.width = rectWidth * devicePixelRatio;
+    this.canvas.height = rectHeight * devicePixelRatio;
+
+    this.offset.x += proportionX * (rectWidth - previousWidth);
+    this.offset.y += proportionY * (rectHeight - previousHeight);
 
     this.queueDraw();
   }
@@ -695,6 +789,9 @@ export class SceneInternal implements Renderer {
   }
 
   doDraw() {
+    // Initialize view if it hasn't been already.
+    this.initView();
+
     const currentTimeMs = this.elapsedTimeMs();
 
     this.drawCommand();
@@ -791,7 +888,8 @@ export class SceneInternal implements Renderer {
           undefined;
     }
 
-    // Scan the removed index range for the next available index and return it.
+    // Scan the removed index range for the next available index and return
+    // it.
     const {lowBound, highBound} = this.removedIndexRange;
     for (let index = lowBound; index <= highBound; index++) {
       const sprite = this.sprites[index];
@@ -822,8 +920,8 @@ export class SceneInternal implements Renderer {
         (!this.removedIndexRange.isDefined &&
          this.sprites.length >= this.attributeMapper.totalSwatches)) {
       // Either there are already sprites queued and waiting, or there is
-      // insufficient swatch capacity remaining. Either way, we need to add this
-      // one to the queue.
+      // insufficient swatch capacity remaining. Either way, we need to add
+      // this one to the queue.
       this.waitingSprites.push(sprite);
     } else {
       // Since there's available capacity, assign this sprite to the next
@@ -846,8 +944,8 @@ export class SceneInternal implements Renderer {
     const properties = sprite[InternalPropertiesSymbol];
     if (properties.lifecyclePhase !== LifecyclePhase.Created) {
       // This error indicates a bug in the logic handling Created (waiting)
-      // sprites. Only Sprites which have never been assigned indices should be
-      // considered for assignment.
+      // sprites. Only Sprites which have never been assigned indices should
+      // be considered for assignment.
       throw new InternalError(
           'Only sprites in the Created phase can be assigned indices');
     }
@@ -905,8 +1003,8 @@ export class SceneInternal implements Renderer {
       // abide this expectation. The user could keep a reference to the
       // SpriteView by setting a variable whose scope is outside the callback.
       // So here, we forcibly dissociate the SpriteView with its underlying
-      // swatch. That way, if, for any reason, the SpriteView is used later, it
-      // will throw.
+      // swatch. That way, if, for any reason, the SpriteView is used later,
+      // it will throw.
       properties.spriteView[DataViewSymbol] =
           undefined as unknown as Float32Array;
     }
