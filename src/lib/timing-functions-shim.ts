@@ -273,7 +273,7 @@ export class TimingFunctionsShim implements TimingFunctions {
    * @param frameCount Number of frames to advance.
    */
   runAnimationFrameCallbacks(frameCount = 1) {
-    if (frameCount <= 0 || isNaN(frameCount) || !isFinite(frameCount)) {
+    if (!Number.isInteger(frameCount) || frameCount <= 0) {
       throw new RangeError('frameCount must be a positive, finite value');
     }
 

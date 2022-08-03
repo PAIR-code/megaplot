@@ -186,7 +186,7 @@ describe('Scene', () => {
       timingFunctionsShim.runAnimationFrameCallbacks(3);
 
       // Now, if we inspect the canvas, its pixels should show that the
-      // sprite has been rendered. Start my making a copy of the canvas and
+      // sprite has been rendered. Start by making a copy of the canvas and
       // for inspection.
       const {canvas} = scene;
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);

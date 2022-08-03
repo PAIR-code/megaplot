@@ -472,9 +472,7 @@ export class SceneInternal implements Renderer {
     });
     this.container.appendChild(this.canvas);
 
-    const bounds = this.canvas.getBoundingClientRect();
-    const width = bounds.right - bounds.left;
-    const height = bounds.bottom - bounds.top;
+    const {width, height} = this.canvas.getBoundingClientRect();
     this.canvas.height = height * devicePixelRatio;
     this.canvas.width = width * devicePixelRatio;
 
@@ -669,9 +667,7 @@ export class SceneInternal implements Renderer {
       return;
     }
 
-    const bounds = this.canvas.getBoundingClientRect();
-    const width = bounds.right - bounds.left;
-    const height = bounds.bottom - bounds.top;
+    const {width, height} = this.canvas.getBoundingClientRect();
 
     if (!width || !height) {
       return;
@@ -731,9 +727,7 @@ export class SceneInternal implements Renderer {
     const proportionY =
         previousHeight > 0 ? fixedCanvasPoint.y / previousHeight : .5;
 
-    const canvasRect = this.canvas.getBoundingClientRect();
-    const rectWidth = canvasRect.right - canvasRect.left;
-    const rectHeight = canvasRect.bottom - canvasRect.top;
+    const {width: rectWidth, height: rectHeight} = this.canvas.getBoundingClientRect();
 
     this.canvas.width = rectWidth * devicePixelRatio;
     this.canvas.height = rectHeight * devicePixelRatio;

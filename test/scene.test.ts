@@ -241,8 +241,8 @@ describe('Scene', () => {
         expect(scene.scale.y).toEqual(100);
       });
 
-      it('should update values squished', () => {
-        // Stretch container, which should cause the canvas to change size.
+      it('should update values when squished', () => {
+        // Squish container, which should cause the canvas to change size.
         container.style.width = '50px';
 
         // Trigger Scene to recalculate its offset and scale.
@@ -300,8 +300,8 @@ describe('Scene', () => {
         expect(scene.scale.y).toEqual(100);
       });
 
-      it('should update values squished', () => {
-        // Stretch container, which should cause the canvas to change size.
+      it('should update values when squished', () => {
+        // Squish container, which should cause the canvas to change size.
         container.style.height = '50px';
 
         // Trigger Scene to recalculate its offset and scale.
