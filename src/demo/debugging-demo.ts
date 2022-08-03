@@ -261,7 +261,7 @@ function main() {
               .scale(scene.scale.x));
 
   // Setup hover behavior.
-  d3.select(scene.canvas).on('mousemove', (event) => {
+  d3.select(scene.canvas).on('mousemove', (event: MouseEvent) => {
     if (!settings.hitTestOnMove) {
       if (hoveredIndices.size) {
         hoveredIndices = new Set();
@@ -283,7 +283,9 @@ function main() {
   });
 
   // Setup resize observer.
-  const observer = new ResizeObserver(() => scene.resize());
+  const observer = new ResizeObserver(() => {
+    scene.resize();
+  });
   observer.observe(scene.canvas);
 }
 

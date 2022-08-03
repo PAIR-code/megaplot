@@ -85,7 +85,9 @@ export class SceneInternal implements Renderer {
    *
    * The scale and offset contribute to the view.
    */
-  scale = new CallbackTriggerPoint(() => this.handleViewChange());
+  scale = new CallbackTriggerPoint(() => {
+    this.handleViewChange();
+  });
 
   /**
    * Offset (camera) coordinates. When the x or y values are set,
@@ -93,7 +95,9 @@ export class SceneInternal implements Renderer {
    *
    * The scale and offset contribute to the view.
    */
-  offset = new CallbackTriggerPoint(() => this.handleViewChange());
+  offset = new CallbackTriggerPoint(() => {
+    this.handleViewChange();
+  });
 
   /**
    * Collection of Sprites that have been created and have swatches
@@ -727,7 +731,8 @@ export class SceneInternal implements Renderer {
     const proportionY =
         previousHeight > 0 ? fixedCanvasPoint.y / previousHeight : .5;
 
-    const {width: rectWidth, height: rectHeight} = this.canvas.getBoundingClientRect();
+    const {width: rectWidth, height: rectHeight} =
+        this.canvas.getBoundingClientRect();
 
     this.canvas.width = rectWidth * devicePixelRatio;
     this.canvas.height = rectHeight * devicePixelRatio;

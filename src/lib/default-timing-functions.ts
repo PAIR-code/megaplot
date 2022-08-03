@@ -32,12 +32,16 @@ export type CallbackFunctionType = (...args: unknown[]) => unknown;
 export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
   requestAnimationFrame: (callbackFn: FrameRequestCallback) =>
       window.requestAnimationFrame(callbackFn),
-  cancelAnimationFrame: (handle: number) => window.cancelAnimationFrame(handle),
+  cancelAnimationFrame: (handle: number) => {
+    window.cancelAnimationFrame(handle);
+  },
   setTimeout:
       (callbackFn: CallbackFunctionType, delay = 0, ...args: unknown[]) => {
         return window.setTimeout(callbackFn, delay, ...args);
       },
-  clearTimeout: (id: number) => window.clearTimeout(id),
+  clearTimeout: (id: number) => {
+    window.clearTimeout(id);
+  },
   now: () => Date.now(),
 });
 

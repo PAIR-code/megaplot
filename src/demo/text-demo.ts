@@ -257,7 +257,9 @@ function main() {
               .scale(scene.scale.x));
 
   // Setup resize observer.
-  const observer = new ResizeObserver(() => scene.resize());
+  const observer = new ResizeObserver(() => {
+    scene.resize();
+  });
   observer.observe(scene.canvas);
 }
 
