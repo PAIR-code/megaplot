@@ -255,6 +255,10 @@ function main() {
           zoom.transform.bind(zoom),
           d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
               .scale(scene.scale.x));
+
+  // Setup resize observer.
+  const observer = new ResizeObserver(() => scene.resize());
+  observer.observe(scene.canvas);
 }
 
 main();

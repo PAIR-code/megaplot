@@ -24,46 +24,43 @@ const path = require('path');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-// Select which demo to run by checking the MEGAPLOT_DEMO env variable.
-const TEXT_DEMO = './src/demo/text-demo.ts';
-const DEBUG_DEMO = './src/demo/debugging-demo.ts';
-const entry = process.env.MEGAPLOT_DEMO === 'text' ? TEXT_DEMO : DEBUG_DEMO;
-
 process.traceDeprecation = true;
 
+// NOTE: 'entry' is not hard-coded, to be passed via command line argument.
 module.exports = {
-  mode: 'development',
-  entry,
-  devtool: 'inline-source-map',
-  devServer: {
-    allowedHosts: 'all',
-    host: '0.0.0.0',
-    static: {
-      directory: './data',
+  mode : 'development',
+  devtool : 'inline-source-map',
+  devServer : {
+    allowedHosts : 'all',
+    host : '0.0.0.0',
+    static : {
+      directory : './data',
     },
   },
-  module: {
-    rules: [
+  module : {
+    rules :
+    [
       {
-        test: /\.ts$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
+        test : /\.ts$/,
+        use : 'ts-loader',
+        exclude : /node_modules/,
       },
       {
-        test: /\.css$/i,
-        use: ['style-loader', 'css-loader'],
+        test : /\.css$/i,
+        use : ['style-loader', 'css-loader'],
       },
     ]
   },
-  resolve: {extensions: ['.ts', '.js']},
-  output: {
-    filename: 'megaplot.js',
-    path: path.resolve(__dirname, 'dist', 'webpack'),
-    libraryTarget: 'umd',
-    library: 'megaplot',
+  resolve : {extensions : ['.ts', '.js']},
+  output : {
+    filename : 'megaplot.js',
+    path : path.resolve(__dirname, 'dist', 'webpack'),
+    libraryTarget : 'umd',
+    library : 'megaplot',
   },
-  plugins: [
-    new CleanWebpackPlugin(),
-    new HtmlWebpackPlugin(),
-  ],
+  plugins :
+          [
+            new CleanWebpackPlugin(),
+            new HtmlWebpackPlugin(),
+          ],
 };
