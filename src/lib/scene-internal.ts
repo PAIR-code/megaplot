@@ -477,8 +477,8 @@ export class SceneInternal implements Renderer {
     this.container.appendChild(this.canvas);
 
     const {width, height} = this.canvas.getBoundingClientRect();
-    this.canvas.height = height * devicePixelRatio;
-    this.canvas.width = width * devicePixelRatio;
+    this.canvas.height = height * this.devicePixelRatio;
+    this.canvas.width = width * this.devicePixelRatio;
 
     const regl = this.regl = createREGL({
       'attributes': {
@@ -663,6 +663,13 @@ export class SceneInternal implements Renderer {
   }
 
   /**
+   * Wrap lookups for devicePixelRatio to satisfy aggressive compilation.
+   */
+  private get devicePixelRatio(): number {
+    return typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  }
+
+  /**
    * Initialize the scale and offset of the Scene if possible. If the canvas has
    * zero width or height, then the scale and offset will not be initialized.
    */
@@ -677,8 +684,8 @@ export class SceneInternal implements Renderer {
       return;
     }
 
-    this.canvas.width = width * devicePixelRatio;
-    this.canvas.height = height * devicePixelRatio;
+    this.canvas.width = width * this.devicePixelRatio;
+    this.canvas.height = height * this.devicePixelRatio;
 
     // Initialize scale and offset to put world 0,0 in the center.
     const defaultScale = Math.min(width, height) || Math.max(width, height) ||
@@ -719,8 +726,8 @@ export class SceneInternal implements Renderer {
       return;
     }
 
-    const previousWidth = this.canvas.width / devicePixelRatio;
-    const previousHeight = this.canvas.height / devicePixelRatio;
+    const previousWidth = this.canvas.width / this.devicePixelRatio;
+    const previousHeight = this.canvas.height / this.devicePixelRatio;
 
     fixedCanvasPoint =
         fixedCanvasPoint || {x: previousWidth / 2, y: previousHeight / 2};
@@ -734,8 +741,8 @@ export class SceneInternal implements Renderer {
     const {width: rectWidth, height: rectHeight} =
         this.canvas.getBoundingClientRect();
 
-    this.canvas.width = rectWidth * devicePixelRatio;
-    this.canvas.height = rectHeight * devicePixelRatio;
+    this.canvas.width = rectWidth * this.devicePixelRatio;
+    this.canvas.height = rectHeight * this.devicePixelRatio;
 
     this.offset.x += proportionX * (rectWidth - previousWidth);
     this.offset.y += proportionY * (rectHeight - previousHeight);
