@@ -107,6 +107,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
+    staggerAnimation: true,
     flipZ: false,
     randomize: false,
     showText: false,
@@ -154,7 +155,15 @@ function main() {
     });
 
     selection.onBind((s, index) => {
+      if (index > settings.total - 1) {
+        // This sprite is about to exit.
+        return;
+      }
+
       s.TransitionTimeMs = settings.transitionTimeMs;
+      if (settings.staggerAnimation) {
+        s.TransitionTimeMs *= (1 + index) / settings.total;
+      }
 
       const i = index % count;
       const j = Math.floor(index / count);
@@ -175,7 +184,7 @@ function main() {
       s.PositionPixelY = -Math.floor(3 * j / count) * settings.paddingPx;
       s.PositionRelativeX = settings.positionRelative;
 
-      s.OrderZ = settings.flipZ ? (settings.total - index) / settings.total : 0;
+      // s.OrderZ = settings.flipZ ? 1 : 0;
 
       s.GeometricZoom = settings.geometricZoom;
 
@@ -237,6 +246,7 @@ function main() {
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+  gui.add(settings, 'staggerAnimation');
   gui.add(settings, 'flipZ').onChange(update);
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
