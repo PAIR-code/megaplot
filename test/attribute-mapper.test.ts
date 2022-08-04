@@ -106,6 +106,31 @@ describe('AttributeMapper', () => {
     expect(attributeComponentIndices['PositionZDelta']).toBe(6);
   });
 
+  it('should set up component-to-attribute map', () => {
+    const attributes = [
+      {
+        attributeName: 'TransitionTimeMs',
+      },
+      {
+        attributeName: 'Position',
+        isInterpolable: true,
+        components: ['X', 'Y', 'Z'],
+      },
+    ];
+
+    const {componentToAttributeMap} = new AttributeMapper({
+      maxTextureSize: DEFAULT_MAX_TEXTURE_SIZE,
+      attributes,
+    });
+
+    expect(Object.keys(componentToAttributeMap).length).toBe(4);
+
+    expect(componentToAttributeMap['TransitionTimeMs']).toBe(attributes[0]);
+    expect(componentToAttributeMap['PositionX']).toBe(attributes[1]);
+    expect(componentToAttributeMap['PositionY']).toBe(attributes[1]);
+    expect(componentToAttributeMap['PositionZ']).toBe(attributes[1]);
+  });
+
   describe('generateTexelReaderGLSL', () => {
     it('should generate data texture reader GLSL code', () => {
       const attributes = [
