@@ -107,6 +107,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
+    flipZ: false,
     randomize: false,
     showText: false,
     hitTestOnMove: false,
@@ -174,6 +175,8 @@ function main() {
       s.PositionPixelY = -Math.floor(3 * j / count) * settings.paddingPx;
       s.PositionRelativeX = settings.positionRelative;
 
+      s.OrderZ = settings.flipZ ? (settings.total - index) / settings.total : 0;
+
       s.GeometricZoom = settings.geometricZoom;
 
       s.SizeWorld = 1 / count * settings.sizeMultiplier;
@@ -234,6 +237,7 @@ function main() {
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+  gui.add(settings, 'flipZ').onChange(update);
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
   gui.add(settings, 'hitTestOnMove');
