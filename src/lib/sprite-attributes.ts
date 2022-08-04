@@ -59,6 +59,16 @@ export interface SpriteAttribute {
    * this property is absent, then the attribute is presumed to be a float.
    */
   readonly components?: readonly string[];
+
+  /**
+   * Minimum allowable value of this attribute. Enforced by runtime checks.
+   */
+  readonly minValue?: number;
+
+  /**
+   * Maximum allowable value of this attribute. Enforced by runtime checks.
+   */
+  readonly maxValue?: number;
 }
 
 /**
@@ -97,6 +107,29 @@ export const SPRITE_ATTRIBUTES: readonly SpriteAttribute[] = [
     isInterpolable: true,
     isBroadcastable: true,
     components: ['Width', 'Height'],
+  },
+
+  /**
+   * By default, when rendering, sprites are stacked such that later allocated
+   * sprites appear on top of earlier sprites. This guarantees that when sprites
+   * overlap and have partially transparent pixels, the pixel values blend
+   * appropriately.
+   *
+   * However, sometimes it's beneficial to override the Z ordering, even if that
+   * could cause blending issues. For example, when a user hovers over a point,
+   * it could make sense to raise that sprite to the top.
+   *
+   * The OrderZ attribute allows the API user to override the default stacking.
+   * If specified, this value should be in the range 0-1. Any sprite with a
+   * specified non-zero OrderZ will be rendered on top of any sprites with
+   * unspecified OrderZ. When two sprites both have OrderZs set, the one with
+   * the higher value will be on top.
+   */
+  {
+    attributeName: 'OrderZ',
+    isInterpolable: true,
+    minValue: 0,
+    maxValue: 1,
   },
 
   /**

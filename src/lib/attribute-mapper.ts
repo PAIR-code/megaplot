@@ -19,7 +19,7 @@
  * to a data texture.
  */
 
-import {SPRITE_ATTRIBUTES} from './sprite-attributes';
+import {SPRITE_ATTRIBUTES, SpriteAttribute} from './sprite-attributes';
 
 const RGBA = Object.freeze(['r', 'g', 'b', 'a']);
 
@@ -91,10 +91,18 @@ export class AttributeMapper {
   public readonly attributeComponentNames: string[];
 
   /**
-   * Object, frozen on construction, that maps attribute names to their indices.
+   * Object, frozen on construction, that maps attribute component names to
+   * their indices.
    */
   public readonly attributeComponentIndices:
       {[attributeComponentName: string]: number};
+
+  /**
+   * Object, frozen on construction, that maps each full attribute component
+   * name back to the attribute that created it.
+   */
+  public readonly componentToAttributeMap:
+      {[attributeComponentName: string]: SpriteAttribute};
 
   /**
    * Number of texels in one swatch of the data texture. A swatch has enough
@@ -185,9 +193,9 @@ export class AttributeMapper {
     this.desiredSwatchCapacity = settings.desiredSwatchCapacity;
     this.attributes = settings.attributes;
 
-    this.attributeComponentIndices = {} as
-        {[attributeComponentName: string]: number};
+    this.attributeComponentIndices = {};
     this.attributeComponentNames = [];
+    this.componentToAttributeMap = {};
     this.isAttributeTimestamp = [];
 
     // Copy attribute component names into local array and create lookup index.
@@ -202,6 +210,7 @@ export class AttributeMapper {
         const index = this.attributeComponentNames.length;
         this.attributeComponentNames[index] = attributeComponentName;
         this.attributeComponentIndices[attributeComponentName] = index;
+        this.componentToAttributeMap[attributeComponentName] = attribute;
         this.isAttributeTimestamp[index] = !!attribute.isTimestamp;
       }
     }
