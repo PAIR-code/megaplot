@@ -94,8 +94,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
         expect(workTask.callback).toBe(incrementCounter);
         expect(workTask.id).toBe(incrementCounter);
@@ -205,8 +203,6 @@ describe('WorkScheduler', () => {
           ++counter
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         workScheduler.scheduleTask(incrementCounter);
         expect(counter).toBe(0);
 
@@ -236,8 +232,6 @@ describe('WorkScheduler', () => {
           return counter >= 7;
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask({
           callback: incrementCounter,
           runUntilDone: true,
@@ -284,8 +278,6 @@ describe('WorkScheduler', () => {
           return counter >= 3;
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask({
           callback: incrementCounter,
           runUntilDone: true,
@@ -328,8 +320,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
         expect(workTask.callback).toBe(incrementCounter);
         expect(workTask.id).toBe(incrementCounter);
@@ -364,8 +354,6 @@ describe('WorkScheduler', () => {
         let counterB = 0;
         const incrementCounterB = () => ++counterB;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         workScheduler.scheduleTask(incrementCounterA);
         workScheduler.scheduleTask(incrementCounterB);
 
@@ -407,8 +395,6 @@ describe('WorkScheduler', () => {
           throw ALWAYS_ERROR;
         };
 
-        // By scheduling the raw functions, these is presumed to run on
-        // animation frames only.
         workScheduler.scheduleTask(incrementCounterA);
         workScheduler.scheduleTask(alwaysThrows);
         workScheduler.scheduleTask(incrementCounterB);
@@ -453,8 +439,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = async () => ++counter;
 
-        // By scheduling the raw async function, this is presumed to run on
-        // animation frames only.
         workScheduler.scheduleTask(incrementCounter);
 
         // Nothing has been run yet, so we expect the counter to be zero.
@@ -488,8 +472,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
 
         // Nothing has been run yet, so we expect the counter to be zero.

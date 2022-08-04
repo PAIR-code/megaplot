@@ -158,8 +158,7 @@ export class WorkScheduler {
       }
     }
 
-    // Make sure timers are set.
-    this.updateTimers();
+    this.updateTimer();
 
     return workTask;
   }
@@ -202,8 +201,7 @@ export class WorkScheduler {
           'Found two matching tasks when at most one is allowed');
     }
 
-    // Make sure timers are set.
-    this.updateTimers();
+    this.updateTimer();
 
     return presentRemovedTask || futureRemovedTask || undefined;
   }
@@ -242,7 +240,7 @@ export class WorkScheduler {
    */
   enable(): WorkScheduler {
     this.isEnabled = true;
-    this.updateTimers();
+    this.updateTimer();
     return this;
   }
 
@@ -251,45 +249,33 @@ export class WorkScheduler {
    */
   disable(): WorkScheduler {
     this.isEnabled = false;
-    this.updateTimers();
+    this.updateTimer();
     return this;
   }
 
   /**
-   * Make sure timers are set if the WorkScheduler is enabled and there is work
-   * to do. If the WorkScheduler is disabled, or if there is no work, then clear
-   * the timers.
+   * Set or unset the animation frame timer based on whether the work scheduler
+   * is enabled and there's any work to do. Inside this method is the only place
+   * where requestAnimationFrame or cancelAnimationFrame should be called.
    */
-  private updateTimers() {
-    const {
-      requestAnimationFrame,
-      cancelAnimationFrame,
-    } = this.timingFunctions;
-
-    // If the WorkScheduler is disabled, or there's no work left to do, then
-    // remove the outstanding timers.
-    if (!this.isEnabled ||
-        (!this.presentWorkQueue.length && !this.futureWorkQueue.length)) {
-      if (this.animationFrameTimer !== undefined) {
-        cancelAnimationFrame(this.animationFrameTimer);
-        this.animationFrameTimer = undefined;
+  private updateTimer() {
+    // Check if scheduler is enabled and there's work to do.
+    if (this.isEnabled && this.presentWorkQueue.length) {
+      if (this.animationFrameTimer === undefined) {
+        const {requestAnimationFrame} = this.timingFunctions;
+        this.animationFrameTimer = requestAnimationFrame(() => {
+          this.animationFrameTimer = undefined;
+          this.performWork();
+        });
       }
       return;
     }
 
-    // Since the WorkScheduler is enabled and there's work left to do, make sure
-    // the timers are set up.
-    if (this.animationFrameTimer === undefined) {
-      const animationFrameCallback = () => {
-        if (!this.isEnabled) {
-          this.animationFrameTimer = undefined;
-          return;
-        }
-        this.animationFrameTimer =
-            requestAnimationFrame(animationFrameCallback);
-        this.performWork();
-      };
-      this.animationFrameTimer = requestAnimationFrame(animationFrameCallback);
+    // Scheduler is not enabled, or there's no work to do.
+    if (this.animationFrameTimer !== undefined) {
+      const {cancelAnimationFrame} = this.timingFunctions;
+      cancelAnimationFrame(this.animationFrameTimer);
+      this.animationFrameTimer = undefined;
     }
   }
 
@@ -298,7 +284,7 @@ export class WorkScheduler {
    */
   private performWork() {
     if (this.isPerformingWork) {
-      throw new Error(
+      throw new InternalError(
           'Only one invocation of performWork is allowed at a time');
     }
 
@@ -309,14 +295,14 @@ export class WorkScheduler {
     // Keep track of how many tasks have been performed.
     let tasksRan = 0;
 
+    const startTime = now();
+
+    const remaining: RemainingTimeFn = () =>
+        this.maxWorkTimeMs + startTime - now();
+
     // For performance, the try/catch block encloses the loop that runs through
     // tasks to perform.
     try {
-      const startTime = now();
-
-      const remaining: RemainingTimeFn = () =>
-          this.maxWorkTimeMs + startTime - now();
-
       while (this.presentWorkQueue.length) {
         // If at least one task has been dequeued, and if we've run out of
         // execution time, then break out of the loop.
@@ -353,13 +339,15 @@ export class WorkScheduler {
 
     } finally {
       this.isPerformingWork = false;
-    }
 
-    // Take any work tasks which were set aside during work and place them
-    // into the queue at their correct place.
-    while (this.futureWorkQueue.length) {
-      const futureTask = this.futureWorkQueue.dequeueTask();
-      this.scheduleTask(futureTask);
+      // Take any work tasks which were set aside during work and place them
+      // into the queue at their correct place.
+      while (this.futureWorkQueue.length) {
+        const futureTask = this.futureWorkQueue.dequeueTask();
+        this.scheduleTask(futureTask);
+      }
+
+      this.updateTimer();
     }
   }
 }
