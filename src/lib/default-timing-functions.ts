@@ -29,7 +29,7 @@ export interface TimingFunctions {
   readonly requestAnimationFrame: (callback: FrameRequestCallback) => number;
 
   /**
-   * Function to cancel a scehduled animation frame.
+   * Function to cancel a scheduled animation frame.
    */
   readonly cancelAnimationFrame: (handle: number) => void;
 
