@@ -40,22 +40,11 @@ export interface TimingFunctions {
 }
 
 /**
- * For compatibility during migration, allow callers to supply setTimout()
- * and/or clearTimeout() implementations even though neither are used by
- * Megaplot. In the future, specifying these properties will trigger TypeScript
- * compilation errors.
- */
-export interface LegacyTimingFunctions extends TimingFunctions {
-  setTimeout?: (callback: ((...args: unknown[]) => unknown)) => void;
-  clearTimeout?: (id: number) => void;
-}
-
-/**
  * To enhance testability, the timing functions are constructor parameters to
  * the WorkScheduler. This is exported only for testing purposes, and generally
  * should not be of interest to API consumers.
  */
-export const DEFAULT_TIMING_FUNCTIONS: LegacyTimingFunctions = Object.freeze({
+export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
   requestAnimationFrame: (callbackFn: FrameRequestCallback) =>
       window.requestAnimationFrame(callbackFn),
 

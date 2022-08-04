@@ -41,20 +41,6 @@ describe('WorkScheduler', () => {
     expect(typeof workScheduler).toBe('object');
   });
 
-  it('should allow setting legacy timing functions', () => {
-    const workScheduler = new WorkScheduler({
-      timingFunctions: {
-        requestAnimationFrame: (_: FrameRequestCallback) => 0,
-        cancelAnimationFrame: (_: number) => {},
-        setTimeout: (_: (...args: unknown[]) => unknown) => 0,
-        clearTimeout: (_: number) => {},
-        now: () => 0,
-      }
-    });
-
-    expect(typeof workScheduler).toBe('object');
-  });
-
   it('should not request animation frames without tasks', () => {
     const timingFunctionsShim = new TimingFunctionsShim();
 
