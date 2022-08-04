@@ -20,11 +20,6 @@
  */
 
 /**
- * Generic Function which can be invoked as a callback.
- */
-// export type CallbackFunctionType = (...args: unknown[]) => unknown;
-
-/**
  * Timing functions for WorkScheduler.
  */
 export interface TimingFunctions {
