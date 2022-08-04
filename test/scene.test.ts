@@ -194,9 +194,7 @@ describe('Scene', () => {
       expect(scene.scale.y).toEqual(20);
     });
   });
-});
 
-describe('Scene', () => {
   describe('resize()', () => {
     const section = createSection('Scene::resize()');
     const sectionContent = section.querySelector('.content')!;
