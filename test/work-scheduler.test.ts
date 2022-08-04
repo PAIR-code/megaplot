@@ -17,9 +17,9 @@
 /**
  * @fileoverview Tests for the WorkScheduler. Most tests use the
  * TimingFunctionsShim to emulate time passing synchronously. As a sanity check,
- * a few simple tests use native animation frames and timeouts. These later
- * tests require a live, visible, focused browser window or they'll time out
- * since animation frames do not run in a backgrounded browser.
+ * a few simple tests use native animation frames. These later tests require a
+ * live, visible, focused browser window or they'll time out since animation
+ * frames do not run in a backgrounded browser.
  */
 
 import {DEFAULT_TIMING_FUNCTIONS} from '../src/lib/default-timing-functions';
@@ -41,6 +41,28 @@ describe('WorkScheduler', () => {
     expect(typeof workScheduler).toBe('object');
   });
 
+  it('should not request animation frames without tasks', () => {
+    const timingFunctionsShim = new TimingFunctionsShim();
+
+    // Wrap requestAnimationFrame with a counter to keep track of the number of
+    // invocations.
+    let frameCounter = 0;
+    const countingRequestAnimationFrame = (callback: FrameRequestCallback) => {
+      frameCounter++;
+      return timingFunctionsShim.requestAnimationFrame(callback);
+    };
+
+    new WorkScheduler({
+      timingFunctions: {
+        requestAnimationFrame: countingRequestAnimationFrame,
+        cancelAnimationFrame: timingFunctionsShim.cancelAnimationFrame,
+        now: timingFunctionsShim.now,
+      },
+    });
+
+    expect(frameCounter).toBe(0);
+  });
+
   describe('scheduleTask', () => {
     describe('callback function', () => {
       it('should allow scheduling a regular callback function', () => {
@@ -58,8 +80,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
         expect(workTask.callback).toBe(incrementCounter);
         expect(workTask.id).toBe(incrementCounter);
@@ -77,6 +97,67 @@ describe('WorkScheduler', () => {
         // should have no effect on the counter.
         timingFunctionsShim.runAnimationFrameCallbacks();
         expect(counter).toBe(1);
+      });
+
+      it('should stop requesting frames when tasks are done', () => {
+        const timingFunctionsShim = new TimingFunctionsShim();
+        const {
+          requestAnimationFrame,
+          cancelAnimationFrame,
+          now,
+        } = timingFunctionsShim;
+
+        // Wrap requestAnimationFrame with a counter to keep track of the number
+        // of frames that have been requested.
+        let frameCount = 0;
+        const countingRequestAnimationFrame = (cb: FrameRequestCallback) => {
+          frameCount++;
+          return requestAnimationFrame(cb);
+        };
+
+        const workScheduler = new WorkScheduler({
+          timingFunctions: {
+            requestAnimationFrame: countingRequestAnimationFrame,
+            cancelAnimationFrame,
+            now,
+          },
+        });
+
+        // Even though the work scheduler should be enabled by default, it
+        // should not start requesting frames until a work task has been
+        // scheduled.
+        expect(frameCount).toBe(0);
+
+        // Define a simple callback task that counts its invocations.
+        let callCount = 0;
+        const countingTask = () => ++callCount;
+
+        // Schedule the increment counter callback.
+        const workTask = workScheduler.scheduleTask(countingTask);
+        expect(workTask.callback).toBe(countingTask);
+        expect(workTask.id).toBe(countingTask);
+
+        // Confirm that one animation frame has been requested.
+        expect(frameCount).toBe(1);
+
+        // Nothing has been run yet, so we expect the call counter to be zero.
+        expect(workScheduler.isScheduledTask(countingTask)).toBe(true);
+        expect(callCount).toBe(0);
+
+        // Advance by one frame. Callback should have been invoked.
+        timingFunctionsShim.runAnimationFrameCallbacks();
+        expect(workScheduler.isScheduledTask(countingTask)).toBe(false);
+        expect(callCount).toBe(1);
+
+        // Since there are no more tasks to run, no more frames should have been
+        // requested.
+        expect(frameCount).toBe(1);
+
+        // Since the increment counter has finished, running animation frame
+        // callbacks additional times should have no effect.
+        timingFunctionsShim.runAnimationFrameCallbacks(10);
+        expect(callCount).toBe(1);
+        expect(frameCount).toBe(1);
       });
 
       it('should invoke callback with remaining time function', () => {
@@ -108,8 +189,6 @@ describe('WorkScheduler', () => {
           ++counter
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         workScheduler.scheduleTask(incrementCounter);
         expect(counter).toBe(0);
 
@@ -139,8 +218,6 @@ describe('WorkScheduler', () => {
           return counter >= 7;
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask({
           callback: incrementCounter,
           runUntilDone: true,
@@ -187,8 +264,6 @@ describe('WorkScheduler', () => {
           return counter >= 3;
         };
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask({
           callback: incrementCounter,
           runUntilDone: true,
@@ -231,8 +306,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
         expect(workTask.callback).toBe(incrementCounter);
         expect(workTask.id).toBe(incrementCounter);
@@ -267,8 +340,6 @@ describe('WorkScheduler', () => {
         let counterB = 0;
         const incrementCounterB = () => ++counterB;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         workScheduler.scheduleTask(incrementCounterA);
         workScheduler.scheduleTask(incrementCounterB);
 
@@ -286,68 +357,6 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.runAnimationFrameCallbacks();
         expect(counterA).toBe(1);
         expect(counterB).toBe(1);
-      });
-
-      it('should run animationOnly=false tasks on timeout', () => {
-        const timingFunctionsShim = new TimingFunctionsShim();
-
-        timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-        const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
-          maxWorkTimeMs: 10,
-        });
-
-        // Define simple counting callback functons.
-        let counter = 0;
-        const incrementCounter = () => ++counter;
-
-        // By specifying a WorkTask object with animationOnly set to false, we
-        // expect this to run when timeouts execute, not just on animation
-        // frames..
-        workScheduler.scheduleTask({
-          callback: incrementCounter,
-          animationOnly: false,
-        });
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Run the timeouts. Callback should be invoked.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(counter).toBe(1);
-
-        // Since the incrementer has finished, running timer callbacks again
-        // should have no effect on the counter.
-        timingFunctionsShim.runTimerCallbacks();
-        expect(counter).toBe(1);
-      });
-
-      it('should run callbacks using native timeouts', async () => {
-        const workScheduler = new WorkScheduler({maxWorkTimeMs: 10});
-
-        let counter = 0;
-        const incrementCounter = () => ++counter;
-
-        // By scheduling a WorkTask with animationOnly set to false, we expect
-        // this to run on timeouts, not just animation frames.
-        workScheduler.scheduleTask({
-          callback: incrementCounter,
-          animationOnly: false,
-        });
-
-        // Nothing has been run yet, so we expect the counter to be zero.
-        expect(counter).toBe(0);
-
-        // Advance by 10ms. Callback should have been invoked.
-        await new Promise(resolve => window.setTimeout(resolve, 10));
-        expect(counter).toBe(1);
-
-        // Since the incrementer has finished, additional passing time should
-        // not cause the incrementer to run.
-        await new Promise(resolve => window.setTimeout(resolve, 10));
-        expect(counter).toBe(1);
       });
 
       it('should preserve other callbacks even if one throws', () => {
@@ -372,8 +381,6 @@ describe('WorkScheduler', () => {
           throw ALWAYS_ERROR;
         };
 
-        // By scheduling the raw functions, these is presumed to run on
-        // animation frames only.
         workScheduler.scheduleTask(incrementCounterA);
         workScheduler.scheduleTask(alwaysThrows);
         workScheduler.scheduleTask(incrementCounterB);
@@ -418,8 +425,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = async () => ++counter;
 
-        // By scheduling the raw async function, this is presumed to run on
-        // animation frames only.
         workScheduler.scheduleTask(incrementCounter);
 
         // Nothing has been run yet, so we expect the counter to be zero.
@@ -453,8 +458,6 @@ describe('WorkScheduler', () => {
         let counter = 0;
         const incrementCounter = () => ++counter;
 
-        // By scheduling the raw function, this is presumed to run on animation
-        // frames only.
         const workTask = workScheduler.scheduleTask(incrementCounter);
 
         // Nothing has been run yet, so we expect the counter to be zero.

@@ -56,12 +56,6 @@ const DEFAULT_WORK_SCHEDULER_SETTINGS = Object.freeze({
    * control back to the caller.
    */
   maxWorkTimeMs: 20,
-
-  /**
-   * When using setTimout() to schedule future off-screen runnable tasks, use
-   * this number of milliseconds.
-   */
-  timeoutMs: 0,
 });
 
 /**
@@ -80,15 +74,9 @@ export class WorkScheduler {
   maxWorkTimeMs: number;
 
   /**
-   * Timeout in milliseconds to use when scheduling future callbacks with
-   * setTimeout().
-   */
-  timeoutMs: number;
-
-  /**
    * Timing functions provided at construction time. Generally these will be the
-   * browser default timing functions (setTimeout, etc.) but they're optionally
-   * supplied in the constructor to facilitate fine-grained unit testing.
+   * browser default timing functions but they're optionally supplied in the
+   * constructor to facilitate fine-grained unit testing.
    */
   private readonly timingFunctions: typeof DEFAULT_TIMING_FUNCTIONS;
 
@@ -96,11 +84,6 @@ export class WorkScheduler {
    * Timer for the animation frame (number returned by requestAnimationFrame).
    */
   private animationFrameTimer: number|undefined;
-
-  /**
-   * Timer for the timeout (number returned by setTimout).
-   */
-  private timeoutTimer: number|undefined;
 
   /**
    * Flag indicating whether the WorkScheduler is currently enabled. When it is
@@ -115,18 +98,6 @@ export class WorkScheduler {
    * detect and prevent nested calls.
    */
   private isPerformingWork = false;
-
-  /**
-   * Flag indicating whether work is currently being performed in the midst of
-   * an animation frame. This is to detect and prevent nested calls.
-   */
-  private isPerformingAnimationFrameWork = false;
-
-  /**
-   * Flag indicating whether work is currently being performed in the midst of
-   * a timeout callback. This is to detect and prevent nested calls.
-   */
-  private isPerformingTimoutWork = false;
 
   /**
    * Queue of work tasks to complete.
@@ -156,7 +127,6 @@ export class WorkScheduler {
 
     // Copy other settings.
     this.maxWorkTimeMs = settings.maxWorkTimeMs;
-    this.timeoutMs = settings.timeoutMs;
 
     // Enable the work scheduler.
     this.enable();
@@ -188,8 +158,7 @@ export class WorkScheduler {
       }
     }
 
-    // Make sure timers are set.
-    this.updateTimers();
+    this.updateTimer();
 
     return workTask;
   }
@@ -232,8 +201,7 @@ export class WorkScheduler {
           'Found two matching tasks when at most one is allowed');
     }
 
-    // Make sure timers are set.
-    this.updateTimers();
+    this.updateTimer();
 
     return presentRemovedTask || futureRemovedTask || undefined;
   }
@@ -272,7 +240,7 @@ export class WorkScheduler {
    */
   enable(): WorkScheduler {
     this.isEnabled = true;
-    this.updateTimers();
+    this.updateTimer();
     return this;
   }
 
@@ -281,63 +249,33 @@ export class WorkScheduler {
    */
   disable(): WorkScheduler {
     this.isEnabled = false;
-    this.updateTimers();
+    this.updateTimer();
     return this;
   }
 
   /**
-   * Make sure timers are set if the WorkScheduler is enabled and there is work
-   * to do. If the WorkScheduler is disabled, or if there is no work, then clear
-   * the timers.
+   * Set or unset the animation frame timer based on whether the work scheduler
+   * is enabled and there's any work to do. Inside this method is the only place
+   * where requestAnimationFrame or cancelAnimationFrame should be called.
    */
-  private updateTimers() {
-    const {
-      requestAnimationFrame,
-      cancelAnimationFrame,
-      setTimeout,
-      clearTimeout,
-    } = this.timingFunctions;
-
-    // If the WorkScheduler is disabled, or there's no work left to do, then
-    // remove the outstanding timers.
-    if (!this.isEnabled ||
-        (!this.presentWorkQueue.length && !this.futureWorkQueue.length)) {
-      if (this.animationFrameTimer !== undefined) {
-        cancelAnimationFrame(this.animationFrameTimer);
-        this.animationFrameTimer = undefined;
-      }
-      if (this.timeoutTimer !== undefined) {
-        clearTimeout(this.timeoutTimer);
-        this.timeoutTimer = undefined;
+  private updateTimer() {
+    // Check if scheduler is enabled and there's work to do.
+    if (this.isEnabled && this.presentWorkQueue.length) {
+      if (this.animationFrameTimer === undefined) {
+        const {requestAnimationFrame} = this.timingFunctions;
+        this.animationFrameTimer = requestAnimationFrame(() => {
+          this.animationFrameTimer = undefined;
+          this.performWork();
+        });
       }
       return;
     }
 
-    // Since the WorkScheduler is enabled and there's work left to do, make sure
-    // the timers are set up.
-    if (this.animationFrameTimer === undefined) {
-      const animationFrameCallback = () => {
-        if (!this.isEnabled) {
-          this.animationFrameTimer = undefined;
-          return;
-        }
-        this.animationFrameTimer =
-            requestAnimationFrame(animationFrameCallback);
-        this.performAnimationFrameWork();
-      };
-      this.animationFrameTimer = requestAnimationFrame(animationFrameCallback);
-    }
-
-    if (this.timeoutTimer === undefined) {
-      const timeoutCallback = () => {
-        if (!this.isEnabled) {
-          this.timeoutTimer = undefined;
-          return;
-        }
-        this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
-        this.performTimeoutWork();
-      };
-      this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
+    // Scheduler is not enabled, or there's no work to do.
+    if (this.animationFrameTimer !== undefined) {
+      const {cancelAnimationFrame} = this.timingFunctions;
+      cancelAnimationFrame(this.animationFrameTimer);
+      this.animationFrameTimer = undefined;
     }
   }
 
@@ -346,7 +284,7 @@ export class WorkScheduler {
    */
   private performWork() {
     if (this.isPerformingWork) {
-      throw new Error(
+      throw new InternalError(
           'Only one invocation of performWork is allowed at a time');
     }
 
@@ -357,14 +295,14 @@ export class WorkScheduler {
     // Keep track of how many tasks have been performed.
     let tasksRan = 0;
 
+    const startTime = now();
+
+    const remaining: RemainingTimeFn = () =>
+        this.maxWorkTimeMs + startTime - now();
+
     // For performance, the try/catch block encloses the loop that runs through
     // tasks to perform.
     try {
-      const startTime = now();
-
-      const remaining: RemainingTimeFn = () =>
-          this.maxWorkTimeMs + startTime - now();
-
       while (this.presentWorkQueue.length) {
         // If at least one task has been dequeued, and if we've run out of
         // execution time, then break out of the loop.
@@ -374,16 +312,8 @@ export class WorkScheduler {
 
         const task = this.presentWorkQueue.dequeueTask();
 
-        if (!this.isPerformingAnimationFrameWork &&
-            (task.animationOnly === undefined || task.animationOnly)) {
-          // Unfortunately, this task is set to only run on animation frames,
-          // and we're not currently in one. Add the task to the future work
-          // queue and continue.
-          this.futureWorkQueue.enqueueTask(task);
-          continue;
-        }
-
         tasksRan++;
+
         const result = task.callback.call(null, remaining);
 
         if (!task.runUntilDone || result) {
@@ -409,48 +339,15 @@ export class WorkScheduler {
 
     } finally {
       this.isPerformingWork = false;
-    }
 
-    // Take any work tasks which were set aside during work and place them
-    // into the queue at their correct place.
-    while (this.futureWorkQueue.length) {
-      const futureTask = this.futureWorkQueue.dequeueTask();
-      this.scheduleTask(futureTask);
-    }
-  }
+      // Take any work tasks which were set aside during work and place them
+      // into the queue at their correct place.
+      while (this.futureWorkQueue.length) {
+        const futureTask = this.futureWorkQueue.dequeueTask();
+        this.scheduleTask(futureTask);
+      }
 
-  /**
-   * Perform work that is suitable for an animation frame.
-   */
-  private performAnimationFrameWork() {
-    if (this.isPerformingAnimationFrameWork) {
-      throw new Error(
-          'Only one invocation of performAnimationFrameWork at a time');
-    }
-
-    this.isPerformingAnimationFrameWork = true;
-
-    try {
-      this.performWork();
-    } finally {
-      this.isPerformingAnimationFrameWork = false;
-    }
-  }
-
-  /**
-   * Perform work that is suitable for a timeout callback.
-   */
-  private performTimeoutWork() {
-    if (this.isPerformingTimoutWork) {
-      throw new Error('Only one invocation of performTimoutWork at a time');
-    }
-
-    this.isPerformingTimoutWork = true;
-
-    try {
-      this.performWork();
-    } finally {
-      this.isPerformingTimoutWork = false;
+      this.updateTimer();
     }
   }
 }

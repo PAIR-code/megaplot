@@ -18,10 +18,10 @@
  * @fileoverview The TimingFunctionsShim class is used for testing the
  * WorkSheduler. A TimingFunctionsShim implements and emulates the upstream
  * timing functions that the WorkScheduler depends on, like
- * requestAnimationFrame() and setTimeout().
+ * requestAnimationFrame().
  */
 
-import {CallbackFunctionType, TimingFunctions} from './default-timing-functions';
+import {TimingFunctions} from './default-timing-functions';
 import {InternalError} from './internal-error';
 
 /**
@@ -37,31 +37,6 @@ interface AnimationFrameCallback {
    * Function to be invoked.
    */
   callback: FrameRequestCallback;
-}
-
-/**
- * Object for storing information about a timeout callback.
- */
-interface TimeoutCallback {
-  /**
-   * Should always be an even, positive integer (2, 4, 6, ...).
-   */
-  id: number;
-
-  /**
-   * Function to be invoked.
-   */
-  callback: CallbackFunctionType;
-
-  /**
-   * Earliest time when this timeout is executable.
-   */
-  thresholdTimeMs: number;
-
-  /**
-   * Array of additional arguments to pass to the method.
-   */
-  args: unknown[];
 }
 
 /**
@@ -95,13 +70,8 @@ export class TimingFunctionsShim implements TimingFunctions {
   totalElapsedTimeMs = 0;
 
   /**
-   * Internal counter to produce numeric timeoutIds in response to requests to
+   * Internal counter to produce numeric ids in response to requests to
    * requestAnimationFrame();
-   *
-   * Since this class's job is to test the WorkQueue, animation frame id's will
-   * all be odd numbers, starting with 1. That way we can test for accidental
-   * calls to the wrong kind of cancel function (calling clearTimeout() for an
-   * animation frame id or cancelAnimationFrame() for a timeout id).
    */
   nextAnimationFrameId = 1;
 
@@ -112,25 +82,6 @@ export class TimingFunctionsShim implements TimingFunctions {
    * test code.
    */
   readonly animationFrameCallbackQueue: AnimationFrameCallback[] = [];
-
-  /**
-   * Internal counter to produce numeric timeoutIds in response to requests to
-   * setTimout();
-   *
-   * Since this class's job is to test the WorkQueue, timeout id's will all be
-   * even numbers, starting with 2. That way we can test for accidental calls to
-   * the wrong kind of cancel function (calling clearTimeout() for an animation
-   * frame id or cancelAnimationFrame() for a timeout id).
-   */
-  nextTimeoutId = 2;
-
-  /**
-   * Internal queue of callbacks to run on the next animation frame. It should
-   * only be modified by calls to requestAnimationFrame() and
-   * triggerAnimationFrame(), but is public here so that it can be evaluated by
-   * test code.
-   */
-  readonly timeoutCallbackQueue: TimeoutCallback[] = [];
 
   /**
    * Bind all methods since the caller will have only the function handle. Check
@@ -150,20 +101,6 @@ export class TimingFunctionsShim implements TimingFunctions {
         this: unknown, id: number): void {
       checkThis(this);
       boundCancelAnimationFrame(id);
-    };
-
-    const boundSetTimeout = this.setTimeout.bind(this);
-    this.setTimeout = function setTimeout(
-        this: unknown, callback: CallbackFunctionType, delay: number,
-        ...args: unknown[]): number {
-      checkThis(this);
-      return boundSetTimeout(callback, delay, ...args);
-    };
-
-    const boundClearTimeout = this.clearTimeout.bind(this);
-    this.clearTimeout = function clearTimeout(this: unknown, id: number): void {
-      checkThis(this);
-      boundClearTimeout(id);
     };
 
     /**
@@ -187,8 +124,8 @@ export class TimingFunctionsShim implements TimingFunctions {
     const id = this.nextAnimationFrameId;
 
     // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError('Animation frame ids must be odd, positive integers');
+    if (isNaN(+id) || !Number.isInteger(id) || id < 1) {
+      throw new TypeError('Animation frame ids must be positive integers');
     }
 
     this.nextAnimationFrameId += 2;
@@ -203,56 +140,13 @@ export class TimingFunctionsShim implements TimingFunctions {
    */
   cancelAnimationFrame(id: number): void {
     // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError('Animation frame ids must be odd, positive integers');
+    if (isNaN(+id) || !Number.isInteger(id) || id < 1) {
+      throw new TypeError('Animation frame ids must be positive integers');
     }
 
     for (let i = this.animationFrameCallbackQueue.length - 1; i >= 0; i--) {
       if (this.animationFrameCallbackQueue[i].id === id) {
         this.animationFrameCallbackQueue.splice(i, 1);
-      }
-    }
-  }
-
-  /**
-   * Emulate window.setTimeout().
-   */
-  setTimeout(callback: CallbackFunctionType, delay = 0, ...args: unknown[]):
-      number {
-    if (!(callback instanceof Function)) {
-      // Upstream setTimout() doesn't throw, but since this class is for
-      // testing, we'll check it anyway.
-      throw new TypeError(
-          'Failed to execute \'setTimeout\': ' +
-          'The callback provided as parameter 1 is not a function');
-    }
-
-    const id = this.nextTimeoutId;
-
-    // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers');
-    }
-
-    this.nextTimeoutId += 2;
-    const thresholdTimeMs = this.totalElapsedTimeMs + (+delay || 0);
-    const callbackObject = {id, callback, thresholdTimeMs, args};
-    this.timeoutCallbackQueue.push(callbackObject);
-    return id;
-  }
-
-  /**
-   * Emulate window.clearTimeout().
-   */
-  clearTimeout(id: number): void {
-    // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 2 || id % 2 === 1) {
-      throw new TypeError('Timeout ids must be even, positive integers');
-    }
-
-    for (let i = this.timeoutCallbackQueue.length - 1; i >= 0; i--) {
-      if (this.timeoutCallbackQueue[i].id === id) {
-        this.timeoutCallbackQueue.splice(i, 1);
       }
     }
   }
@@ -274,7 +168,7 @@ export class TimingFunctionsShim implements TimingFunctions {
    */
   runAnimationFrameCallbacks(frameCount = 1) {
     if (!Number.isInteger(frameCount) || frameCount <= 0) {
-      throw new RangeError('frameCount must be a positive, finite value');
+      throw new RangeError('frameCount must be a positive integer');
     }
 
     for (let i = 0; i < frameCount; i++) {
@@ -315,56 +209,6 @@ export class TimingFunctionsShim implements TimingFunctions {
             ...futureCallbackQueue,
         );
       }
-    }
-  }
-
-  /**
-   * Provide a mechanism for running down queued timer callbacks.
-   */
-  runTimerCallbacks() {
-    // Remove all callbacks from the canonical timer callback queue.
-    // This local version will be the one we run down so that we can track any
-    // that were blocked by earlier exceptions. This also ensures that we don't
-    // accidentally start executing future queued callbacks (those put onto the
-    // canonical queue as a side effect of this run).
-    const presentCallbackQueue =
-        this.timeoutCallbackQueue.splice(0, this.timeoutCallbackQueue.length);
-
-    // Some timeouts may not yet be ready to run. Queue these up to re-add to
-    // the canonical queue after we've tried to run the present queue.
-    const delayedCallbackQueue: TimeoutCallback[] = [];
-
-    try {
-      // Dequeue present callbacks and run any with hit thresholds.
-      while (presentCallbackQueue.length) {
-        const timeoutCallback = presentCallbackQueue.shift();
-
-        if (!timeoutCallback) {
-          throw new InternalError('Falsey value found in callback queue');
-        }
-
-        if (this.now() < timeoutCallback.thresholdTimeMs) {
-          delayedCallbackQueue.push(timeoutCallback);
-          continue;
-        }
-
-        timeoutCallback.callback.apply(null, timeoutCallback.args);
-      }
-
-    } finally {
-      // Collect any callbacks that were added to the canonical queue during the
-      // running of present callbacks.
-      const futureCallbackQueue =
-          this.timeoutCallbackQueue.splice(0, this.timeoutCallbackQueue.length);
-
-      // Update the canonical queue to include, in order, any explicitly delayed
-      // callbacks, then any remaining present callbacks, then any newly added
-      // (future) callbacks.
-      this.timeoutCallbackQueue.push(
-          ...delayedCallbackQueue,
-          ...presentCallbackQueue,
-          ...futureCallbackQueue,
-      );
     }
   }
 }
