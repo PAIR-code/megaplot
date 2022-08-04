@@ -55,6 +55,28 @@ describe('WorkScheduler', () => {
     expect(typeof workScheduler).toBe('object');
   });
 
+  it('should not request animation frames without tasks', () => {
+    const timingFunctionsShim = new TimingFunctionsShim();
+
+    // Wrap requestAnimationFrame with a counter to keep track of the number of
+    // invocations.
+    let frameCounter = 0;
+    const countingRequestAnimationFrame = (callback: FrameRequestCallback) => {
+      frameCounter++;
+      return timingFunctionsShim.requestAnimationFrame(callback);
+    };
+
+    new WorkScheduler({
+      timingFunctions: {
+        requestAnimationFrame: countingRequestAnimationFrame,
+        cancelAnimationFrame: timingFunctionsShim.cancelAnimationFrame,
+        now: timingFunctionsShim.now,
+      },
+    });
+
+    expect(frameCounter).toBe(0);
+  });
+
   describe('scheduleTask', () => {
     describe('callback function', () => {
       it('should allow scheduling a regular callback function', () => {
@@ -91,6 +113,67 @@ describe('WorkScheduler', () => {
         // should have no effect on the counter.
         timingFunctionsShim.runAnimationFrameCallbacks();
         expect(counter).toBe(1);
+      });
+
+      it('should stop requesting frames when tasks are done', () => {
+        const timingFunctionsShim = new TimingFunctionsShim();
+        const {
+          requestAnimationFrame,
+          cancelAnimationFrame,
+          now,
+        } = timingFunctionsShim;
+
+        // Wrap requestAnimationFrame with a counter to keep track of the number
+        // of frames that have been requested.
+        let frameCount = 0;
+        const countingRequestAnimationFrame = (cb: FrameRequestCallback) => {
+          frameCount++;
+          return requestAnimationFrame(cb);
+        };
+
+        const workScheduler = new WorkScheduler({
+          timingFunctions: {
+            requestAnimationFrame: countingRequestAnimationFrame,
+            cancelAnimationFrame,
+            now,
+          },
+        });
+
+        // Even though the work scheduler should be enabled by default, it
+        // should not start requesting frames until a work task has been
+        // scheduled.
+        expect(frameCount).toBe(0);
+
+        // Define a simple callback task that counts its invocations.
+        let callCount = 0;
+        const countingTask = () => ++callCount;
+
+        // Schedule the increment counter callback.
+        const workTask = workScheduler.scheduleTask(countingTask);
+        expect(workTask.callback).toBe(countingTask);
+        expect(workTask.id).toBe(countingTask);
+
+        // Confirm that one animation frame has been requested.
+        expect(frameCount).toBe(1);
+
+        // Nothing has been run yet, so we expect the call counter to be zero.
+        expect(workScheduler.isScheduledTask(countingTask)).toBe(true);
+        expect(callCount).toBe(0);
+
+        // Advance by one frame. Callback should have been invoked.
+        timingFunctionsShim.runAnimationFrameCallbacks();
+        expect(workScheduler.isScheduledTask(countingTask)).toBe(false);
+        expect(callCount).toBe(1);
+
+        // Since there are no more tasks to run, no more frames should have been
+        // requested.
+        expect(frameCount).toBe(1);
+
+        // Since the increment counter has finished, running animation frame
+        // callbacks additional times should have no effect.
+        timingFunctionsShim.runAnimationFrameCallbacks(10);
+        expect(callCount).toBe(1);
+        expect(frameCount).toBe(1);
       });
 
       it('should invoke callback with remaining time function', () => {

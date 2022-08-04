@@ -18,7 +18,7 @@
  * @fileoverview The TimingFunctionsShim class is used for testing the
  * WorkSheduler. A TimingFunctionsShim implements and emulates the upstream
  * timing functions that the WorkScheduler depends on, like
- * requestAnimationFrame() and setTimeout().
+ * requestAnimationFrame().
  */
 
 import {TimingFunctions} from './default-timing-functions';
@@ -37,31 +37,6 @@ interface AnimationFrameCallback {
    * Function to be invoked.
    */
   callback: FrameRequestCallback;
-}
-
-/**
- * Object for storing information about a timeout callback.
- */
-interface TimeoutCallback {
-  /**
-   * Should always be an even, positive integer (2, 4, 6, ...).
-   */
-  id: number;
-
-  /**
-   * Function to be invoked.
-   */
-  callback: FrameRequestCallback;
-
-  /**
-   * Earliest time when this timeout is executable.
-   */
-  thresholdTimeMs: number;
-
-  /**
-   * Array of additional arguments to pass to the method.
-   */
-  args: unknown[];
 }
 
 /**
@@ -95,13 +70,8 @@ export class TimingFunctionsShim implements TimingFunctions {
   totalElapsedTimeMs = 0;
 
   /**
-   * Internal counter to produce numeric timeoutIds in response to requests to
+   * Internal counter to produce numeric ids in response to requests to
    * requestAnimationFrame();
-   *
-   * Since this class's job is to test the WorkQueue, animation frame id's will
-   * all be odd numbers, starting with 1. That way we can test for accidental
-   * calls to the wrong kind of cancel function (calling clearTimeout() for an
-   * animation frame id or cancelAnimationFrame() for a timeout id).
    */
   nextAnimationFrameId = 1;
 
@@ -112,25 +82,6 @@ export class TimingFunctionsShim implements TimingFunctions {
    * test code.
    */
   readonly animationFrameCallbackQueue: AnimationFrameCallback[] = [];
-
-  /**
-   * Internal counter to produce numeric timeoutIds in response to requests to
-   * setTimout();
-   *
-   * Since this class's job is to test the WorkQueue, timeout id's will all be
-   * even numbers, starting with 2. That way we can test for accidental calls to
-   * the wrong kind of cancel function (calling clearTimeout() for an animation
-   * frame id or cancelAnimationFrame() for a timeout id).
-   */
-  nextTimeoutId = 2;
-
-  /**
-   * Internal queue of callbacks to run on the next animation frame. It should
-   * only be modified by calls to requestAnimationFrame() and
-   * triggerAnimationFrame(), but is public here so that it can be evaluated by
-   * test code.
-   */
-  readonly timeoutCallbackQueue: TimeoutCallback[] = [];
 
   /**
    * Bind all methods since the caller will have only the function handle. Check
@@ -173,8 +124,8 @@ export class TimingFunctionsShim implements TimingFunctions {
     const id = this.nextAnimationFrameId;
 
     // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError('Animation frame ids must be odd, positive integers');
+    if (isNaN(+id) || !Number.isInteger(id) || id < 1) {
+      throw new TypeError('Animation frame ids must be positive integers');
     }
 
     this.nextAnimationFrameId += 2;
@@ -189,8 +140,8 @@ export class TimingFunctionsShim implements TimingFunctions {
    */
   cancelAnimationFrame(id: number): void {
     // Sanity check.
-    if (isNaN(+id) || !Number.isInteger(id) || id < 1 || id % 2 === 0) {
-      throw new TypeError('Animation frame ids must be odd, positive integers');
+    if (isNaN(+id) || !Number.isInteger(id) || id < 1) {
+      throw new TypeError('Animation frame ids must be positive integers');
     }
 
     for (let i = this.animationFrameCallbackQueue.length - 1; i >= 0; i--) {
