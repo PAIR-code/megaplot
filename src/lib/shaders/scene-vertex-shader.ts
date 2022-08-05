@@ -75,6 +75,14 @@ uniform float ts;
 uniform float instanceCount;
 
 /**
+ * Granularity expected in the value of OrderZ values. The higher the
+ * granularity, the more control the user has over the Z position of sprites.
+ * However, this leaves less precision for correctly positioning sprites which
+ * have exactly the same OrderZ value.
+ */
+uniform float orderZGranularity;
+
+/**
  * View and projection matrices for converting from world space to clip space.
  */
 uniform mat3 viewMatrix;
@@ -332,7 +340,25 @@ void main () {
   vec2 clipVertexPosition =
     (projectionMatrix * vec3(viewVertexPosition, 1.)).xy;
 
-  float clipZ = -instanceIndex / instanceCount;
+  // Compute the current user-specified OrderZ value.
+  float currentOrderZ = computeCurrentValue(
+      previousOrderZ(),
+      previousOrderZDelta(),
+      targetOrderZ());
+
+  // Compute the stacking Z value for index-order blending.
+  float stackZ = (1. + instanceIndex) / (1. + instanceCount);
+
+  // Use provided granularity to combine current and stack Z values.
+  float gInv = 1. / orderZGranularity;
+
+  float combinedZ =
+    mix(0., 1. - gInv, currentOrderZ) +
+    mix(0., gInv, stackZ);
+
+  // Project combined Z into clip space.
+  float clipZ = mix(1., -1., combinedZ);
+
   gl_Position = vec4(clipVertexPosition, clipZ, 1.);
 }
 `;

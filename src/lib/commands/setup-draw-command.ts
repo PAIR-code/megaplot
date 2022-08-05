@@ -110,6 +110,7 @@ export function setupDrawCommand(
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
       'instanceCount': () => coordinator.instanceCount,
+      'orderZGranularity': () => 10,
       'viewMatrix': () => coordinator.getViewMatrix(),
       'viewMatrixScale': () => coordinator.getViewMatrixScale(),
       'projectionMatrix': (context: REGL.DefaultContext) => {
