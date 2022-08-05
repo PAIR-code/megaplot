@@ -109,7 +109,7 @@ export function setupDrawCommand(
 
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
-      'instanceZ': () => 1 / (1 + coordinator.instanceCount),
+      'instanceCount': () => coordinator.instanceCount,
       'viewMatrix': () => coordinator.getViewMatrix(),
       'viewMatrixScale': () => coordinator.getViewMatrixScale(),
       'projectionMatrix': (context: REGL.DefaultContext) => {

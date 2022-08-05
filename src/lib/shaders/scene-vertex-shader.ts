@@ -67,11 +67,12 @@ precision lowp float;
 uniform float ts;
 
 /**
- * Incremental clip-space Z for stacking sprites based on their instanceIndex.
+ * Total number of sprite instances being rendered this pass. Used to compute
+ * clip-space Z for stacking sprites based on their instanceIndex.
  * This ensures that partial-opacity pixels of stacked sprites will be
  * alpha-blended. Without this, occluded sprites' pixels may not blend.
  */
-uniform float instanceZ;
+uniform float instanceCount;
 
 /**
  * View and projection matrices for converting from world space to clip space.
@@ -331,9 +332,8 @@ void main () {
   vec2 clipVertexPosition =
     (projectionMatrix * vec3(viewVertexPosition, 1.)).xy;
 
-  // Align Z axis clip-space coordinate (perpendicular to screen) with instance
-  // index for blending stacked sprites.
-  gl_Position = vec4(clipVertexPosition, -instanceIndex * instanceZ, 1.);
+  float clipZ = -instanceIndex / instanceCount;
+  gl_Position = vec4(clipVertexPosition, clipZ, 1.);
 }
 `;
 }
