@@ -180,7 +180,10 @@ function main() {
       s.PositionPixelY = -Math.floor(3 * j / count) * settings.paddingPx;
       s.PositionRelativeX = settings.positionRelative;
 
-      // s.OrderZ = settings.flipZ ? 1 : 0;
+      s.OrderZ = 0;
+      if (settings.flipZ && index < settings.total) {
+        s.OrderZ = (settings.total - index) / settings.total;
+      }
 
       s.GeometricZoom = settings.geometricZoom;
 
