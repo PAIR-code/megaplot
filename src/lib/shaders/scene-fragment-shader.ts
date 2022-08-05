@@ -338,10 +338,17 @@ void main () {
   float targetDistance = getDist(targetSides, varyingTargetShapeTexture);
   float signedDistance = mix(previousDistance, targetDistance, varyingT);
 
-  gl_FragColor =
+  vec4 color =
     signedDistance < varyingBorderThresholds.x ? vec4(0.) :
     signedDistance < varyingBorderThresholds.y ? varyingBorderColor :
     varyingFillColor;
+
+  if (color.a < .01) {
+    discard;
+    return;
+  }
+
+  gl_FragColor = color;
 }
 `;
 }
