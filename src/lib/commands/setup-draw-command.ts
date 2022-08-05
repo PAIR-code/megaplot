@@ -40,6 +40,7 @@ interface CoordinatorAPI {
   instanceCount: number;
   instanceIndexBuffer: REGL.Buffer;
   instanceSwatchUvBuffer: REGL.Buffer;
+  orderZGranularity: number;
   previousValuesFramebuffer: REGL.Framebuffer2D;
   regl: REGL.Regl;
   sdfTexture: REGL.Texture;
@@ -110,7 +111,7 @@ export function setupDrawCommand(
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
       'instanceCount': () => coordinator.instanceCount,
-      'orderZGranularity': () => 10,
+      'orderZGranularity': () => coordinator.orderZGranularity,
       'viewMatrix': () => coordinator.getViewMatrix(),
       'viewMatrixScale': () => coordinator.getViewMatrixScale(),
       'projectionMatrix': (context: REGL.DefaultContext) => {
