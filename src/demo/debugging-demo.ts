@@ -144,24 +144,20 @@ function main() {
     const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
 
-    selection.onInit(s => {
+    selection.onInit((s) => {
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
     });
 
-    selection.onExit(s => {
+    selection.onExit((s) => {
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
     });
 
     selection.onBind((s, index) => {
-      if (index > settings.total - 1) {
-        // This sprite is about to exit.
-        return;
-      }
-
       s.TransitionTimeMs = settings.transitionTimeMs;
-      if (settings.staggerAnimation) {
+
+      if (settings.staggerAnimation && index < settings.total) {
         s.TransitionTimeMs *= (1 + index) / settings.total;
       }
 
