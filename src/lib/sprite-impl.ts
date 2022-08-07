@@ -45,7 +45,7 @@ export class SpriteImpl {
 
   enter(enterCallback: SpriteViewCallback): Sprite {
     if (this.isAbandoned) {
-      throw new Error('Cannot add enter callback to abondend sprite');
+      throw new Error('Cannot add enter callback to abandoned sprite');
     }
 
     if (this.isRemoved) {

@@ -52,7 +52,7 @@ module.exports = {
     '@typescript-eslint/prefer-readonly': ERROR,
     'spellcheck/spell-checker': [WARN, {
       'comments': true,
-      'strings': false,
+      'strings': true,
       'identifiers': false,
       'templates': false,
       'lang': 'en_US',
