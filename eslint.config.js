@@ -18,6 +18,13 @@
  * @fileoverview Configuration for ESLint.
  */
 
+const fs = require('fs');
+const skipWords = fs.readFileSync('eslint.skipWords.txt', 'utf8')
+                      .split('\n')
+                      .map(line => line.trim())
+                      .filter(line => !!line);
+
+
 const OFF = 0;
 const WARN = 1;
 const ERROR = 2;
@@ -43,6 +50,17 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-confusing-void-expression': ERROR,
     '@typescript-eslint/prefer-readonly': ERROR,
-    'spellcheck/spell-checker': WARN,
+    'spellcheck/spell-checker': [WARN, {
+      'comments': true,
+      'strings': false,
+      'identifiers': false,
+      'templates': false,
+      'lang': 'en_US',
+      'skipWords': skipWords,
+      'skipIfMatch': [
+        'dat\\.GUI',
+        'TODO\\s*\\([^\\)]+\\):',
+      ],
+    }],
   },
 };
