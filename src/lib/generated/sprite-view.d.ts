@@ -24,6 +24,7 @@ export interface SpriteView {
   PositionWorldY: number;
   SizeWorldWidth: number;
   SizeWorldHeight: number;
+  OrderZ: number;
   GeometricZoomX: number;
   GeometricZoomY: number;
   PositionPixelX: number;

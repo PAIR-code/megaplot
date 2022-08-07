@@ -107,6 +107,8 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
+    staggerAnimation: true,
+    flipZ: false,
     randomize: false,
     showText: false,
     hitTestOnMove: false,
@@ -142,18 +144,22 @@ function main() {
     const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
 
-    selection.onInit(s => {
+    selection.onInit((s) => {
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
     });
 
-    selection.onExit(s => {
+    selection.onExit((s) => {
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
     });
 
     selection.onBind((s, index) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
+
+      if (settings.staggerAnimation && index < settings.total) {
+        s.TransitionTimeMs *= (1 + index) / settings.total;
+      }
 
       const i = index % count;
       const j = Math.floor(index / count);
@@ -173,6 +179,11 @@ function main() {
       s.PositionPixelX = Math.floor(3 * i / count) * settings.paddingPx;
       s.PositionPixelY = -Math.floor(3 * j / count) * settings.paddingPx;
       s.PositionRelativeX = settings.positionRelative;
+
+      s.OrderZ = 0;
+      if (settings.flipZ && index < settings.total) {
+        s.OrderZ = (settings.total - index) / settings.total;
+      }
 
       s.GeometricZoom = settings.geometricZoom;
 
@@ -234,6 +245,8 @@ function main() {
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+  gui.add(settings, 'staggerAnimation');
+  gui.add(settings, 'flipZ').onChange(update);
   gui.add(settings, 'randomize').onChange(update);
   gui.add(settings, 'showText').onChange(update);
   gui.add(settings, 'hitTestOnMove');

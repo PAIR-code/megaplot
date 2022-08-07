@@ -32,13 +32,14 @@ export const DEFAULT_GLYPHS =
 /**
  * Parameters to configure the Scene.
  */
-export const DEFAULT_SCENE_SETTINGS = Object.freeze({
+export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
   container: document.body,
   defaultTransitionTimeMs: 250,
-  glyphs: DEFAULT_GLYPHS,
   desiredSpriteCapacity: 1e6,
-  timingFunctions: DEFAULT_TIMING_FUNCTIONS,
+  glyphs: DEFAULT_GLYPHS,
   glyphMapper: DEFAULT_GLYPH_MAPPER_SETTINGS,
+  orderZGranularity: 10,
+  timingFunctions: DEFAULT_TIMING_FUNCTIONS,
 });
 
 /**
@@ -57,6 +58,9 @@ export const DEFAULT_SCENE_SETTINGS = Object.freeze({
  *     fire for the datum and its associated SpriteView.
  * @param {string} glyphs Characters to support in glyph mapper.
  * @param {GlyphMapperSettings} glyphMapper Settings for the glyph mapper.
+ * @param {number} orderZGranularity Granularity of OrderZ values. Higher means
+ *     more granular control over user-specified OrderZ, but reduces precision
+ *     remaining for differentiating stacked sprites with the same OrderZ.
  * @param {TimingFunctions} timingFunctions Timing functions for WorkScheduler.
  */
 export interface SceneSettings {
@@ -65,5 +69,6 @@ export interface SceneSettings {
   desiredSpriteCapacity: number;
   glyphs: string;
   glyphMapper: GlyphMapperSettings;
+  orderZGranularity: number;
   timingFunctions: TimingFunctions;
 }

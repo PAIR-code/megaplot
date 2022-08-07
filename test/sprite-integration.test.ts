@@ -218,7 +218,7 @@ describe('Sprite', () => {
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
       content.appendChild(copyContainer);
 
-      // Grap a snapshot of the Scene's rendered pixels and draw them to
+      // Grab a snapshot of the Scene's rendered pixels and draw them to
       // the canvas copy.
       const blob = await scene[SceneInternalSymbol].snapshot();
       const img = await blobToImage(blob);
@@ -598,6 +598,261 @@ describe('Sprite', () => {
         timingFunctionsShim.runAnimationFrameCallbacks();
         await recordSnapshot();
       }
+    });
+  });
+
+  describe('stacking', () => {
+    // Create a <section> for storing visible artifacts.
+    const section = createSection('Sprite stacking');
+    const content = section.querySelector('.content')!;
+
+    it('should render later sprites over earlier sprites', async () => {
+      // Create a container <div> of fixed size for the Scene to render into.
+      const container = document.createElement('div');
+      container.style.width = '100px';
+      container.style.height = '100px';
+      content.appendChild(container);
+
+      // Control time meticulously to evaluate animation states.
+      const timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      const bottomSprite = scene.createSprite();
+      // Give the Sprite an enter() callback to invoke.
+      bottomSprite.enter((s) => {
+        // Position of the sprite should be centered at world origin.
+        s.PositionWorldX = 0.2;
+        s.PositionWorldY = -0.2;
+
+        // Sprite size should fill the canvas.
+        s.SizeWorldWidth = 0.7;
+        s.SizeWorldHeight = 0.7;
+
+        // Shape should be a square.
+        s.Sides = 2;
+
+        // Interior fill is opaque purple.
+        s.FillColorR = 128;
+        s.FillColorG = 0;
+        s.FillColorB = 128;
+        s.FillColorOpacity = 1;
+      });
+
+      const topSprite = scene.createSprite();
+      // Give the Sprite an enter() callback to invoke.
+      topSprite.enter((s) => {
+        // Position of the sprite should be centered at world origin.
+        s.PositionWorldX = -0.2;
+        s.PositionWorldY = 0.2;
+
+        // Sprite size should fill the canvas.
+        s.SizeWorldWidth = 0.7;
+        s.SizeWorldHeight = 0.7;
+
+        // Shape should be a square.
+        s.Sides = 2;
+
+        // Interior fill is opaque orange.
+        s.FillColorR = 255;
+        s.FillColorG = 128;
+        s.FillColorB = 0;
+        s.FillColorOpacity = 1;
+      });
+
+      // After advancing three frames, the sprites should both be drawn to the
+      // canvas.
+      timingFunctionsShim.runAnimationFrameCallbacks(3);
+
+      // Now, if we inspect the canvas, its pixels should show that the sprite
+      // has been rendered. Start my making a copy of the canvas and for
+      // inspection.
+      const {canvas} = scene;
+      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+      content.appendChild(copyContainer);
+
+      // Grab a snapshot of the Scene's rendered pixels and draw them to
+      // the canvas copy.
+      const blob = await scene[SceneInternalSymbol].snapshot();
+      const img = await blobToImage(blob);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // For integration testing, we'll sample an area of the output that's 10%
+      // the width and height of the canvas size. This patch is a middle-ground
+      // between testing the whole image for pixel-perfect rendering and testing
+      // a single pixel.
+      const sampleWidth = Math.ceil(copy.width * .1);
+      const sampleHeight = Math.ceil(copy.width * .1);
+      const pixelCount = sampleWidth * sampleHeight;
+
+      // Generate patches of solid green and magenta to compare to the rendered
+      // pixels for correctness.
+      const solidOrange = filledColorArray(pixelCount, [255, 128, 0, 255]);
+      const solidPurple = filledColorArray(pixelCount, [128, 0, 128, 255]);
+
+      // Take a sample of the top left corner and compare it to the expected
+      // solid green patch.
+      const topLeftSample = ctx.getImageData(
+          0,
+          0,
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(topLeftSample.data, solidOrange)).toEqual(1);
+
+      // Take a sample of the bottom right corner and compare it to the expected
+      // solid green patch.
+      const bottomRightSample = ctx.getImageData(
+          Math.floor(copy.width - sampleWidth),
+          Math.floor(copy.height - sampleHeight),
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(bottomRightSample.data, solidPurple))
+          .toEqual(1);
+
+      // Lastly, sample a chunk of the middle of the image and compare it to the
+      // solid magenta patch.
+      const centerSample = ctx.getImageData(
+          Math.floor(copy.width * .5 - sampleWidth * .5),
+          Math.floor(copy.height * .5 - sampleHeight * .5),
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(centerSample.data, solidOrange)).toEqual(1);
+    });
+
+    it('should render higher sprites over lower sprites', async () => {
+      // Create a container <div> of fixed size for the Scene to render into.
+      const container = document.createElement('div');
+      container.style.width = '100px';
+      container.style.height = '100px';
+      content.appendChild(container);
+
+      // Control time meticulously to evaluate animation states.
+      const timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+
+      const scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      const topSprite = scene.createSprite();
+      // Give the Sprite an enter() callback to invoke.
+      topSprite.enter((s) => {
+        // Position of the sprite should be centered at world origin.
+        s.PositionWorldX = 0.2;
+        s.PositionWorldY = 0.2;
+
+        // PLACE SPRITE ON TOP.
+        s.OrderZ = 1;
+
+        // Sprite size should fill the canvas.
+        s.SizeWorldWidth = 0.7;
+        s.SizeWorldHeight = 0.7;
+
+        // Shape should be a square.
+        s.Sides = 2;
+
+        // Interior fill is opaque purple.
+        s.FillColorR = 128;
+        s.FillColorG = 0;
+        s.FillColorB = 128;
+        s.FillColorOpacity = 1;
+      });
+
+      const bottomSprite = scene.createSprite();
+      // Give the Sprite an enter() callback to invoke.
+      bottomSprite.enter((s) => {
+        // Position of the sprite should be centered at world origin.
+        s.PositionWorldX = -0.2;
+        s.PositionWorldY = -0.2;
+
+        // PLACE SPRITE ON BOTTOM.
+        s.OrderZ = 0;
+
+        // Sprite size should fill the canvas.
+        s.SizeWorldWidth = 0.7;
+        s.SizeWorldHeight = 0.7;
+
+        // Shape should be a square.
+        s.Sides = 2;
+
+        // Interior fill is opaque orange.
+        s.FillColorR = 255;
+        s.FillColorG = 128;
+        s.FillColorB = 0;
+        s.FillColorOpacity = 1;
+      });
+
+      // After advancing three frames, the sprites should both be drawn to the
+      // canvas.
+      timingFunctionsShim.runAnimationFrameCallbacks(3);
+
+      // Now, if we inspect the canvas, its pixels should show that the sprite
+      // has been rendered. Start my making a copy of the canvas and for
+      // inspection.
+      const {canvas} = scene;
+      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+      content.appendChild(copyContainer);
+
+      // Grab a snapshot of the Scene's rendered pixels and draw them to
+      // the canvas copy.
+      const blob = await scene[SceneInternalSymbol].snapshot();
+      const img = await blobToImage(blob);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // For integration testing, we'll sample an area of the output that's 10%
+      // the width and height of the canvas size. This patch is a middle-ground
+      // between testing the whole image for pixel-perfect rendering and testing
+      // a single pixel.
+      const sampleWidth = Math.ceil(copy.width * .1);
+      const sampleHeight = Math.ceil(copy.width * .1);
+      const pixelCount = sampleWidth * sampleHeight;
+
+      // Generate patches of solid green and magenta to compare to the rendered
+      // pixels for correctness.
+      const solidOrange = filledColorArray(pixelCount, [255, 128, 0, 255]);
+      const solidPurple = filledColorArray(pixelCount, [128, 0, 128, 255]);
+
+      // Take a sample of the top right corner and compare it to the expected
+      // solid green patch.
+      const topRightSample = ctx.getImageData(
+          Math.floor(copy.width - sampleWidth),
+          0,
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(topRightSample.data, solidPurple)).toEqual(1);
+
+      // Take a sample of the bottom right corner and compare it to the expected
+      // solid green patch.
+      const bottomLeftSample = ctx.getImageData(
+          0,
+          Math.floor(copy.height - sampleHeight),
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(bottomLeftSample.data, solidOrange)).toEqual(1);
+
+      // Lastly, sample a chunk of the middle of the image and compare it to the
+      // solid magenta patch.
+      const centerSample = ctx.getImageData(
+          Math.floor(copy.width * .5 - sampleWidth * .5),
+          Math.floor(copy.height * .5 - sampleHeight * .5),
+          sampleWidth,
+          sampleHeight,
+      );
+      expect(compareColorArrays(centerSample.data, solidPurple)).toEqual(1);
     });
   });
 });

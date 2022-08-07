@@ -155,6 +155,9 @@ export class SpriteViewImpl implements SpriteView {
       continue;
     }
 
+    const attribute =
+        attributeMapper.componentToAttributeMap[attributeComponentName];
+
     output.push(`
   get ${attributeComponentName}(): number {
     return this[DataViewSymbol][${i}];
@@ -163,7 +166,25 @@ export class SpriteViewImpl implements SpriteView {
   set ${attributeComponentName}(attributeValue: number) {
     if (isNaN(attributeValue)) {
       throw new RangeError('${attributeComponentName} cannot be NaN');
+    }`);
+
+    if (attribute.minValue !== undefined) {
+      output.push(`
+    if (attributeValue < ${attribute.minValue}) {
+      throw new RangeError('${attributeComponentName} cannot be less than ${
+          attribute.minValue}');
+    }`);
     }
+
+    if (attribute.maxValue !== undefined) {
+      output.push(`
+    if (attributeValue > ${attribute.maxValue}) {
+      throw new RangeError('${attributeComponentName} cannot be greater than ${
+          attribute.maxValue}');
+    }`);
+    }
+
+    output.push(`
     this[DataViewSymbol][${i}] = attributeValue;
   }`);
   }

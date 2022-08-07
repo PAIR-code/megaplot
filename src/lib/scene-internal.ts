@@ -100,6 +100,13 @@ export class SceneInternal implements Renderer {
   });
 
   /**
+   * Granularity of OrderZ values. Higher means more granular control over
+   * user-specified OrderZ, but reduces precision remaining for differentiating
+   * stacked sprites with the same OrderZ.
+   */
+  orderZGranularity: number;
+
+  /**
    * Collection of Sprites that have been created and have swatches
    * assigned.
    */
@@ -453,6 +460,7 @@ export class SceneInternal implements Renderer {
 
     this.container = settings.container;
     this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
+    this.orderZGranularity = settings.orderZGranularity;
 
     // Look for either the REGL module or createREGL global since both are
     // supported. The latter is for hot-loading the standalone Regl JS file.
