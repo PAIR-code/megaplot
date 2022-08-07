@@ -41,7 +41,7 @@ const DEFAULT_VERTICAL_ALIGN_VALUE = 'middle';
  * Characteristics of a glyph as part of a TextSelection.
  */
 interface TextGlyph<T> {
-  // The dataum behind this glyph's text.
+  // The datum behind this glyph's text.
   datum: T;
 
   // SDF texture coordinates for this glyph.
@@ -192,7 +192,7 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
     let lastEnterIndex = this.boundData.length;
 
-    // Performs enter data binding while there's time remaning, then returns
+    // Performs enter data binding while there's time remaining, then returns
     // whether there's more work to do.
     const enterTask = (remaining: RemainingTimeFn) => {
       while (lastEnterIndex < dataLength) {
@@ -403,7 +403,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
    * array will be empty.
    *
    * @param hitTestParameters Coordinates of the box/point to test.
-   * @return CancellablePromise Yielding a hit test result including the data.
    */
   hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
     // Determine sprites that could be hit,

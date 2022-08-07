@@ -22,7 +22,7 @@ import {DEFAULT_TIMING_FUNCTIONS, TimingFunctions} from './default-timing-functi
 import {DEFAULT_GLYPH_MAPPER_SETTINGS, GlyphMapperSettings} from './glyph-mapper';
 
 /**
- * Default glyph set is the printible ASCII characters from 33 to 126 (dec).
+ * Default glyph set is the printable ASCII characters from 33 to 126 (decimal).
  */
 export const DEFAULT_GLYPHS =
     '!"#$%&\'()*+,-./0123456789:;<=>?' +   // ASCII 33 - 63.
@@ -48,7 +48,7 @@ export const DEFAULT_SCENE_SETTINGS = Object.freeze({
  * @param {number} defaultTransitionTimeMs Default duration of transitions in
  *     milliseconds. Defaults to 250ms, but can be made longer or shorter to
  *     suit your needs. Any value below the duration of an animation frame
- *     (~17ms) will effectively be instantateous.
+ *     (~17ms) will effectively be instantaneous.
  * @param {number} desiredSpriteCapacity Desired number of sprites to be able to
  *     render. As this number could be arbitrarily large, it may not be possible
  *     to satisfy given other system constraints. It is best to provide some
@@ -59,7 +59,7 @@ export const DEFAULT_SCENE_SETTINGS = Object.freeze({
  * @param {GlyphMapperSettings} glyphMapper Settings for the glyph mapper.
  * @param {TimingFunctions} timingFunctions Timing functions for WorkScheduler.
  */
- export interface SceneSettings {
+export interface SceneSettings {
   container: HTMLElement;
   defaultTransitionTimeMs: number;
   desiredSpriteCapacity: number;

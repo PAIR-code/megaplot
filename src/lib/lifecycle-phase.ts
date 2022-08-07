@@ -16,8 +16,8 @@
  */
 /**
  * @fileoverview A Sprite represents a renderable object, internally
- * implemented as a SpriteImpl. During its lifecyle, it goes through a number of
- * phases, which are defined here.
+ * implemented as a SpriteImpl. During its lifecycle, it goes through a number
+ * of phases, which are defined here.
  */
 
 import {InternalError} from './internal-error';
@@ -75,7 +75,7 @@ export enum LifecyclePhase {
  * A LifecyclePhase transition is a situation where a Sprite in a particular
  * LifecyclePhase moves to a different LifecyclePhase. Since there are six
  * phases, there are 6x5=30 possible transitions. By assigning each transition a
- * numeric index, we can use bitwise arithmatic to check whether a given phase
+ * numeric index, we can use bitwise arithmetic to check whether a given phase
  * transition is valid.
  */
 export function transitionToFlag(
@@ -88,7 +88,7 @@ export function transitionToFlag(
 }
 
 /**
- * Create a single integer value which enocodes all the allowed LifecyclePhase
+ * Create a single integer value which encodes all the allowed LifecyclePhase
  * transitions. This value can be AND'd with a phase transition index to test
  * for whether the transition is allowed.
  */
@@ -134,7 +134,7 @@ export function createAllowedTransitionMask(): number {
   // NeedsTextureSync to have its values flashed.
   mask |= transitionToFlag(NeedsRebase, NeedsTextureSync);
 
-  // From NeedsTextureSync, once the sync has occured, the Sprite goes to
+  // From NeedsTextureSync, once the sync has occurred, the Sprite goes to
   // HasCallback if there are more callbacks to run, or to Rest, or to Removed
   // if the Sprite has been marked for removal.
   mask |= transitionToFlag(NeedsTextureSync, Rest);

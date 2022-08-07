@@ -108,9 +108,9 @@ export class AttributeMapper {
   public readonly swatchesPerRow: number;
 
   /**
-   * Number of values storable in a swatch. This will be greater than or equal
-   * to the number of attributes stored, rounded to the nearest texel based on
-   * the dataChannelCount.
+   * Number of values that can be stored in a swatch. This will be greater than
+   * or equal to the number of attributes stored, rounded to the nearest texel
+   * based on the dataChannelCount.
    */
   public readonly valuesPerSwatch: number;
 
@@ -142,7 +142,7 @@ export class AttributeMapper {
   public readonly textureHeight: number;
 
   /**
-   * Total number of swatches storable in the mapped texture.
+   * Total number of swatches that can be stored in the mapped texture.
    */
   public readonly totalSwatches: number;
 

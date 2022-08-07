@@ -16,7 +16,7 @@
  */
 /**
  * @fileoverview This app exercises various aspects of Megaplot under load.
- * Using the dat.gui controls, the user can dramatically increase or decrease
+ * Using the dat.GUI controls, the user can dramatically increase or decrease
  * the number of sprites being rendered. This serves to test the capacity of the
  * system to execute the API user's callbacks and shuttle the resulting swatch
  * data over to the GPU for rendering.
@@ -39,7 +39,7 @@ const MAX_CAPACITY = MAX_COUNT * MAX_COUNT;
 /**
  * Creates a repeating background that looks like graph paper by stacking two
  * SVG images. Together they form a 100x100 pixel grid with light blue lines
- * every 10px and thick blue lines every 100px. Useful fo estimating aspects of
+ * every 10px and thick blue lines every 100px. Useful for estimating aspects of
  * rendered sprites like size and border width.
  */
 document.body.style.background = `
@@ -72,7 +72,7 @@ function main() {
 
   const {workScheduler} = scene[SceneInternalSymbol];
 
-  // Add framerate stats panel.
+  // Add frame rate stats panel.
   const stats = new Stats();
   stats.showPanel(0);
   Object.assign(stats.dom.style, {

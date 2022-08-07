@@ -43,7 +43,7 @@ export type SpriteViewCallback = (spriteView: SpriteView) => void;
  * Calling the Sprite's exit() method signals the intent to move from Active to
  * Removed. This transition does not necessarily happen immediately. Once the
  * Renderer has invoked the exit callback, and after enough time has elapsed to
- * complete the transition, then the Renderer will remove the Sprite from acitve
+ * complete the transition, then the Renderer will remove the Sprite from active
  * use and set its state to Removed. In the Removed state, the Sprite object
  * still exists, but its isRemoved property will return true, and the Renderer
  * will no longer maintain any reference to it.

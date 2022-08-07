@@ -22,12 +22,12 @@
 import {glsl} from './glsl-template-tag';
 
 /**
- * List of types for creating vectorizied versions of functions.
+ * List of types for creating vectorized versions of functions.
  */
 const GEN_TYPES = ['float', 'vec2', 'vec3', 'vec4'];
 
 /**
- * Range function. Inverse of GLSL built in mix() funcition.
+ * Range function. Inverse of GLSL built in mix() function.
  */
 export function range() {
   return glsl`

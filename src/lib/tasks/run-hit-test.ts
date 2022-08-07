@@ -127,7 +127,7 @@ export function runHitTest(coordinator: CoordinatorAPI): void {
 
     // Recover swatch index value, or -1 for a miss. These values will not be
     // 100% accurate due to loss of precision when normalizing and
-    // packing/unpacking. However, misses will be defintely equal to -1, and
+    // packing/unpacking. However, misses will be definitely equal to -1, and
     // the values will be ordinally correct, meaning that greater numbers
     // equate to higher up the z-order.
     results[i] = n * (totalSwatches + 1) - 1;

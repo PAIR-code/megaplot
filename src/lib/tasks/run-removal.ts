@@ -125,7 +125,7 @@ export function runRemoval(
       }
 
       // The sprite has been marked for removal, its in the right
-      // LifeciclePhase, and its time has expired. Flash zeros to the sprite's
+      // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
       properties.spriteView[DataViewSymbol].fill(0);
       properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;

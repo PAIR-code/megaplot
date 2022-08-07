@@ -169,7 +169,7 @@ export class SceneInternal implements Renderer {
    * The range of arrival times (Ts) of sprites slated for removal. This may not
    * exactly match the times of sprites to be removed, for example if a sprite
    * to be removed has changed lifecycle phases. That's OK, this is used only to
-   * short-circuit the runRemoval() task in the evet that we know that no
+   * short-circuit the runRemoval() task in the event that we know that no
    * sprites are due for removal.
    */
   toBeRemovedTsRange = new NumericRange();
@@ -314,7 +314,7 @@ export class SceneInternal implements Renderer {
 
   /**
    * Array of UV values for outputting the results of a hit test. These values
-   * never change. In effect, they map indices from the HitTestParamaters'
+   * never change. In effect, they map indices from the HitTestParameters'
    * sprites array into the output texture. The array's size will be sufficient
    * to cover hit testing all sprites in the scene at once.
    */
@@ -334,7 +334,7 @@ export class SceneInternal implements Renderer {
   /**
    * A place to flash the intermediate, packed hit test values from the
    * framebuffer after the hit test shader runs. Note that these values are not
-   * ready for use as-is. They need to be reinflated to produce results.
+   * ready for use as-is. They need to be re-inflated to produce results.
    */
   hitTestOutputValues: Uint8Array;
 
@@ -644,7 +644,7 @@ export class SceneInternal implements Renderer {
     this.instanceHitTestOutputUvBuffer =
         this.regl.buffer(this.instanceHitTestOutputUvValues);
 
-    // Rebase UV array is long enough to accomodate all sprites, but usually
+    // Rebase UV array is long enough to accommodate all sprites, but usually
     // it won't have this many.
     this.instanceRebaseUvValues =
         new Float32Array(this.instanceSwatchUvValues.length);
@@ -790,7 +790,7 @@ export class SceneInternal implements Renderer {
     // Return results. Note that this is a .subarray(), not a .slice(), which
     // would copy the results. This is faster because it doesn't require a
     // memory operation, but it means the recipient needs to make use of it
-    // immedatiely before the next hit test overwrites the results.
+    // immediately before the next hit test overwrites the results.
     // TODO(jimbo): Consider adding an option to copy results for safety.
     return this.hitTestOutputResults.subarray(0, sprites.length);
   }
