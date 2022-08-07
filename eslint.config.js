@@ -53,7 +53,7 @@ module.exports = {
     'spellcheck/spell-checker': [WARN, {
       'comments': true,
       'strings': true,
-      'identifiers': false,
+      'identifiers': true,
       'templates': false,
       'lang': 'en_US',
       'skipWords': skipWords,

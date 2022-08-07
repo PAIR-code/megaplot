@@ -4,12 +4,19 @@ bitwise
 broadcastable
 cancellable
 cancelled
+chr
 coord
+ctx
+edt
+edt1d
+enqueue
 enqueued
+dat
 decrement
 dequeue
 dequeued
 directionally
+dom
 drawable
 dst
 enum
@@ -18,7 +25,9 @@ fileoverview
 framebuffer
 func
 gl
+glsl
 glyphs
+gui
 heapspace
 impl
 interpolable
@@ -55,6 +64,7 @@ timestamps
 typings
 uglifiers
 uint
+unschedule
 unscheduling
 uv
 vec

@@ -23,11 +23,11 @@
  * which that it.
  */
 export function glsl(
-    strs: TemplateStringsArray, ...args: Array<string|number>) {
+    strings: TemplateStringsArray, ...args: Array<string|number>) {
   const interleaved: string[] = [];
   for (let i = 0; i < args.length; i++) {
-    interleaved.push(strs[i], `${args[i]}`);
+    interleaved.push(strings[i], `${args[i]}`);
   }
-  interleaved.push(strs[strs.length - 1]);
+  interleaved.push(strings[strings.length - 1]);
   return interleaved.join('');
 }
