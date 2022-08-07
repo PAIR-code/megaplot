@@ -35,7 +35,7 @@ require('./styles.css');
 /**
  * Creates a repeating background that looks like graph paper by stacking two
  * SVG images. Together they form a 100x100 pixel grid with light blue lines
- * every 10px and thick blue lines every 100px. Useful fo estimating aspects of
+ * every 10px and thick blue lines every 100px. Useful for estimating aspects of
  * rendered sprites like size and border width.
  */
 document.body.style.background = `
@@ -58,7 +58,7 @@ function main() {
     defaultTransitionTimeMs: 0,
   });
 
-  // Add framerate stats panel.
+  // Add frame rate stats panel.
   const stats = new Stats();
   stats.showPanel(0);
   Object.assign(stats.dom.style, {
@@ -163,7 +163,7 @@ function main() {
           (a, b) => a.text.localeCompare(b.text) *
               (settings.sort === 'ascending' ? 1 : -1));
 
-      // Place each labels in the current cloumn, vertically by sorted index.
+      // Place each labels in the current column, vertically by sorted index.
       facetLabels.forEach((label, index) => {
         label.x = column * .1;
         label.y = -index * .1;
@@ -199,7 +199,7 @@ function main() {
       s.FillColorOpacity = 0;
     });
 
-    // On bind, update position and border properties based on settintgs.
+    // On bind, update position and border properties based on settings.
     textSelection.onBind((s, d) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 

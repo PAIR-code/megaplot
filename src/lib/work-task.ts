@@ -16,7 +16,7 @@
  */
 /**
  * @fileoverview The WorkScheduler operates on WorkTasks, which are callback
- * functions plus additional identifing and state information.
+ * functions plus additional identifying and state information.
  */
 
 /**
@@ -127,7 +127,7 @@ export function getWorkTaskId(workTaskOrFunction: WorkTask|
   }
 
   // The id of a WorkTask object that does not have an explicit id is its
-  // callback funciton.
+  // callback function.
   return workTaskOrFunction.callback;
 }
 

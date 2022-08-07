@@ -16,7 +16,7 @@
  */
 /**
  * @fileoverview The TimingFunctionsShim class is used for testing the
- * WorkSheduler. A TimingFunctionsShim implements and emulates the upstream
+ * WorkScheduler. A TimingFunctionsShim implements and emulates the upstream
  * timing functions that the WorkScheduler depends on, like
  * requestAnimationFrame().
  */

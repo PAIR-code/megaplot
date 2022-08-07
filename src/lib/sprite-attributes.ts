@@ -151,7 +151,7 @@ export const SPRITE_ATTRIBUTES: readonly SpriteAttribute[] = [
   },
 
   /**
-   * Maxium size when rendered in pixels. Any non-positive value is treated
+   * Maximum size when rendered in pixels. Any non-positive value is treated
    * as unbounded.
    */
   {

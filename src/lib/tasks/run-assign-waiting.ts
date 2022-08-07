@@ -54,7 +54,7 @@ interface CoordinatorAPI {
  * the remaining time function. Must be a non-negative integer. Should be in the
  * 100-1000 range. Higher numbers reduce the frequency of time checks, but run
  * the risk of running too long before returning control to the UI thread
- * (laggy user experince).
+ * (laggy user experience).
  */
 export function runAssignWaiting(
     coordinator: CoordinatorAPI,

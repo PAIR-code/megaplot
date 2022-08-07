@@ -26,7 +26,7 @@ import {ensureOrCreateWorkTask, getWorkTaskId, WorkTask, WorkTaskCallbackFn, Wor
  * A WorkQueue consists of an array of work tasks with Ids, and a set for
  * looking up tasks by their Id to check for existence. Any given task,
  * identified by its id, can only be in the WorkQueue once at a time. After a
- * task has been removed, it can be readded.
+ * task has been removed, it can be re-added.
  */
 export class WorkQueue {
   /**

@@ -89,7 +89,7 @@ export class WorkScheduler {
    * Flag indicating whether the WorkScheduler is currently enabled. When it is
    * enabled, then it will be scheduling callbacks and running them. While this
    * value is initialized to false here, the WorkScheduler's enable() method is
-   * called during construciton, which flips this value to true.
+   * called during construction, which flips this value to true.
    */
   private isEnabled = false;
 
