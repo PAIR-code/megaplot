@@ -28,6 +28,7 @@ module.exports = {
   plugins:
   [
     '@typescript-eslint',
+    'spellcheck',
   ],
   extends:
   [
@@ -42,5 +43,6 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-confusing-void-expression': ERROR,
     '@typescript-eslint/prefer-readonly': ERROR,
+    'spellcheck/spell-checker': WARN,
   },
 };
