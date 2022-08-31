@@ -839,18 +839,19 @@ export class SceneInternal implements Renderer {
    * View matrix converts world units into view (pixel) coordinates.
    */
   getViewMatrix() {
+    const scaleFactor = 2 * this.devicePixelRatio;
     return [
       // Column 0.
-      4 * this.scale.x,
+      this.scale.x * scaleFactor,
       0,
       0,
       // Column 1.
       0,
-      -4 * this.scale.y,
+      this.scale.y * -scaleFactor,
       0,
       // Column 2.
-      4 * this.offset.x,
-      4 * this.offset.y,
+      this.offset.x * scaleFactor,
+      this.offset.y * scaleFactor,
       1,
     ];
   }
@@ -860,12 +861,10 @@ export class SceneInternal implements Renderer {
    * vertex shader.
    */
   getViewMatrixScale() {
-    return [
-      4 * this.scale.x,
-      4 * this.scale.y,
-      .25 / this.scale.x,
-      .25 / this.scale.y,
-    ];
+    const scaleFactor = 2 * this.devicePixelRatio;
+    const scaleX = this.scale.x * scaleFactor;
+    const scaleY = this.scale.y * scaleFactor;
+    return [scaleX, scaleY, 1 / scaleX, 1 / scaleY];
   }
 
   /**
