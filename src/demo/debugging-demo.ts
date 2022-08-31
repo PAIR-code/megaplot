@@ -255,8 +255,9 @@ function main() {
   gui.add(settings, 'inclusive');
   gui.add(settings, 'brush');
   gui.add(settings, 'clearBeforeUpdate');
-  gui.add(settings, 'devicePixelRatio', 0.5, 3, .5)
-      .onChange(() => scene.resize());
+  gui.add(settings, 'devicePixelRatio', 0.5, 3, .5).onChange(() => {
+    scene.resize();
+  });
   update();
   container.appendChild(gui.domElement);
 
