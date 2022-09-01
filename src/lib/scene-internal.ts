@@ -57,6 +57,13 @@ import {WorkTaskId} from './work-task';
  */
 const STEPS_BETWEEN_REMAINING_TIME_CHECKS = 500;
 
+/**
+ * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
+ * where each component is clipped to the range (-1,1). The distance from
+ * edge-to-edge is therefore 2.
+ */
+const CLIP_SPACE_RANGE = 2;
+
 export class SceneInternal implements Renderer {
   /**
    * Container element to pass to Regl for rendering. Regl will place a canvas
@@ -874,7 +881,7 @@ export class SceneInternal implements Renderer {
       throw new InternalError('initView must set lastDevicePixelRatio');
     }
 
-    const scaleFactor = 2 * this.lastDevicePixelRatio;
+    const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
     return [
       // Column 0.
       this.scale.x * scaleFactor,
@@ -882,7 +889,7 @@ export class SceneInternal implements Renderer {
       0,
       // Column 1.
       0,
-      this.scale.y * -scaleFactor,
+      this.scale.y * -scaleFactor,  // Invert Y.
       0,
       // Column 2.
       this.offset.x * scaleFactor,
@@ -900,7 +907,7 @@ export class SceneInternal implements Renderer {
       throw new InternalError('initView must set lastDevicePixelRatio');
     }
 
-    const scaleFactor = 2 * this.lastDevicePixelRatio;
+    const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
     const scaleX = this.scale.x * scaleFactor;
     const scaleY = this.scale.y * scaleFactor;
     return [scaleX, scaleY, 1 / scaleX, 1 / scaleY];
