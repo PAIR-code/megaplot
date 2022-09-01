@@ -18,6 +18,7 @@
  * @fileoverview Tests for the Scene.
  */
 
+import {SpriteView} from '../src/lib/generated/sprite-view';
 import {Scene} from '../src/lib/scene';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
@@ -122,6 +123,41 @@ function compareColorArrays(
   return matches / (expected.length / 4);
 }
 
+/**
+ * Set a SpriteView's attributes to make the sprite a magenta filled square with
+ * green border.
+ */
+function makeGreenMagentaSquare(s: SpriteView) {
+  // Position of the sprite should be centered at world origin.
+  s.PositionWorldX = 0;
+  s.PositionWorldY = 0;
+
+  // Sprite size should fill the canvas.
+  s.SizeWorldWidth = 1;
+  s.SizeWorldHeight = 1;
+
+  // Shape should be a square.
+  s.Sides = 2;
+
+  // Border should be 1/4 of a world unit, half the radius of the
+  // of the shape.
+  s.BorderPlacement = 0;
+  s.BorderRadiusWorld = .25;
+  s.BorderRadiusPixel = 0;
+
+  // Border is opaque green.
+  s.BorderColorR = 0;
+  s.BorderColorG = 255;
+  s.BorderColorB = 0;
+  s.BorderColorOpacity = 1;
+
+  // Interior fill is opaque magenta.
+  s.FillColorR = 255;
+  s.FillColorG = 0;
+  s.FillColorB = 255;
+  s.FillColorOpacity = 1;
+}
+
 describe('Scene', () => {
   describe('initialization', () => {
     const section = createSection('Scene initialization');
@@ -149,40 +185,7 @@ describe('Scene', () => {
 
       // Create a Sprite and render it.
       const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
-      // Three frames to run callbacks, flash data texture and draw.
+      sprite.enter(makeGreenMagentaSquare);
       timingFunctionsShim.runAnimationFrameCallbacks(3);
 
       // Now, if we inspect the canvas, its pixels should show that the
@@ -274,39 +277,7 @@ describe('Scene', () => {
 
       // Create a Sprite and render it.
       const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
+      sprite.enter(makeGreenMagentaSquare);
       timingFunctionsShim.runAnimationFrameCallbacks(4);
 
       // Now, if we inspect the canvas, its pixels should show that the sprite
@@ -388,39 +359,7 @@ describe('Scene', () => {
 
       // Create a Sprite and render it.
       const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
+      sprite.enter(makeGreenMagentaSquare);
       timingFunctionsShim.runAnimationFrameCallbacks(4);
 
       // Now change the devicePixelRatio and resize(). This simulates moving the
@@ -492,448 +431,88 @@ describe('Scene', () => {
     const section = createSection('Scene::devicePixelRatio');
     const sectionContent = section.querySelector('.content')!;
 
-    it('should render normally at devicePixelRatio=0.5', async () => {
-      const container = document.createElement('div');
-      container.style.width = '100px';
-      container.style.height = '100px';
-      sectionContent.appendChild(container);
+    const devicePixelRatioParameters = [0.5, 1, 1.5, 2, 2.5, 3];
 
-      const timingFunctionsShim = new TimingFunctionsShim();
-      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
+    for (const dpr of devicePixelRatioParameters) {
+      it(`should render at devicePixelRatio=${dpr}`, async () => {
+        const container = document.createElement('div');
+        container.style.width = '100px';
+        container.style.height = '100px';
+        sectionContent.appendChild(container);
 
-      const scene = new Scene({
-        container,
-        defaultTransitionTimeMs: 0,
-        desiredSpriteCapacity: 100,
-        devicePixelRatio: 0.5,
-        timingFunctions: timingFunctionsShim,
+        const timingFunctionsShim = new TimingFunctionsShim();
+        timingFunctionsShim.totalElapsedTimeMs = 1234500000;
+
+        const scene = new Scene({
+          container,
+          defaultTransitionTimeMs: 0,
+          desiredSpriteCapacity: 100,
+          devicePixelRatio: dpr,
+          timingFunctions: timingFunctionsShim,
+        });
+
+        // Create a Sprite and render it.
+        const sprite = scene.createSprite();
+        sprite.enter(makeGreenMagentaSquare);
+        timingFunctionsShim.runAnimationFrameCallbacks(4);
+
+        // Now, if we inspect the canvas, its pixels should show that the sprite
+        // has been rendered. Start my making a copy of the canvas and for
+        // inspection.
+        const {canvas} = scene;
+        const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+        sectionContent.appendChild(copyContainer);
+
+        // Grab a snapshot of the Scene's rendered pixels and draw them to
+        // the canvas copy.
+        const blob = await scene[SceneInternalSymbol].snapshot();
+        const img = await blobToImage(blob);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // For integration testing, we'll sample areas of the output that are
+        // 10% the width and height of the canvas size. This patch is a
+        // middle-ground between testing the whole image for pixel-perfect
+        // rendering and testing a single pixel.
+        const sampleWidth = Math.ceil(copy.width * .1);
+        const sampleHeight = Math.ceil(copy.width * .1);
+        const pixelCount = sampleWidth * sampleHeight;
+
+        // Generate patches of solid green and magenta to compare to the
+        // rendered pixels for correctness.
+        const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
+        const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
+
+        // Take a sample of the top left corner and compare it to the expected
+        // solid green patch.
+        const topLeftSample = ctx.getImageData(
+            0,
+            0,
+            sampleWidth,
+            sampleHeight,
+        );
+        expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
+
+        // Take a sample of the bottom right corner and compare it to the
+        // expected solid green patch.
+        const bottomRightSample = ctx.getImageData(
+            Math.floor(copy.width - sampleWidth),
+            Math.floor(copy.height - sampleHeight),
+            sampleWidth,
+            sampleHeight,
+        );
+        expect(compareColorArrays(bottomRightSample.data, greenPatch))
+            .toEqual(1);
+
+        // Lastly, sample a chunk of the middle of the image and compare it to
+        // the solid magenta patch.
+        const centerSample = ctx.getImageData(
+            Math.floor(copy.width * .5 - sampleWidth * .5),
+            Math.floor(copy.height * .5 - sampleHeight * .5),
+            sampleWidth,
+            sampleHeight,
+        );
+        expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
       });
-
-      // Create a Sprite and render it.
-      const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
-      timingFunctionsShim.runAnimationFrameCallbacks(4);
-
-      // Now, if we inspect the canvas, its pixels should show that the sprite
-      // has been rendered. Start my making a copy of the canvas and for
-      // inspection.
-      const {canvas} = scene;
-      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-      sectionContent.appendChild(copyContainer);
-
-      // Grab a snapshot of the Scene's rendered pixels and draw them to
-      // the canvas copy.
-      const blob = await scene[SceneInternalSymbol].snapshot();
-      const img = await blobToImage(blob);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // For integration testing, we'll sample areas of the output that are 10%
-      // the width and height of the canvas size. This patch is a middle-ground
-      // between testing the whole image for pixel-perfect rendering and testing
-      // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
-      const pixelCount = sampleWidth * sampleHeight;
-
-      // Generate patches of solid green and magenta to compare to the rendered
-      // pixels for correctness.
-      const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
-
-      // Take a sample of the top left corner and compare it to the expected
-      // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          0,
-          0,
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
-
-      // Take a sample of the bottom right corner and compare it to the expected
-      // solid green patch.
-      const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(bottomRightSample.data, greenPatch)).toEqual(1);
-
-      // Lastly, sample a chunk of the middle of the image and compare it to the
-      // solid magenta patch.
-      const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
-    });
-
-    it('should render normally at devicePixelRatio=1', async () => {
-      const container = document.createElement('div');
-      container.style.width = '100px';
-      container.style.height = '100px';
-      sectionContent.appendChild(container);
-
-      const timingFunctionsShim = new TimingFunctionsShim();
-      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
-
-      const scene = new Scene({
-        container,
-        defaultTransitionTimeMs: 0,
-        desiredSpriteCapacity: 100,
-        devicePixelRatio: 1,
-        timingFunctions: timingFunctionsShim,
-      });
-
-      // Create a Sprite and render it.
-      const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
-      timingFunctionsShim.runAnimationFrameCallbacks(4);
-
-      // Now, if we inspect the canvas, its pixels should show that the sprite
-      // has been rendered. Start my making a copy of the canvas and for
-      // inspection.
-      const {canvas} = scene;
-      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-      sectionContent.appendChild(copyContainer);
-
-      // Grab a snapshot of the Scene's rendered pixels and draw them to
-      // the canvas copy.
-      const blob = await scene[SceneInternalSymbol].snapshot();
-      const img = await blobToImage(blob);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // For integration testing, we'll sample areas of the output that are 10%
-      // the width and height of the canvas size. This patch is a middle-ground
-      // between testing the whole image for pixel-perfect rendering and testing
-      // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
-      const pixelCount = sampleWidth * sampleHeight;
-
-      // Generate patches of solid green and magenta to compare to the rendered
-      // pixels for correctness.
-      const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
-
-      // Take a sample of the top left corner and compare it to the expected
-      // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          0,
-          0,
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
-
-      // Take a sample of the bottom right corner and compare it to the expected
-      // solid green patch.
-      const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(bottomRightSample.data, greenPatch)).toEqual(1);
-
-      // Lastly, sample a chunk of the middle of the image and compare it to the
-      // solid magenta patch.
-      const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
-    });
-
-    it('should render normally at devicePixelRatio=2', async () => {
-      const container = document.createElement('div');
-      container.style.width = '100px';
-      container.style.height = '100px';
-      sectionContent.appendChild(container);
-
-      const timingFunctionsShim = new TimingFunctionsShim();
-      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
-
-      const scene = new Scene({
-        container,
-        defaultTransitionTimeMs: 0,
-        desiredSpriteCapacity: 100,
-        devicePixelRatio: 2,
-        timingFunctions: timingFunctionsShim,
-      });
-
-      // Create a Sprite and render it.
-      const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
-      timingFunctionsShim.runAnimationFrameCallbacks(4);
-
-      // Now, if we inspect the canvas, its pixels should show that the sprite
-      // has been rendered. Start my making a copy of the canvas and for
-      // inspection.
-      const {canvas} = scene;
-      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-      sectionContent.appendChild(copyContainer);
-
-      // Grab a snapshot of the Scene's rendered pixels and draw them to
-      // the canvas copy.
-      const blob = await scene[SceneInternalSymbol].snapshot();
-      const img = await blobToImage(blob);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // For integration testing, we'll sample areas of the output that are 10%
-      // the width and height of the canvas size. This patch is a middle-ground
-      // between testing the whole image for pixel-perfect rendering and testing
-      // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
-      const pixelCount = sampleWidth * sampleHeight;
-
-      // Generate patches of solid green and magenta to compare to the rendered
-      // pixels for correctness.
-      const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
-
-      // Take a sample of the top left corner and compare it to the expected
-      // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          0,
-          0,
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
-
-      // Take a sample of the bottom right corner and compare it to the expected
-      // solid green patch.
-      const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(bottomRightSample.data, greenPatch)).toEqual(1);
-
-      // Lastly, sample a chunk of the middle of the image and compare it to the
-      // solid magenta patch.
-      const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
-    });
-
-    it('should render normally at devicePixelRatio=3', async () => {
-      const container = document.createElement('div');
-      container.style.width = '100px';
-      container.style.height = '100px';
-      sectionContent.appendChild(container);
-
-      const timingFunctionsShim = new TimingFunctionsShim();
-      timingFunctionsShim.totalElapsedTimeMs = 1234500000;
-
-      const scene = new Scene({
-        container,
-        defaultTransitionTimeMs: 0,
-        desiredSpriteCapacity: 100,
-        devicePixelRatio: 3,
-        timingFunctions: timingFunctionsShim,
-      });
-
-      // Create a Sprite and render it.
-      const sprite = scene.createSprite();
-
-      // Give the Sprite an enter() callback to invoke.
-      sprite.enter((s) => {
-        // Position of the sprite should be centered at world origin.
-        s.PositionWorldX = 0;
-        s.PositionWorldY = 0;
-
-        // Sprite size should fill the canvas.
-        s.SizeWorldWidth = 1;
-        s.SizeWorldHeight = 1;
-
-        // Shape should be a square.
-        s.Sides = 2;
-
-        // Border should be 1/4 of a world unit, half the radius of the
-        // of the shape.
-        s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
-        s.BorderRadiusPixel = 0;
-
-        // Border is opaque green.
-        s.BorderColorR = 0;
-        s.BorderColorG = 255;
-        s.BorderColorB = 0;
-        s.BorderColorOpacity = 1;
-
-        // Interior fill is opaque magenta.
-        s.FillColorR = 255;
-        s.FillColorG = 0;
-        s.FillColorB = 255;
-        s.FillColorOpacity = 1;
-      });
-
-      timingFunctionsShim.runAnimationFrameCallbacks(4);
-
-      // Now, if we inspect the canvas, its pixels should show that the sprite
-      // has been rendered. Start my making a copy of the canvas and for
-      // inspection.
-      const {canvas} = scene;
-      const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-      sectionContent.appendChild(copyContainer);
-
-      // Grab a snapshot of the Scene's rendered pixels and draw them to
-      // the canvas copy.
-      const blob = await scene[SceneInternalSymbol].snapshot();
-      const img = await blobToImage(blob);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // For integration testing, we'll sample areas of the output that are 10%
-      // the width and height of the canvas size. This patch is a middle-ground
-      // between testing the whole image for pixel-perfect rendering and testing
-      // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
-      const pixelCount = sampleWidth * sampleHeight;
-
-      // Generate patches of solid green and magenta to compare to the rendered
-      // pixels for correctness.
-      const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
-
-      // Take a sample of the top left corner and compare it to the expected
-      // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          0,
-          0,
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
-
-      // Take a sample of the bottom right corner and compare it to the expected
-      // solid green patch.
-      const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(bottomRightSample.data, greenPatch)).toEqual(1);
-
-      // Lastly, sample a chunk of the middle of the image and compare it to the
-      // solid magenta patch.
-      const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
-      );
-      expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
-    });
+    }
   });
 });
