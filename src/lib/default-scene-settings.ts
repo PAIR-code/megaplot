@@ -36,6 +36,7 @@ export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
   container: document.body,
   defaultTransitionTimeMs: 250,
   desiredSpriteCapacity: 1e6,
+  devicePixelRatio: undefined,
   glyphs: DEFAULT_GLYPHS,
   glyphMapper: DEFAULT_GLYPH_MAPPER_SETTINGS,
   orderZGranularity: 10,
@@ -56,6 +57,9 @@ export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
  *     headroom when setting this value; failure to do so can cause your sprites
  *     to not render in the Scene even though the .bind(), etc. callbacks may
  *     fire for the datum and its associated SpriteView.
+ * @param {number|(() => number)} devicePixelRatio Optional static number or a
+ *     function to provide devicePixelRatio setting instead of accessing the
+ *     global value each time.
  * @param {string} glyphs Characters to support in glyph mapper.
  * @param {GlyphMapperSettings} glyphMapper Settings for the glyph mapper.
  * @param {number} orderZGranularity Granularity of OrderZ values. Higher means
@@ -67,6 +71,7 @@ export interface SceneSettings {
   container: HTMLElement;
   defaultTransitionTimeMs: number;
   desiredSpriteCapacity: number;
+  devicePixelRatio?: number|(() => number);
   glyphs: string;
   glyphMapper: GlyphMapperSettings;
   orderZGranularity: number;

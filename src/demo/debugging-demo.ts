@@ -60,35 +60,6 @@ const TEXT_BORDER = d3.color('black') as d3.RGBColor;
 const TEXT_FILL = d3.color('white') as d3.RGBColor;
 
 function main() {
-  // Locate the container element.
-  const container = d3.select('body').node() as HTMLElement;
-
-  // Create a Scene to be rendered in a fresh canvas fitted to container.
-  const scene = new Scene({
-    container,
-    defaultTransitionTimeMs: 0,
-    desiredSpriteCapacity: MAX_CAPACITY,
-  });
-
-  const {workScheduler} = scene[SceneInternalSymbol];
-
-  // Add frame rate stats panel.
-  const stats = new Stats();
-  stats.showPanel(0);
-  Object.assign(stats.dom.style, {
-    bottom: 0,
-    left: null,
-    position: 'absolute',
-    right: 0,
-    top: null,
-  });
-  container.appendChild(stats.dom);
-  function loop() {
-    stats.update();
-    requestAnimationFrame(loop);
-  }
-  loop();
-
   // Configuration option for dat.GUI settings.
   const settings = {
     total: 0,
@@ -115,7 +86,38 @@ function main() {
     inclusive: true,
     brush: false,
     clearBeforeUpdate: false,
+    devicePixelRatio: window.devicePixelRatio || 1,
   };
+
+  // Locate the container element.
+  const container = d3.select('body').node() as HTMLElement;
+
+  // Create a Scene to be rendered in a fresh canvas fitted to container.
+  const scene = new Scene({
+    container,
+    defaultTransitionTimeMs: 0,
+    desiredSpriteCapacity: MAX_CAPACITY,
+    devicePixelRatio: () => settings.devicePixelRatio,
+  });
+
+  const {workScheduler} = scene[SceneInternalSymbol];
+
+  // Add frame rate stats panel.
+  const stats = new Stats();
+  stats.showPanel(0);
+  Object.assign(stats.dom.style, {
+    bottom: 0,
+    left: null,
+    position: 'absolute',
+    right: 0,
+    top: null,
+  });
+  container.appendChild(stats.dom);
+  function loop() {
+    stats.update();
+    requestAnimationFrame(loop);
+  }
+  loop();
 
   const colors = d3.schemeCategory10;
   const borderColor = d3.color('rgba(255,0,0,0.5)') as d3.RGBColor;
@@ -253,6 +255,9 @@ function main() {
   gui.add(settings, 'inclusive');
   gui.add(settings, 'brush');
   gui.add(settings, 'clearBeforeUpdate');
+  gui.add(settings, 'devicePixelRatio', 0.5, 3, .5).onChange(() => {
+    scene.resize();
+  });
   update();
   container.appendChild(gui.domElement);
 

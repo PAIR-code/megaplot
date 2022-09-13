@@ -57,6 +57,13 @@ import {WorkTaskId} from './work-task';
  */
 const STEPS_BETWEEN_REMAINING_TIME_CHECKS = 500;
 
+/**
+ * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
+ * where each component is clipped to the range (-1,1). The distance from
+ * edge-to-edge is therefore 2.
+ */
+const CLIP_SPACE_RANGE = 2;
+
 export class SceneInternal implements Renderer {
   /**
    * Container element to pass to Regl for rendering. Regl will place a canvas
@@ -445,6 +452,12 @@ export class SceneInternal implements Renderer {
    */
   private isViewInitialized = false;
 
+  /**
+   * Keep track of the devicePixelRatio used during the last initView() or
+   * resize() call since it may change.
+   */
+  private lastDevicePixelRatio?: number;
+
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
     const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
@@ -457,6 +470,24 @@ export class SceneInternal implements Renderer {
 
     // Set up work scheduler to use timing functions.
     this.workScheduler = new WorkScheduler({timingFunctions});
+
+    // Override getDevicePixelRatio() method if an alternative was supplied.
+    if (typeof settings.devicePixelRatio === 'function') {
+      const devicePixelRatioCallback = settings.devicePixelRatio;
+      this.getDevicePixelRatio = () => {
+        const devicePixelRatio = devicePixelRatioCallback();
+        if (isNaN(devicePixelRatio) || devicePixelRatio <= 0) {
+          throw new RangeError('Callback returned invalid devicePixelRatio');
+        }
+        return devicePixelRatio;
+      };
+    } else if (typeof settings.devicePixelRatio === 'number') {
+      const {devicePixelRatio} = settings;
+      if (isNaN(devicePixelRatio) || devicePixelRatio <= 0) {
+        throw new RangeError('Provided devicePixelRatio value is invalid');
+      }
+      this.getDevicePixelRatio = () => devicePixelRatio;
+    }
 
     this.container = settings.container;
     this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
@@ -485,8 +516,9 @@ export class SceneInternal implements Renderer {
     this.container.appendChild(this.canvas);
 
     const {width, height} = this.canvas.getBoundingClientRect();
-    this.canvas.height = height * this.devicePixelRatio;
-    this.canvas.width = width * this.devicePixelRatio;
+    const devicePixelRatio = this.getDevicePixelRatio();
+    this.canvas.height = height * devicePixelRatio;
+    this.canvas.width = width * devicePixelRatio;
 
     const regl = this.regl = createREGL({
       'attributes': {
@@ -673,7 +705,7 @@ export class SceneInternal implements Renderer {
   /**
    * Wrap lookups for devicePixelRatio to satisfy aggressive compilation.
    */
-  private get devicePixelRatio(): number {
+  private getDevicePixelRatio(): number {
     return typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   }
 
@@ -692,8 +724,9 @@ export class SceneInternal implements Renderer {
       return;
     }
 
-    this.canvas.width = width * this.devicePixelRatio;
-    this.canvas.height = height * this.devicePixelRatio;
+    this.lastDevicePixelRatio = this.getDevicePixelRatio();
+    this.canvas.width = width * this.lastDevicePixelRatio;
+    this.canvas.height = height * this.lastDevicePixelRatio;
 
     // Initialize scale and offset to put world 0,0 in the center.
     const defaultScale = Math.min(width, height) || Math.max(width, height) ||
@@ -734,8 +767,12 @@ export class SceneInternal implements Renderer {
       return;
     }
 
-    const previousWidth = this.canvas.width / this.devicePixelRatio;
-    const previousHeight = this.canvas.height / this.devicePixelRatio;
+    if (!this.lastDevicePixelRatio) {
+      throw new InternalError('initView must set lastDevicePixelRatio');
+    }
+
+    const previousWidth = this.canvas.width / this.lastDevicePixelRatio;
+    const previousHeight = this.canvas.height / this.lastDevicePixelRatio;
 
     fixedCanvasPoint =
         fixedCanvasPoint || {x: previousWidth / 2, y: previousHeight / 2};
@@ -749,8 +786,9 @@ export class SceneInternal implements Renderer {
     const {width: rectWidth, height: rectHeight} =
         this.canvas.getBoundingClientRect();
 
-    this.canvas.width = rectWidth * this.devicePixelRatio;
-    this.canvas.height = rectHeight * this.devicePixelRatio;
+    this.lastDevicePixelRatio = this.getDevicePixelRatio();
+    this.canvas.width = rectWidth * this.lastDevicePixelRatio;
+    this.canvas.height = rectHeight * this.lastDevicePixelRatio;
 
     this.offset.x += proportionX * (rectWidth - previousWidth);
     this.offset.y += proportionY * (rectHeight - previousHeight);
@@ -839,18 +877,23 @@ export class SceneInternal implements Renderer {
    * View matrix converts world units into view (pixel) coordinates.
    */
   getViewMatrix() {
+    if (!this.lastDevicePixelRatio) {
+      throw new InternalError('initView must set lastDevicePixelRatio');
+    }
+
+    const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
     return [
       // Column 0.
-      4 * this.scale.x,
+      this.scale.x * scaleFactor,
       0,
       0,
       // Column 1.
       0,
-      -4 * this.scale.y,
+      this.scale.y * -scaleFactor,  // Invert Y.
       0,
       // Column 2.
-      4 * this.offset.x,
-      4 * this.offset.y,
+      this.offset.x * scaleFactor,
+      this.offset.y * scaleFactor,
       1,
     ];
   }
@@ -860,12 +903,14 @@ export class SceneInternal implements Renderer {
    * vertex shader.
    */
   getViewMatrixScale() {
-    return [
-      4 * this.scale.x,
-      4 * this.scale.y,
-      .25 / this.scale.x,
-      .25 / this.scale.y,
-    ];
+    if (!this.lastDevicePixelRatio) {
+      throw new InternalError('initView must set lastDevicePixelRatio');
+    }
+
+    const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
+    const scaleX = this.scale.x * scaleFactor;
+    const scaleY = this.scale.y * scaleFactor;
+    return [scaleX, scaleY, 1 / scaleX, 1 / scaleY];
   }
 
   /**
