@@ -31,6 +31,7 @@ import {fragmentShader, vertexShader} from '../shaders/hit-test-shaders';
 interface CoordinatorAPI {
   attributeMapper: AttributeMapper;
   elapsedTimeMs: () => number;
+  getDevicePixelRatio: () => number;
   getViewMatrix: () => number[];
   getViewMatrixScale: () => number[];
   hitTestAttributeMapper: AttributeMapper;
@@ -95,6 +96,7 @@ export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
       'capacity': () => coordinator.hitTestAttributeMapper.totalSwatches,
+      'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
       'hitTestCoordinates': () => ([
         coordinator.hitTestParameters.x,
         coordinator.hitTestParameters.y,
