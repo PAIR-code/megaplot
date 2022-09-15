@@ -67,6 +67,11 @@ precision lowp float;
 uniform float ts;
 
 /**
+ * Effective devicePixelRatio.
+ */
+uniform float devicePixelRatio;
+
+/**
  * Total number of sprite instances being rendered this pass. Used to compute
  * clip-space Z for stacking sprites based on their instanceIndex.
  * This ensures that partial-opacity pixels of stacked sprites will be
@@ -137,7 +142,7 @@ varying vec4 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
- * inside the shape (Y). Values between constitue the borde.
+ * inside the shape (Y). Values between constitute the border.
  */
 varying vec2 varyingBorderThresholds;
 
@@ -297,15 +302,20 @@ void main () {
         targetBorderRadiusPixel(),
         targetBorderPlacement())
   );
+  float currentBorderRadiusWorld = borderProperties.x;
+  float currentBorderRadiusPixel = borderProperties.y;
+  float currentBorderPlacement = borderProperties.z;
 
   // The fragment shader needs to know the threshold signed distances that
   // indicate whether each pixel is inside the shape, in the boreder, or outside
   // of the shape.
   vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
-  float edgeDistance = borderProperties.x +
-    borderProperties.y * 8. / min(projectedSizePixel.x, projectedSizePixel.y);
+  float edgeDistance = currentBorderRadiusWorld + (
+      currentBorderRadiusPixel * 4. * devicePixelRatio /
+      min(projectedSizePixel.x, projectedSizePixel.y)
+    );
   varyingBorderThresholds =
-    vec2(0., edgeDistance) + mix(0., -edgeDistance, borderProperties.z);
+    vec2(0., edgeDistance) + mix(0., -edgeDistance, currentBorderPlacement);
 
   // Compute the sprite's aspect ratio and the inverse.
   varyingAspectRatio = computeAspectRatio(computedSize);
