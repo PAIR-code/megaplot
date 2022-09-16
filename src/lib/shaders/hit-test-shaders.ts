@@ -182,9 +182,11 @@ void main () {
   readInputTexels();
 
   // Compute time variables.
-  rangeT = clamp(
-      range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
-      0., 1.);
+  rangeT =
+    ts >= targetTransitionTimeMs() ? 1. :
+    ts <= previousTransitionTimeMs() ? 0. :
+    clamp(range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
+        0., 1.);
   easeT = cubicEaseInOut(rangeT);
 
   // Compute current size component values by interpolation (parallelized).
