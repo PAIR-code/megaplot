@@ -100,10 +100,11 @@ export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
       'hitTestCoordinates': () => ([
         coordinator.hitTestParameters.x,
         coordinator.hitTestParameters.y,
-        coordinator.hitTestParameters.width,
-        coordinator.hitTestParameters.height,
+        coordinator.hitTestParameters.width || 0,
+        coordinator.hitTestParameters.height || 0,
       ]),
-      'inclusive': () => !!coordinator.hitTestParameters.inclusive,
+      'inclusive': () => coordinator.hitTestParameters === undefined ||
+          !!coordinator.hitTestParameters.inclusive,
       'viewMatrix': () => coordinator.getViewMatrix(),
       'viewMatrixScale': () => coordinator.getViewMatrixScale(),
       'targetValuesTexture': coordinator.targetValuesTexture,
