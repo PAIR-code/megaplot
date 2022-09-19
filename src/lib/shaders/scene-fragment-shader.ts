@@ -42,6 +42,15 @@ export function fragmentShader() {
 precision lowp float;
 
 /**
+ * Each sprite receives the same vertex coordinates, which describe a unit
+ * square centered at the origin. However, the distance calculations performed
+ * by the fragment shader use a distance of 1 to mean the dead center of a
+ * circle, which implies a diameter of 2. So to convert from sprite vertex
+ * coordinate space to edge distance space requires a dilation of 2.
+ */
+const float EDGE_DISTANCE_DILATION = 2.;
+
+/**
  * View matrix for converting from world space to clip space.
  */
 uniform mat3 viewMatrix;
@@ -65,7 +74,7 @@ varying vec4 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
- * inside the shape (Y). Values between constitue the borde.
+ * inside the shape (Y). Values between constitute the border.
  */
 varying vec2 varyingBorderThresholds;
 
@@ -162,7 +171,8 @@ float getDistStar(int sides, vec4 radii) {
 
   // The point of interest starts with the varyingVertexCoordinates, but shifted
   // to center the shape vertically.
-  vec2 poi = 2. * varyingVertexCoordinates.xy + vec2(0., 2. - height);
+  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates.xy +
+    vec2(0., EDGE_DISTANCE_DILATION - height);
 
   // Compute theta for point of interest, counter-clockwise from vertical.
   float theta = computeTheta(poi);
@@ -235,7 +245,7 @@ float getDistEllipse() {
   vec4 aspectRatio = flipped ? varyingAspectRatio.yxwz : varyingAspectRatio;
 
   // Point of interest in the expanded circle (before aspect ratio stretching).
-  vec2 circlePoint = 2. * abs(
+  vec2 circlePoint = EDGE_DISTANCE_DILATION * abs(
       flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates.xy);
 
   // Capture length for inside/outside checking.
@@ -280,7 +290,7 @@ float getDistRect() {
   // All quadrants can be treated the same, so we limit our computation to the
   // top right.
   vec2 ar = varyingAspectRatio.xy;
-  vec2 p = ar * 2. * abs(varyingVertexCoordinates.xy);
+  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates.xy);
 
   // If the point of intrest is beyond the top corner, return the negative
   // distance to that corner.
@@ -306,7 +316,7 @@ float getDistSDF(vec4 shapeTexture) {
   vec2 textureUv =
       shapeTexture.xy +
       shapeTexture.zw * varyingVertexCoordinates.zw;
-  return 2. * texture2D(sdfTexture, textureUv).z - 1.;
+  return EDGE_DISTANCE_DILATION * texture2D(sdfTexture, textureUv).z - 1.;
 }
 
 /**

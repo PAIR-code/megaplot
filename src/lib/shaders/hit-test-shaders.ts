@@ -82,6 +82,8 @@ precision lowp float;
 
 uniform float ts;
 
+uniform float devicePixelRatio;
+
 /**
  * Screen pixel coordinates for performing the hit test. The XY channels contain
  * the screen x and y coordinates respectively. The ZW channels hold the width
@@ -180,9 +182,11 @@ void main () {
   readInputTexels();
 
   // Compute time variables.
-  rangeT = clamp(
-      range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
-      0., 1.);
+  rangeT =
+    ts >= targetTransitionTimeMs() ? 1. :
+    ts <= previousTransitionTimeMs() ? 0. :
+    clamp(range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
+        0., 1.);
   easeT = cubicEaseInOut(rangeT);
 
   // Compute current size component values by interpolation (parallelized).
@@ -236,7 +240,7 @@ void main () {
       currentPositionPixel,
       vec2(-.5, -.5),
       viewMatrix
-  ) * .25;
+  ) * .5 / devicePixelRatio;
   vec2 topRight = computeViewVertexPosition(
       currentPositionWorld,
       computedSize,
@@ -244,7 +248,7 @@ void main () {
       currentPositionPixel,
       vec2(.5, .5),
       viewMatrix
-  ) * .25;
+  ) * .5 / devicePixelRatio;
   vec4 spriteBox = vec4(bottomLeft.xy, topRight.xy - bottomLeft.xy);
 
   // Hit test coordinates are presented based on the top-left corner, so to

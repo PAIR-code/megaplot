@@ -705,7 +705,7 @@ export class SceneInternal implements Renderer {
   /**
    * Wrap lookups for devicePixelRatio to satisfy aggressive compilation.
    */
-  private getDevicePixelRatio(): number {
+  getDevicePixelRatio(): number {
     return typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   }
 

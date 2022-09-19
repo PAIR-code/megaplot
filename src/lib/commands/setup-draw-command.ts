@@ -34,6 +34,7 @@ interface CoordinatorAPI {
   attributeMapper: AttributeMapper;
   canvas: HTMLCanvasElement;
   elapsedTimeMs: () => number;
+  getDevicePixelRatio: () => number;
   getProjectionMatrix: (context: ReglContext) => number[];
   getViewMatrix: () => number[];
   getViewMatrixScale: () => number[];
@@ -110,6 +111,7 @@ export function setupDrawCommand(
 
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
+      'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
       'instanceCount': () => coordinator.instanceCount,
       'orderZGranularity': () => coordinator.orderZGranularity,
       'viewMatrix': () => coordinator.getViewMatrix(),

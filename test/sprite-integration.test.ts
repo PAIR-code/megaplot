@@ -21,6 +21,7 @@
  */
 
 import {Scene} from '../src/lib/scene';
+import {Sprite} from '../src/lib/sprite';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
@@ -136,18 +137,25 @@ describe('Sprite', () => {
     container.style.height = '100px';
     content.appendChild(container);
 
-    // Control time meticulously to evaluate animation states.
-    const timingFunctionsShim = new TimingFunctionsShim();
-    timingFunctionsShim.totalElapsedTimeMs = 1000;
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+    let sprite: Sprite;
 
-    const scene = new Scene({
-      container,
-      defaultTransitionTimeMs: 0,
-      desiredSpriteCapacity: 100,
-      timingFunctions: timingFunctionsShim,
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+      sprite = scene.createSprite();
     });
 
-    const sprite = scene.createSprite();
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
 
     // This is an integration test. It draws a single sprite, then reads
     // back the rendered pixels to test that they're the correct colors.
@@ -280,63 +288,72 @@ describe('Sprite', () => {
     container.style.height = '100px';
     content.appendChild(container);
 
-    // Explicitly control time.
-    const timingFunctionsShim = new TimingFunctionsShim();
-    timingFunctionsShim.totalElapsedTimeMs = 1000;
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+    let sprite: Sprite;
 
-    const scene = new Scene({
-      container,
-      defaultTransitionTimeMs: 0,
-      desiredSpriteCapacity: 100,
-      timingFunctions: timingFunctionsShim,
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+
+      sprite = scene.createSprite();
+
+      // This enter callback puts the sprite in the correct state to test the
+      // effects of the later update call.
+      sprite.enter((s) => {
+        // Position of the sprite should be centered at world origin.
+        s.PositionWorldX = 0;
+        s.PositionWorldY = 0;
+
+        // Sprite size should fill the canvas.
+        s.SizeWorldWidth = 1;
+        s.SizeWorldHeight = 1;
+
+        // Shape should be a square to start.
+        s.Sides = 2;
+
+        // Border should be 1/4 of a world unit, half the radius of the
+        // of the shape.
+        s.BorderPlacement = 0;
+        s.BorderRadiusWorld = .25;
+        s.BorderRadiusPixel = 0;
+
+        // Border is opaque, green.
+        s.BorderColorR = 0;
+        s.BorderColorG = 255;
+        s.BorderColorB = 0;
+        s.BorderColorOpacity = 1;
+
+        // Interior fill is opaque magenta.
+        s.FillColorR = 255;
+        s.FillColorG = 0;
+        s.FillColorB = 255;
+        s.FillColorOpacity = 1;
+      });
+
+      // Behind the scenes, this should run the enter callback above.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+
+      // Next frame, values should be flashed to the WebGL texture.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+
+      // Next frame, the Scene's draw command should have run.
+      timingFunctionsShim.runAnimationFrameCallbacks();
+
+      // Advance time slightly.
+      timingFunctionsShim.totalElapsedTimeMs += 100;
     });
 
-    const sprite = scene.createSprite();
-
-    // This enter callback puts the sprite in the correct state to test the
-    // effects of the later update call.
-    sprite.enter((s) => {
-      // Position of the sprite should be centered at world origin.
-      s.PositionWorldX = 0;
-      s.PositionWorldY = 0;
-
-      // Sprite size should fill the canvas.
-      s.SizeWorldWidth = 1;
-      s.SizeWorldHeight = 1;
-
-      // Shape should be a square to start.
-      s.Sides = 2;
-
-      // Border should be 1/4 of a world unit, half the radius of the
-      // of the shape.
-      s.BorderPlacement = 0;
-      s.BorderRadiusWorld = .25;
-      s.BorderRadiusPixel = 0;
-
-      // Border is opaque, green.
-      s.BorderColorR = 0;
-      s.BorderColorG = 255;
-      s.BorderColorB = 0;
-      s.BorderColorOpacity = 1;
-
-      // Interior fill is opaque magenta.
-      s.FillColorR = 255;
-      s.FillColorG = 0;
-      s.FillColorB = 255;
-      s.FillColorOpacity = 1;
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
     });
-
-    // Behind the scenes, this should run the enter callback above.
-    timingFunctionsShim.runAnimationFrameCallbacks();
-
-    // Next frame, values should be flashed to the WebGL texture.
-    timingFunctionsShim.runAnimationFrameCallbacks();
-
-    // Next frame, the Scene's draw command should have run.
-    timingFunctionsShim.runAnimationFrameCallbacks();
-
-    // Advance time slightly.
-    timingFunctionsShim.totalElapsedTimeMs += 100;
 
     // At this point we're ready to test the update transition.
     it('should take and invoke a callback', async () => {
@@ -466,18 +483,25 @@ describe('Sprite', () => {
     container.style.height = '100px';
     content.appendChild(container);
 
-    // Manually advance time.
-    const timingFunctionsShim = new TimingFunctionsShim();
-    timingFunctionsShim.totalElapsedTimeMs = 1000;
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+    let sprite: Sprite;
 
-    const scene = new Scene({
-      container,
-      defaultTransitionTimeMs: 0,
-      desiredSpriteCapacity: 100,
-      timingFunctions: timingFunctionsShim,
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+      sprite = scene.createSprite();
     });
 
-    const sprite = scene.createSprite();
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
 
     // In this test, we'll give the Sprite an enter() and update() callback
     // both at the start.
@@ -726,6 +750,9 @@ describe('Sprite', () => {
           sampleHeight,
       );
       expect(compareColorArrays(centerSample.data, solidOrange)).toEqual(1);
+
+      // Cleanup REGL resources.
+      scene[SceneInternalSymbol].regl.destroy();
     });
 
     it('should render higher sprites over lower sprites', async () => {
@@ -853,6 +880,9 @@ describe('Sprite', () => {
           sampleHeight,
       );
       expect(compareColorArrays(centerSample.data, solidPurple)).toEqual(1);
+
+      // Cleanup REGL resources.
+      scene[SceneInternalSymbol].regl.destroy();
     });
   });
 });
