@@ -69,7 +69,7 @@ precision lowp float;
 const float CLIP_SPACE_RANGE = 2.;
 
 /**
- * Each sprite receieves the same vertex coordinates, which describe a unit
+ * Each sprite receives the same vertex coordinates, which describe a unit
  * square centered at the origin. However, the distance calculations performed
  * by the fragment shader use a distance of 1 to mean the dead center of a
  * circle, which implies a diameter of 2. So to convert from sprite vertex
