@@ -83,6 +83,11 @@ describe('Scene', () => {
     timingFunctions: timingFunctionsShim,
   });
 
+  // Cleanup REGL resources after tests complete.
+  afterAll(() => {
+    scene[SceneInternalSymbol].regl.destroy();
+  });
+
   describe('constructor', () => {
     it('should create a canvas', () => {
       const devicePixelRatio = window.devicePixelRatio || 1;

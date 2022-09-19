@@ -243,6 +243,9 @@ describe('Scene', () => {
           sampleHeight,
       );
       expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
+
+      // Release REGL resources.
+      scene[SceneInternalSymbol].regl.destroy();
     });
   });
 });
@@ -335,6 +338,9 @@ describe('Scene', () => {
           sampleHeight,
       );
       expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
+
+      // Release REGL resources.
+      scene[SceneInternalSymbol].regl.destroy();
     });
 
     it('should render normally after devicePixelRatio change', async () => {
@@ -424,6 +430,9 @@ describe('Scene', () => {
           sampleHeight,
       );
       expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
+
+      // Release REGL resources.
+      scene[SceneInternalSymbol].regl.destroy();
     });
   });
 
@@ -512,6 +521,9 @@ describe('Scene', () => {
             sampleHeight,
         );
         expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
+
+        // Release REGL resources.
+        scene[SceneInternalSymbol].regl.destroy();
       });
     }
   });
@@ -522,7 +534,7 @@ describe('Scene', () => {
 
     for (let devicePixelRatio = 1; devicePixelRatio <= 3;
          devicePixelRatio += 0.5) {
-      describe(`devicePixelRatio=${devicePixelRatio}`, () => {
+      it(`should hit when devicePixelRatio=${devicePixelRatio}`, () => {
         const container = document.createElement('div');
         container.style.width = '200px';
         container.style.height = '200px';
@@ -562,65 +574,57 @@ describe('Scene', () => {
         const tests = [
           // Top row.
           {
-            label: 'top left',
             params: {x: 10, y: 10, width: 0, height: 0, inclusive: true},
             expected: [0, -1, -1, -1],
           },
           {
-            label: 'top center',
             params: {x: 100, y: 10, width: 0, height: 0, inclusive: true},
             expected: [0, 1, -1, -1],
           },
           {
-            label: 'top right',
             params: {x: 190, y: 10, width: 0, height: 0, inclusive: true},
             expected: [-1, 1, -1, -1],
           },
 
           // Middle row.
           {
-            label: 'middle left',
             params: {x: 10, y: 100, width: 0, height: 0, inclusive: true},
             expected: [0, -1, 2, -1],
           },
           {
-            label: 'middle center',
             params: {x: 100, y: 100, width: 0, height: 0, inclusive: true},
             expected: [0, 1, 2, 3],
           },
           {
-            label: 'middle right',
             params: {x: 190, y: 100, width: 0, height: 0, inclusive: true},
             expected: [-1, 1, -1, 3],
           },
 
           // Bottom row.
           {
-            label: 'bottom left',
             params: {x: 10, y: 190, width: 0, height: 0, inclusive: true},
             expected: [-1, -1, 2, -1],
           },
           {
-            label: 'bottom center',
             params: {x: 100, y: 190, width: 0, height: 0, inclusive: true},
             expected: [-1, -1, 2, 3],
           },
           {
-            label: 'bottom right',
             params: {x: 190, y: 190, width: 0, height: 0, inclusive: true},
             expected: [-1, -1, -1, 3],
           },
         ];
 
-        for (const {label, params, expected} of tests) {
-          it(`should hit ${label}`, () => {
-            const res = scene.hitTest({...params, sprites});
-            expect(res[0]).toBeCloseTo(expected[0], 0);
-            expect(res[1]).toBeCloseTo(expected[1], 0);
-            expect(res[2]).toBeCloseTo(expected[2], 0);
-            expect(res[3]).toBeCloseTo(expected[3], 0);
-          });
+        for (const {params, expected} of tests) {
+          const res = scene.hitTest({...params, sprites});
+          expect(res[0]).toBeCloseTo(expected[0], 0);
+          expect(res[1]).toBeCloseTo(expected[1], 0);
+          expect(res[2]).toBeCloseTo(expected[2], 0);
+          expect(res[3]).toBeCloseTo(expected[3], 0);
         }
+
+        // Cleanup REGL resources.
+        scene[SceneInternalSymbol].regl.destroy();
       });
     }
   });

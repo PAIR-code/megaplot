@@ -24,7 +24,7 @@ module.exports = (config) => {
     basePath: '',
 
     // Frameworks to use.
-    frameworks: ['jasmine'],
+    frameworks: ['jasmine', 'webpack'],
 
     // List of files / patterns to load in the browser.
     files: ['test/**/*.test.ts'],

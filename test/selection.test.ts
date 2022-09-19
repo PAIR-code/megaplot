@@ -19,6 +19,7 @@
  */
 
 import {Scene} from '../src/lib/scene';
+import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
 /**
@@ -72,19 +73,27 @@ describe('Selection', () => {
   container.style.height = '100px';
   content.appendChild(container);
 
-  const timingFunctionsShim = new TimingFunctionsShim();
-
-  timingFunctionsShim.totalElapsedTimeMs = 1000;
-
-  const scene = new Scene({
-    container,
-    defaultTransitionTimeMs: 0,
-    desiredSpriteCapacity: 100,
-    timingFunctions: timingFunctionsShim,
-  });
 
   describe('init', () => {
-    it('should invoke callback asynchronously after bind', async () => {
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+    });
+
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
+
+    it('should invoke callback asynchronously after bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the init callback is invoked.
@@ -124,7 +133,7 @@ describe('Selection', () => {
       expect(initDataSet).toEqual(expectedDataSet);
     });
 
-    it('should invoke init before enter', async () => {
+    it('should invoke init before enter', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
@@ -177,7 +186,25 @@ describe('Selection', () => {
   });
 
   describe('enter', () => {
-    it('should invoke callback asynchronously after bind', async () => {
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+    });
+
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
+
+    it('should invoke callback asynchronously after bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the enter callback is invoked.
@@ -217,7 +244,7 @@ describe('Selection', () => {
       expect(enterDataSet).toEqual(expectedDataSet);
     });
 
-    it('should invoke enter before update', async () => {
+    it('should invoke enter before update', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
@@ -272,7 +299,25 @@ describe('Selection', () => {
   });
 
   describe('update', () => {
-    it('should invoke callback asynchronously after re-bind', async () => {
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+    });
+
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
+
+    it('should invoke callback asynchronously after re-bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the enter callback is invoked.
@@ -325,7 +370,7 @@ describe('Selection', () => {
       expect(updateDataSet).toEqual(expectedDataSet);
     });
 
-    it('should invoke update before exit', async () => {
+    it('should invoke update before exit', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
@@ -392,7 +437,25 @@ describe('Selection', () => {
   });
 
   describe('bind', () => {
-    it('should invoke callback asynchronously after bind', async () => {
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+    });
+
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
+
+    it('should invoke callback asynchronously after bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the bind callback is invoked.
@@ -432,7 +495,7 @@ describe('Selection', () => {
       expect(bindDataSet).toEqual(expectedDataSet);
     });
 
-    it('should invoke bind before init', async () => {
+    it('should invoke bind before init', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
@@ -475,7 +538,25 @@ describe('Selection', () => {
   });
 
   describe('clear', () => {
-    it('should remove data and sprites', async () => {
+    let timingFunctionsShim: TimingFunctionsShim;
+    let scene: Scene;
+
+    beforeEach(() => {
+      timingFunctionsShim = new TimingFunctionsShim();
+      timingFunctionsShim.totalElapsedTimeMs = 1000;
+      scene = new Scene({
+        container,
+        defaultTransitionTimeMs: 0,
+        desiredSpriteCapacity: 100,
+        timingFunctions: timingFunctionsShim,
+      });
+    });
+
+    afterEach(() => {
+      scene[SceneInternalSymbol].regl.destroy();
+    });
+
+    it('should remove data and sprites', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
@@ -550,7 +631,7 @@ describe('Selection', () => {
       expect(counter).toEqual({bind: 3, init: 1, enter: 1, exit: 1});
     });
 
-    it('should finish before a subsequent bind', async () => {
+    it('should finish before a subsequent bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
@@ -623,7 +704,7 @@ describe('Selection', () => {
       expect(counter).toEqual({bind: 5, init: 2, enter: 2, update: 0, exit: 1});
     });
 
-    it('should circumvent a scheduled bind', async () => {
+    it('should circumvent a scheduled bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
