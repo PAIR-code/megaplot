@@ -62,6 +62,22 @@ export function vertexShader(attributeMapper: AttributeMapper) {
 precision lowp float;
 
 /**
+ * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
+ * where each component is clipped to the range (-1,1). The distance from
+ * edge-to-edge is therefore 2.
+ */
+const float CLIP_SPACE_RANGE = 2.;
+
+/**
+ * Each sprite receieves the same vertex coordinates, which describe a unit
+ * square centered at the origin. However, the distance calculations performed
+ * by the fragment shader use a distance of 1 to mean the dead center of a
+ * circle, which implies a diameter of 2. So to convert from sprite vertex
+ * coordinate space to edge distance space requires a dilation of 2.
+ */
+const float EDGE_DISTANCE_DILATION = 2.;
+
+/**
  * Current uniform timestamp for interpolating.
  */
 uniform float ts;
@@ -306,12 +322,21 @@ void main () {
   float currentBorderRadiusPixel = borderProperties.y;
   float currentBorderPlacement = borderProperties.z;
 
+  // Project the computed size into pixels by using the viewMatrixScale. Note
+  // that this already includes the effect of the devicePixelRatio, and a 2x
+  // multiplier for clip-space, which goes from -1 to 1 in all dimensions.
+  vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
+
   // The fragment shader needs to know the threshold signed distances that
   // indicate whether each pixel is inside the shape, in the boreder, or outside
-  // of the shape.
-  vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
+  // of the shape. A point right on the edge of the shape will have a distance
+  // of 0. In edge-distance space, a distance of 1 would be the dead center of a
+  // circle.
   float edgeDistance = currentBorderRadiusWorld + (
-      currentBorderRadiusPixel * 4. * devicePixelRatio /
+      currentBorderRadiusPixel *
+      CLIP_SPACE_RANGE *
+      EDGE_DISTANCE_DILATION *
+      devicePixelRatio /
       min(projectedSizePixel.x, projectedSizePixel.y)
     );
   varyingBorderThresholds =
