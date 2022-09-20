@@ -342,6 +342,10 @@ void main () {
   varyingBorderThresholds =
     vec2(0., edgeDistance) + mix(0., -edgeDistance, currentBorderPlacement);
 
+  // Shift the quad vertices outward to account for borders, which may expand
+  // the bounding box of the sprite.
+  varyingVertexCoordinates.xy *= (1. - varyingBorderThresholds.x);
+
   // Compute the sprite's aspect ratio and the inverse.
   varyingAspectRatio = computeAspectRatio(computedSize);
 
@@ -367,7 +371,7 @@ void main () {
       computedSize,
       currentPositionRelative,
       currentPositionPixel,
-      vertexCoordinates.xy,
+      varyingVertexCoordinates.xy,
       viewMatrix
   );
 
