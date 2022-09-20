@@ -178,8 +178,8 @@ describe('Sprite', () => {
         // Border should be 1/4 of a world unit, half the radius of the
         // of the shape.
         s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
         s.BorderRadiusPixel = 0;
+        s.BorderRadiusRelative = .25;
 
         // Border is opaque green.
         s.BorderColorR = 0;
@@ -322,8 +322,8 @@ describe('Sprite', () => {
         // Border should be 1/4 of a world unit, half the radius of the
         // of the shape.
         s.BorderPlacement = 0;
-        s.BorderRadiusWorld = .25;
         s.BorderRadiusPixel = 0;
+        s.BorderRadiusRelative = .25;
 
         // Border is opaque, green.
         s.BorderColorR = 0;
@@ -528,8 +528,8 @@ describe('Sprite', () => {
             // Border should be 1/4 of a world unit, half the radius of the
             // of the shape.
             s.BorderPlacement = 0;
-            s.BorderRadiusWorld = .25;
             s.BorderRadiusPixel = 0;
+            s.BorderRadiusRelative = .25;
 
             // Border is solid green.
             s.BorderColorR = 0;

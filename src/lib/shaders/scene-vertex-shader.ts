@@ -306,20 +306,20 @@ void main () {
   // Compute border attributes in parallel.
   vec3 borderProperties = computeCurrentValue(
       vec3(
-        previousBorderRadiusWorld(),
         previousBorderRadiusPixel(),
+        previousBorderRadiusRelative(),
         previousBorderPlacement()),
       vec3(
-        previousBorderRadiusWorldDelta(),
         previousBorderRadiusPixelDelta(),
+        previousBorderRadiusRelativeDelta(),
         previousBorderPlacementDelta()),
       vec3(
-        targetBorderRadiusWorld(),
         targetBorderRadiusPixel(),
+        targetBorderRadiusRelative(),
         targetBorderPlacement())
   );
-  float currentBorderRadiusWorld = borderProperties.x;
-  float currentBorderRadiusPixel = borderProperties.y;
+  float currentBorderRadiusPixel = borderProperties.x;
+  float currentBorderRadiusRelative = borderProperties.y;
   float currentBorderPlacement = borderProperties.z;
 
   // Project the computed size into pixels by using the viewMatrixScale. Note
@@ -332,7 +332,7 @@ void main () {
   // of the shape. A point right on the edge of the shape will have a distance
   // of 0. In edge-distance space, a distance of 1 would be the dead center of a
   // circle.
-  float edgeDistance = currentBorderRadiusWorld + (
+  float edgeDistance = currentBorderRadiusRelative + (
       currentBorderRadiusPixel *
       CLIP_SPACE_RANGE *
       EDGE_DISTANCE_DILATION *

@@ -42,8 +42,8 @@ export interface SpriteView {
   ShapeTextureV: number;
   ShapeTextureWidth: number;
   ShapeTextureHeight: number;
-  BorderRadiusWorld: number;
   BorderRadiusPixel: number;
+  BorderRadiusRelative: number;
   BorderPlacement: number;
   BorderColorR: number;
   BorderColorG: number;

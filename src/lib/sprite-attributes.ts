@@ -253,15 +253,17 @@ export const SPRITE_ATTRIBUTES: readonly SpriteAttribute[] = [
   },
 
   /**
-   * The border can have width in both world and pixel coordinates. These
-   * are additive.
+   * The border can have width in both pixel coordinates, and relative to the
+   * size of the sprite (width or height, whichever is smaller). These are
+   * additive. Note that the size of the border does not affect the size of the
+   * sprite, so there is no conflict here.
    */
   {
-    attributeName: 'BorderRadiusWorld',
+    attributeName: 'BorderRadiusPixel',
     isInterpolable: true,
   },
   {
-    attributeName: 'BorderRadiusPixel',
+    attributeName: 'BorderRadiusRelative',
     isInterpolable: true,
   },
 

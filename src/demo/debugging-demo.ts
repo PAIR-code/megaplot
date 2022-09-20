@@ -167,8 +167,8 @@ function main() {
       const j = Math.floor(index / count);
       const color = d3.color('' + colorScale(j * count + i)) as d3.RGBColor;
 
-      s.BorderRadiusWorld = settings.borderRadiusWorld;
       s.BorderRadiusPixel = settings.borderRadiusPx;
+      s.BorderRadiusRelative = settings.borderRadiusWorld;
 
       s.BorderColor = hoveredIndices.has(index) ? hoverColor : borderColor;
 

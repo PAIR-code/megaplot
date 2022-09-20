@@ -187,7 +187,7 @@ function main() {
       s.SizeWorldWidth = .1;
       s.SizeWorldHeight = .1;
 
-      s.BorderRadiusWorld = .2;
+      s.BorderRadiusRelative = .2;
 
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
