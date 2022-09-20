@@ -67,7 +67,7 @@ function main() {
     transitionTimeMs: 2000,
     paddingPx: 0,
     maxBatchTimeMs: 20,
-    borderRadiusWorld: 0.25,
+    borderRadiusRelative: 0.25,
     borderRadiusPx: 0.25,
     borderPlacement: 0,
     positionRelative: 0,
@@ -168,7 +168,7 @@ function main() {
       const color = d3.color('' + colorScale(j * count + i)) as d3.RGBColor;
 
       s.BorderRadiusPixel = settings.borderRadiusPx;
-      s.BorderRadiusRelative = settings.borderRadiusWorld;
+      s.BorderRadiusRelative = settings.borderRadiusRelative;
 
       s.BorderColor = hoveredIndices.has(index) ? hoverColor : borderColor;
 
@@ -236,7 +236,7 @@ function main() {
   gui.add(settings, 'maxBatchTimeMs', 1, 1000, 1).onChange(() => {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
-  gui.add(settings, 'borderRadiusWorld', 0, 1, .05).onChange(update);
+  gui.add(settings, 'borderRadiusRelative', 0, 1, .05).onChange(update);
   gui.add(settings, 'borderRadiusPx', 0, 100, 1).onChange(update);
   gui.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
   gui.add(settings, 'positionRelative', -3, 3, .1).onChange(update);
