@@ -294,8 +294,15 @@ float getDistRect() {
 
   // If the point of intrest is beyond the top corner, return the negative
   // distance to that corner.
-  if (all(greaterThan(p, ar))) {
+  bvec2 gt = greaterThan(p, ar);
+  if (all(gt)) {
     return -distance(p, ar);
+  }
+  if (gt.x) {
+    return ar.x - p.x;
+  }
+  if (gt.y) {
+    return ar.y - p.y;
   }
 
   // Determine distance to nearest edge.
