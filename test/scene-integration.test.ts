@@ -123,6 +123,9 @@ function compareColorArrays(
   return matches / (expected.length / 4);
 }
 
+const GREEN = [0, 255, 0, 1];
+const MAGENTA = [255, 0, 255, 1];
+
 /**
  * Set a SpriteView's attributes to make the sprite a magenta filled square with
  * green border.
@@ -145,17 +148,8 @@ function makeGreenMagentaSquare(s: SpriteView) {
   s.BorderRadiusPixel = 0;
   s.BorderRadiusRelative = .25;
 
-  // Border is opaque green.
-  s.BorderColorR = 0;
-  s.BorderColorG = 255;
-  s.BorderColorB = 0;
-  s.BorderColorOpacity = 1;
-
-  // Interior fill is opaque magenta.
-  s.FillColorR = 255;
-  s.FillColorG = 0;
-  s.FillColorB = 255;
-  s.FillColorOpacity = 1;
+  s.BorderColor = GREEN;
+  s.FillColor = MAGENTA;
 }
 
 describe('Scene', () => {
@@ -560,11 +554,12 @@ describe('Scene', () => {
           const sprite = scene.createSprite();
           sprite.enter((s: SpriteView) => {
             s.BorderColorOpacity = .4;
+            s.BorderPlacement = 1;  // Place border outside shape.
             s.BorderRadiusPixel = 10;
             s.FillColor = [255, 255, 255, .4];
             s.PositionWorld = position;
             s.Sides = 1;
-            s.SizeWorld = .8;
+            s.SizeWorld = .5;
           })
           return sprite;
         });

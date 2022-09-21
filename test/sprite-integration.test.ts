@@ -519,15 +519,15 @@ describe('Sprite', () => {
             s.PositionWorldY = 0;
 
             // Sprite size should fill the canvas.
-            s.SizeWorldWidth = 1;
-            s.SizeWorldHeight = 1;
+            s.SizeWorldWidth = .8;
+            s.SizeWorldHeight = .8;
 
             // Shape should be a square to start.
             s.Sides = 2;
 
             // Border should be 1/4 of a world unit, half the radius of the
             // of the shape.
-            s.BorderPlacement = 0;
+            s.BorderPlacement = 1;
             s.BorderRadiusPixel = 0;
             s.BorderRadiusRelative = .25;
 
