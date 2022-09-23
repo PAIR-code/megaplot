@@ -36,8 +36,7 @@
  * However, a couple of things make Scene unique:
  *  - We need to interpolate to find the instantaneous positions.
  *  - Many properties are specified in both world and pixel coordinates.
- *  - The only 'local' coordinates are the vertexCoordinates.xy, and these are
- *    already also world coordinates.
+ *  - The only 'local' coordinates are the vertexCoordinates.
  *  - Producing world coordinates is an algebraic operation combining the
  *    vertex coordinates with instance offsets and dimensions.
  *
@@ -126,18 +125,17 @@ uniform sampler2D targetValuesTexture;
 /**
  * Per-vertex coordinates for the quad into which the sprite will be rendered.
  * XY contain the local cartesian coordinates for a unit square centered at the
- * origin. The ZW coordinates contain the y-flipped UV coordinates for orienting
- * the square against texture atlases.
+ * origin.
  *
  *   vertexCoordinates: [
- *     [-0.5, -0.5, 0, 1],
- *     [0.5, -0.5, 1, 1],
- *     [-0.5, 0.5, 0, 0],
- *     [0.5, 0.5, 1, 0],
+ *     [-0.5, -0.5],
+ *     [0.5, -0.5],
+ *     [-0.5, 0.5],
+ *     [0.5, 0.5],
  *   ],
  *
  */
-attribute vec4 vertexCoordinates;
+attribute vec2 vertexCoordinates;
 
 /**
  * Instanced, per-sprite index and UV coordinates of the sprite's data swatch.
@@ -154,7 +152,7 @@ varying float varyingT;
 /**
  * Interpolated vertexCoordinates for fragment shader.
  */
-varying vec4 varyingVertexCoordinates;
+varying vec2 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
@@ -344,7 +342,7 @@ void main () {
 
   // Shift the quad vertices outward to account for borders, which may expand
   // the bounding box of the sprite.
-  varyingVertexCoordinates.xy *= (1. - varyingBorderThresholds.x);
+  varyingVertexCoordinates *= (1. - varyingBorderThresholds.x);
 
   // Compute the sprite's aspect ratio and the inverse.
   varyingAspectRatio = computeAspectRatio(computedSize);
@@ -371,7 +369,7 @@ void main () {
       computedSize,
       currentPositionRelative,
       currentPositionPixel,
-      varyingVertexCoordinates.xy,
+      varyingVertexCoordinates,
       viewMatrix
   );
 

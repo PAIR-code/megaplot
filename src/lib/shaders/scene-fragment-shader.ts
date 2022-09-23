@@ -70,7 +70,7 @@ varying float varyingT;
  * Interpolated, per-vertex coordinate attributes for the quad into which the
  * sprite will be rendered.
  */
-varying vec4 varyingVertexCoordinates;
+varying vec2 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
@@ -171,7 +171,7 @@ float getDistStar(int sides, vec4 radii) {
 
   // The point of interest starts with the varyingVertexCoordinates, but shifted
   // to center the shape vertically.
-  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates.xy +
+  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates +
     vec2(0., EDGE_DISTANCE_DILATION - height);
 
   // Compute theta for point of interest, counter-clockwise from vertical.
@@ -246,7 +246,7 @@ float getDistEllipse() {
 
   // Point of interest in the expanded circle (before aspect ratio stretching).
   vec2 circlePoint = EDGE_DISTANCE_DILATION * abs(
-      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates.xy);
+      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates);
 
   // Capture length for inside/outside checking.
   float len = length(circlePoint);
@@ -290,7 +290,7 @@ float getDistRect() {
   // All quadrants can be treated the same, so we limit our computation to the
   // top right.
   vec2 ar = varyingAspectRatio.xy;
-  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates.xy);
+  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates);
 
   // If the point of intrest is beyond the top corner, return the negative
   // distance to that corner.
@@ -320,9 +320,12 @@ float getDistRect() {
  * texture within which to sample (corresponds to the glyph being rendered).
  */
 float getDistSDF(vec4 shapeTexture) {
+  // UV sampling coordinates are Y-flipped and shifted.
+  vec2 coordUV = varyingVertexCoordinates * vec2(1., -1.) + .5;
+
   vec2 textureUv =
       shapeTexture.xy +
-      shapeTexture.zw * varyingVertexCoordinates.zw;
+      shapeTexture.zw * coordUV;
   return EDGE_DISTANCE_DILATION * texture2D(sdfTexture, textureUv).z - 1.;
 }
 
