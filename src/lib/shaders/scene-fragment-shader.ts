@@ -320,13 +320,30 @@ float getDistRect() {
  * texture within which to sample (corresponds to the glyph being rendered).
  */
 float getDistSDF(vec4 shapeTexture) {
-  // UV sampling coordinates are Y-flipped and shifted.
-  vec2 coordUV = varyingVertexCoordinates * vec2(1., -1.) + .5;
+  // Clamp vertex coordinates to the -1 to 1 range.
+  vec2 clamped = clamp(varyingVertexCoordinates, -1., 1.);
 
+  // For sampling, UV coordinates are Y-flipped and shifted.
+  vec2 coordUv = clamped * vec2(1., -1.) + .5;
+
+  // Focus on the middle 50% of the UV space. Assumes glyphs were rendered with
+  // buffer roughly equal to the font size.
+  //
+  //   +------+       .      .
+  //   |      |         +--+
+  //   |  k   |  =>     |k |
+  //   |      |         +--+
+  //   +------+       .      .
+  //
+  coordUv *= .5;
+  coordUv += .25;
+
+  // Offset into the texture according to the shapeTexture's location and size.
   vec2 textureUv =
       shapeTexture.xy +
-      shapeTexture.zw * coordUV;
-  return EDGE_DISTANCE_DILATION * texture2D(sdfTexture, textureUv).z - 1.;
+      shapeTexture.zw * coordUv;
+
+  return texture2D(sdfTexture, textureUv).z;
 }
 
 /**

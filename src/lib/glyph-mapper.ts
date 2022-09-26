@@ -61,11 +61,11 @@ export const DEFAULT_GLYPH_MAPPER_SETTINGS: GlyphMapperSettings =
     Object.freeze({
       maxTextureSize: 2048,
       fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
-      buffer: Math.ceil(DEFAULT_GLYPH_FONT_SIZE_PX / 4),
+      buffer: DEFAULT_GLYPH_FONT_SIZE_PX,
       radius: DEFAULT_GLYPH_FONT_SIZE_PX,
       // This default value ensures that a distance of zero coincides with the
       // edge of the glyph.
-      cutoff: 0.5,
+      cutoff: 1,
       fontFamily: 'monospace',
       fontWeight: 'normal',
     });
@@ -217,12 +217,12 @@ export class GlyphMapper {
       }
     }
 
-    const coordinates = {
+    const coordinates = Object.freeze({
       u: col / this.glyphsPerRow,
       v: row / this.glyphsPerRow,
       width: this.glyphSize / this.textureSize,
       height: this.glyphSize / this.textureSize,
-    };
+    });
     this.glyphToCoordinates.set(glyph, coordinates);
 
     return coordinates;
