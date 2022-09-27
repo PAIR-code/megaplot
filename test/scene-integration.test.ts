@@ -554,7 +554,12 @@ describe('Scene', () => {
           const sprite = scene.createSprite();
           sprite.enter((s: SpriteView) => {
             s.BorderColorOpacity = .4;
-            s.BorderPlacement = 1;  // Place border outside shape.
+
+            // Place the border entirely outside the shape. It is only because
+            // of this that the bounding boxes of the sprites are large enough
+            // for the ensuing hitTest() invocations to hit them.
+            s.BorderPlacement = 1
+
             s.BorderRadiusPixel = 10;
             s.FillColor = [255, 255, 255, .4];
             s.PositionWorld = position;

@@ -19,13 +19,51 @@
  */
 
 /**
+ * Create an <article> element to contain sections.
+ */
+export function createArticle() {
+  const article = document.createElement('article');
+  article.className = 'cw';
+
+  const css = `
+    .cw {
+      font-family: monospace;
+    }
+    .cw .content {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .cw canvas {
+      background-image: linear-gradient(135deg, #aaa 50%, #ccc 50%);
+      background-size: 10px 10px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+    }
+  `;
+
+  const style = document.createElement('style');
+  style.appendChild(document.createTextNode(css));
+  article.appendChild(style);
+
+  return article;
+}
+
+/**
  * Create a <section> element inside the <article>.
  */
-export function createSection(title: string): HTMLElement {
+export function createSection(title: string) {
   const section = document.createElement('section');
-  section.innerHTML = '<h2 class="title"></h2><div class="content"></div>';
-  section.querySelector('h2')!.textContent = title;
-  return section;
+
+  const header = document.createElement('h2');
+  header.className = 'title';
+  header.textContent = title;
+  section.appendChild(header);
+
+  const content = document.createElement('div');
+  content.className = 'content';
+  section.appendChild(content);
+
+  return {section, content};
 }
 
 /**

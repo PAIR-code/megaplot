@@ -22,39 +22,19 @@ import {Scene} from '../src/lib/scene';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createSection, filledColorArray} from './utils';
+import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
  */
-const article = document.createElement('article');
-article.className = 'cw';
-article.innerHTML = `
-<style>
-.cw {
-  font-family: monospace;
-}
-.cw .content {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.cw canvas {
-  background-image: linear-gradient(135deg, #aaa 50%, #ccc 50%);
-  background-size: 10px 10px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
-}
-</style>
-`;
+const article = createArticle();
 document.body.appendChild(article);
 
 describe('glyph', () => {
   it('should render a glyph of text', async () => {
     // Create a <section> for storing visible artifacts.
-    const section = createSection('glyph');
+    const {section, content} = createSection('glyph');
     article.appendChild(section);
-
-    const content = section.querySelector('.content')!;
 
     // Create a container <div> of fixed size for the Scene to render into.
     const container = document.createElement('div');
