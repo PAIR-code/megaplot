@@ -88,12 +88,12 @@ export function setupDrawCommand(
     'vert': vertexShader(coordinator.attributeMapper),
 
     'attributes': {
-      // Corners and uv coords of the rectangle, same for each sprite.
+      // Corners of the rectangle, same for each sprite.
       'vertexCoordinates': [
-        [-0.5, -0.5, 0, 1],
-        [0.5, -0.5, 1, 1],
-        [-0.5, 0.5, 0, 0],
-        [0.5, 0.5, 1, 0],
+        [-0.5, -0.5],  // UV: [0, 1].
+        [0.5, -0.5],   // UV: [1, 1].
+        [-0.5, 0.5],   // UV: [0, 0].
+        [0.5, 0.5],    // UV: [1, 0].
       ],
 
       // Swatch uv coordinates for retrieving data texture values.

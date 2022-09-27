@@ -79,6 +79,7 @@ function main() {
   const settings = {
     transitionTimeMs: 250,
     borderPlacement: 1,
+    borderRadiusRelative: .1,
     maxBatchTimeMs: 20,
     align: 'left' as AlignmentOption,
     verticalAlign: 'middle' as VerticalAlignmentOption,
@@ -187,8 +188,6 @@ function main() {
       s.SizeWorldWidth = .1;
       s.SizeWorldHeight = .1;
 
-      s.BorderRadiusWorld = .2;
-
       s.BorderColorOpacity = 0;
       s.FillColorOpacity = 0;
     });
@@ -206,6 +205,7 @@ function main() {
       s.PositionWorld = d;
 
       s.BorderPlacement = settings.borderPlacement;
+      s.BorderRadiusRelative = settings.borderRadiusRelative;
 
       s.BorderColor = borderColor;
       s.FillColor = fillColor;
@@ -228,6 +228,7 @@ function main() {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
   gui.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
+  gui.add(settings, 'borderRadiusRelative', 0, 1, .1).onChange(update);
   gui.add(settings, 'align', ['left', 'center', 'right']).onChange(update);
   gui.add(settings, 'verticalAlign', ['top', 'middle', 'bottom'])
       .onChange(update);

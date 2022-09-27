@@ -70,7 +70,7 @@ varying float varyingT;
  * Interpolated, per-vertex coordinate attributes for the quad into which the
  * sprite will be rendered.
  */
-varying vec4 varyingVertexCoordinates;
+varying vec2 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
@@ -171,7 +171,7 @@ float getDistStar(int sides, vec4 radii) {
 
   // The point of interest starts with the varyingVertexCoordinates, but shifted
   // to center the shape vertically.
-  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates.xy +
+  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates +
     vec2(0., EDGE_DISTANCE_DILATION - height);
 
   // Compute theta for point of interest, counter-clockwise from vertical.
@@ -246,7 +246,7 @@ float getDistEllipse() {
 
   // Point of interest in the expanded circle (before aspect ratio stretching).
   vec2 circlePoint = EDGE_DISTANCE_DILATION * abs(
-      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates.xy);
+      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates);
 
   // Capture length for inside/outside checking.
   float len = length(circlePoint);
@@ -290,12 +290,19 @@ float getDistRect() {
   // All quadrants can be treated the same, so we limit our computation to the
   // top right.
   vec2 ar = varyingAspectRatio.xy;
-  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates.xy);
+  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates);
 
   // If the point of intrest is beyond the top corner, return the negative
   // distance to that corner.
-  if (all(greaterThan(p, ar))) {
+  bvec2 gt = greaterThan(p, ar);
+  if (all(gt)) {
     return -distance(p, ar);
+  }
+  if (gt.x) {
+    return ar.x - p.x;
+  }
+  if (gt.y) {
+    return ar.y - p.y;
   }
 
   // Determine distance to nearest edge.
@@ -313,10 +320,30 @@ float getDistRect() {
  * texture within which to sample (corresponds to the glyph being rendered).
  */
 float getDistSDF(vec4 shapeTexture) {
+  // Clamp vertex coordinates to the -1 to 1 range.
+  vec2 clamped = clamp(varyingVertexCoordinates, -1., 1.);
+
+  // For sampling, UV coordinates are Y-flipped and shifted.
+  vec2 coordUv = clamped * vec2(1., -1.) + .5;
+
+  // Focus on the middle 50% of the UV space. Assumes glyphs were rendered with
+  // buffer roughly equal to the font size.
+  //
+  //   +------+       .      .
+  //   |      |         +--+
+  //   |  k   |  =>     |k |
+  //   |      |         +--+
+  //   +------+       .      .
+  //
+  coordUv *= .5;
+  coordUv += .25;
+
+  // Offset into the texture according to the shapeTexture's location and size.
   vec2 textureUv =
       shapeTexture.xy +
-      shapeTexture.zw * varyingVertexCoordinates.zw;
-  return EDGE_DISTANCE_DILATION * texture2D(sdfTexture, textureUv).z - 1.;
+      shapeTexture.zw * coordUv;
+
+  return texture2D(sdfTexture, textureUv).z;
 }
 
 /**

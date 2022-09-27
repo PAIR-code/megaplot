@@ -313,25 +313,25 @@ export class SpriteViewImpl implements SpriteView {
     this[DataViewSymbol][22] = attributeValue;
   }
 
-  get BorderRadiusWorld(): number {
-    return this[DataViewSymbol][23];
-  }
-
-  set BorderRadiusWorld(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('BorderRadiusWorld cannot be NaN');
-    }
-
-    this[DataViewSymbol][23] = attributeValue;
-  }
-
   get BorderRadiusPixel(): number {
-    return this[DataViewSymbol][24];
+    return this[DataViewSymbol][23];
   }
 
   set BorderRadiusPixel(attributeValue: number) {
     if (isNaN(attributeValue)) {
       throw new RangeError('BorderRadiusPixel cannot be NaN');
+    }
+
+    this[DataViewSymbol][23] = attributeValue;
+  }
+
+  get BorderRadiusRelative(): number {
+    return this[DataViewSymbol][24];
+  }
+
+  set BorderRadiusRelative(attributeValue: number) {
+    if (isNaN(attributeValue)) {
+      throw new RangeError('BorderRadiusRelative cannot be NaN');
     }
 
     this[DataViewSymbol][24] = attributeValue;
