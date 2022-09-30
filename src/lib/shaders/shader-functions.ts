@@ -165,8 +165,6 @@ vec2 computeSize(
   // Inital computed size in world coordinates is based on projected pixel size.
   vec2 computedSize = projectedSizePixel * viewMatrixScale.zw;
 
-  // TODO(jimbo): Add border width to size if positioned externally.
-
   // Compute whether max and min size components are positive, in parallel.
   // XY contains results for max, ZW contains results for min.
   bvec4 isPositive = greaterThan(vec4(maxSizePixel, minSizePixel), vec4(0.));
@@ -234,7 +232,7 @@ vec4 computeCurrentMaxAndMinSizePixel() {
       targetMaxSizePixel(),
       targetMinSizePixel()
     )
-  ) * 4.;
+  ) * CLIP_SPACE_RANGE * devicePixelRatio;
 }
 `;
 }
