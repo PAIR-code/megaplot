@@ -73,6 +73,7 @@ function main() {
     positionRelative: 0,
     positionMultiplier: 1,
     sizeMultiplier: 1,
+    sizeAddPx: 0,
     geometricZoom: 0,
     maxSizePxWidth: 0,
     maxSizePxHeight: 0,
@@ -192,6 +193,7 @@ function main() {
       s.GeometricZoom = settings.geometricZoom;
 
       s.SizeWorld = 1 / count * settings.sizeMultiplier;
+      s.SizePixel = settings.sizeAddPx;
 
       s.MaxSizePixelWidth = settings.maxSizePxWidth;
       s.MaxSizePixelHeight = settings.maxSizePxHeight;
@@ -244,6 +246,7 @@ function main() {
   gui.add(settings, 'positionRelative', -3, 3, .1).onChange(update);
   gui.add(settings, 'positionMultiplier', -3, 3, .1).onChange(update);
   gui.add(settings, 'sizeMultiplier', 0.1, 3, .1).onChange(update);
+  gui.add(settings, 'sizeAddPx', 0, 100, 5).onChange(update);
   gui.add(settings, 'geometricZoom', 0, 1, .01).onChange(update);
   gui.add(settings, 'maxSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
