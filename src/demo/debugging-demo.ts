@@ -87,6 +87,8 @@ function main() {
     brush: false,
     clearBeforeUpdate: false,
     devicePixelRatio: window.devicePixelRatio || 1,
+    zoomX: true,
+    zoomY: true,
   };
 
   // Locate the container element.
@@ -258,6 +260,8 @@ function main() {
   gui.add(settings, 'devicePixelRatio', 0.5, 3, .5).onChange(() => {
     scene.resize();
   });
+  gui.add(settings, 'zoomX');
+  gui.add(settings, 'zoomY');
   update();
   container.appendChild(gui.domElement);
 
@@ -266,10 +270,14 @@ function main() {
                    .scaleExtent([1, 200000])
                    .on('zoom', (event: TransformEvent) => {
                      const {x, y, k} = event.transform;
-                     scene.scale.x = k;
-                     scene.scale.y = k;
-                     scene.offset.x = x;
-                     scene.offset.y = y;
+                     if (settings.zoomX) {
+                       scene.scale.x = k;
+                       scene.offset.x = x;
+                     }
+                     if (settings.zoomY) {
+                       scene.scale.y = k;
+                       scene.offset.y = y;
+                     }
                    });
   d3.select(scene.canvas)
       .call(zoom)
