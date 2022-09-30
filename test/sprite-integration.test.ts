@@ -25,111 +25,19 @@ import {Sprite} from '../src/lib/sprite';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
+import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+
 /**
  * Tests produce visible artifacts for debugging.
  */
-const article = document.createElement('article');
-article.className = 'cw';
-article.innerHTML = `
-<style>
-.cw {
-  font-family: monospace;
-}
-.cw .content {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.cw canvas {
-  background-image: linear-gradient(135deg, #aaa 50%, #ccc 50%);
-  background-size: 10px 10px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
-}
-</style>
-`;
+const article = createArticle();
 document.body.appendChild(article);
-
-/**
- * Create a <section> element inside the <article>.
- */
-function createSection(title: string): HTMLElement {
-  const section = document.createElement('section');
-  section.innerHTML = '<h2 class="title"></h2><div class="content"></div>';
-  section.querySelector('h2')!.textContent = title;
-  article.appendChild(section);
-  return section;
-}
-
-/**
- * Create a canvas element with the same characteristics as the provided canvas.
- * The copy will have the same size and styled size. Return the copy and its 2d
- * context.
- */
-function copyCanvasAndContainer(canvas: HTMLCanvasElement):
-    [HTMLCanvasElement, CanvasRenderingContext2D, HTMLElement] {
-  const parent = canvas.parentElement!;
-  const div = document.createElement('div');
-  div.style.width = parent.style.width;
-  div.style.height = parent.style.height;
-  const copy = document.createElement('canvas');
-  copy.width = canvas.width;
-  copy.height = canvas.height;
-  copy.style.width = canvas.style.width;
-  copy.style.height = canvas.style.height;
-  const ctx = copy.getContext('2d')!;
-  div.appendChild(copy);
-  return [copy, ctx, div];
-}
-
-/**
- * Render a blob to a canvas.
- */
-async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-  });
-  img.src = url;
-  return promise;
-}
-
-/**
- * Given a target length, and the Uint 8 RGBA channels for a pixel, create a
- * block of pixel values for testing sampled swatches of canvas data.
- */
-function filledColorArray(
-    pixelCount: number,
-    fillColor: [number, number, number, number]): Uint8ClampedArray {
-  const array = new Uint8ClampedArray(pixelCount * 4);
-  for (let i = 0; i < array.length; i++) {
-    array[i] = fillColor[i % fillColor.length];
-  }
-  return array;
-}
-
-/**
- * Compare two color arrays and return the proportion of matching pixels.
- */
-function compareColorArrays(
-    actual: Uint8ClampedArray, expected: Uint8ClampedArray): number {
-  let matches = 0;
-  for (let i = 0; i < expected.length; i += 4) {
-    if (expected[i] === actual[i] && expected[i + 1] === actual[i + 1] &&
-        expected[i + 2] === actual[i + 2] &&
-        expected[i + 3] === actual[i + 3]) {
-      matches++;
-    }
-  }
-  return matches / (expected.length / 4);
-}
 
 describe('Sprite', () => {
   describe('enter()', () => {
     // Create a <section> for storing visible artifacts.
-    const section = createSection('Sprite::enter()');
-    const content = section.querySelector('.content')!;
+    const {section, content} = createSection('Sprite::enter()');
+    article.appendChild(section);
 
     // Create a container <div> of fixed size for the Scene to render into.
     const container = document.createElement('div');
@@ -279,8 +187,8 @@ describe('Sprite', () => {
 
   describe('update()', () => {
     // Create a visible document section for inspection.
-    const section = createSection('Sprite::update()');
-    const content = section.querySelector('.content')!;
+    const {section, content} = createSection('Sprite::update()');
+    article.appendChild(section);
 
     // Create a container div in which the Scene will place its canvas.
     const container = document.createElement('div');
@@ -474,8 +382,8 @@ describe('Sprite', () => {
 
   describe('enter(), update()', () => {
     // Create a section for visually inspecting output.
-    const section = createSection('Sprite::enter(), update()');
-    const content = section.querySelector('.content')!;
+    const {section, content} = createSection('Sprite::enter(), update()');
+    article.appendChild(section);
 
     // Create a fixed-size container div for the Scene's canvas.
     const container = document.createElement('div');
@@ -627,8 +535,8 @@ describe('Sprite', () => {
 
   describe('stacking', () => {
     // Create a <section> for storing visible artifacts.
-    const section = createSection('Sprite stacking');
-    const content = section.querySelector('.content')!;
+    const {section, content} = createSection('Sprite stacking');
+    article.appendChild(section);
 
     it('should render later sprites over earlier sprites', async () => {
       // Create a container <div> of fixed size for the Scene to render into.
