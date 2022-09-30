@@ -22,40 +22,13 @@ import {Scene} from '../src/lib/scene';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
+import {createArticle, createSection} from './utils';
+
 /**
  * Tests produce visible artifacts for debugging.
  */
-const article = document.createElement('article');
-article.className = 'cw';
-article.innerHTML = `
-<style>
-.cw {
-  font-family: monospace;
-}
-.cw .content {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.cw canvas {
-  background-image: linear-gradient(135deg, #aaa 50%, #ccc 50%);
-  background-size: 10px 10px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
-}
-</style>
-`;
+const article = createArticle();
 document.body.appendChild(article);
-
-/**
- * Create a <section> element inside the <article>.
- */
-function createSection(title: string): HTMLElement {
-  const section = document.createElement('section');
-  section.innerHTML = '<h2 class="title"></h2><div class="content"></div>';
-  section.querySelector('h2')!.textContent = title;
-  article.appendChild(section);
-  return section;
-}
 
 /**
  * Dummy data interface for testing.
@@ -65,8 +38,8 @@ interface TestDatum {
 }
 
 describe('Selection', () => {
-  const section = createSection('Selection');
-  const content = section.querySelector('.content')!;
+  const {section, content} = createSection('Selection');
+  article.appendChild(section);
 
   const container = document.createElement('div');
   container.style.width = '100px';
