@@ -721,6 +721,10 @@ export class SceneInternal implements Renderer {
     const {width, height} = this.canvas.getBoundingClientRect();
 
     if (!width || !height) {
+      console.warn('Delaying Scene initialization: canvas has zero size');
+      if (!this.canvas.isConnected) {
+        console.debug('Canvas is not connected to the DOM');
+      }
       return;
     }
 
@@ -744,7 +748,6 @@ export class SceneInternal implements Renderer {
    * or offset is changed, this method is invoked.
    */
   private handleViewChange() {
-    this.isViewInitialized = true;
     this.queueDraw();
   }
 
@@ -841,13 +844,17 @@ export class SceneInternal implements Renderer {
     return this.hitTestOutputResults.subarray(0, sprites.length);
   }
 
-  doDraw() {
+  private doDraw() {
     // Initialize view if it hasn't been already.
     this.initView();
 
     const currentTimeMs = this.elapsedTimeMs();
 
-    this.drawCommand();
+    if (this.isViewInitialized) {
+      this.drawCommand();
+    } else {
+      console.warn('Skipping draw: view is not initialized');
+    }
 
     if (this.toDrawTsRange.isDefined) {
       this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
