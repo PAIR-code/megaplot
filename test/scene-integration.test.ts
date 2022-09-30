@@ -23,105 +23,13 @@ import {Scene} from '../src/lib/scene';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
+import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+
 /**
  * Tests produce visible artifacts for debugging.
  */
-const article = document.createElement('article');
-article.className = 'cw';
-article.innerHTML = `
-<style>
-.cw {
-  font-family: monospace;
-}
-.cw .content {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.cw canvas {
-  background-image: linear-gradient(135deg, #aaa 50%, #ccc 50%);
-  background-size: 10px 10px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
-}
-</style>
-`;
+const article = createArticle();
 document.body.appendChild(article);
-
-/**
- * Create a <section> element inside the <article>.
- */
-function createSection(title: string): HTMLElement {
-  const section = document.createElement('section');
-  section.innerHTML = '<h2 class="title"></h2><div class="content"></div>';
-  section.querySelector('h2')!.textContent = title;
-  article.appendChild(section);
-  return section;
-}
-
-/**
- * Create a canvas element with the same characteristics as the provided canvas.
- * The copy will have the same size and styled size. Return the copy and its 2d
- * context.
- */
-function copyCanvasAndContainer(canvas: HTMLCanvasElement):
-    [HTMLCanvasElement, CanvasRenderingContext2D, HTMLElement] {
-  const parent = canvas.parentElement!;
-  const div = document.createElement('div');
-  div.style.width = parent.style.width;
-  div.style.height = parent.style.height;
-  const copy = document.createElement('canvas');
-  copy.width = canvas.width;
-  copy.height = canvas.height;
-  copy.style.width = canvas.style.width;
-  copy.style.height = canvas.style.height;
-  const ctx = copy.getContext('2d')!;
-  div.appendChild(copy);
-  return [copy, ctx, div];
-}
-
-/**
- * Render a blob to a canvas.
- */
-async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-  });
-  img.src = url;
-  return promise;
-}
-
-/**
- * Given a target length, and the Uint 8 RGBA channels for a pixel, create a
- * block of pixel values for testing sampled swatches of canvas data.
- */
-function filledColorArray(
-    pixelCount: number,
-    fillColor: [number, number, number, number]): Uint8ClampedArray {
-  const array = new Uint8ClampedArray(pixelCount * 4);
-  for (let i = 0; i < array.length; i++) {
-    array[i] = fillColor[i % fillColor.length];
-  }
-  return array;
-}
-
-/**
- * Compare two color arrays and return the proportion of matching pixels.
- */
-function compareColorArrays(
-    actual: Uint8ClampedArray, expected: Uint8ClampedArray): number {
-  let matches = 0;
-  for (let i = 0; i < expected.length; i += 4) {
-    if (expected[i] === actual[i] && expected[i + 1] === actual[i + 1] &&
-        expected[i + 2] === actual[i + 2] &&
-        expected[i + 3] === actual[i + 3]) {
-      matches++;
-    }
-  }
-  return matches / (expected.length / 4);
-}
 
 const GREEN = [0, 255, 0, 1];
 const MAGENTA = [255, 0, 255, 1];
@@ -154,8 +62,9 @@ function makeGreenMagentaSquare(s: SpriteView) {
 
 describe('Scene', () => {
   describe('initialization', () => {
-    const section = createSection('Scene initialization');
-    const sectionContent = section.querySelector('.content')!;
+    const {section, content: sectionContent} =
+        createSection('Scene initialization');
+    article.appendChild(section);
 
     it('should render when canvas attached post-construction', async () => {
       const container = document.createElement('div');
@@ -246,8 +155,8 @@ describe('Scene', () => {
 
 describe('Scene', () => {
   describe('resize()', () => {
-    const section = createSection('Scene::resize()');
-    const sectionContent = section.querySelector('.content')!;
+    const {section, content: sectionContent} = createSection('Scene::resize()');
+    article.appendChild(section);
 
     it('should render normally after resize', async () => {
       // Container starts out 50x50.
@@ -431,8 +340,9 @@ describe('Scene', () => {
   });
 
   describe('devicePixelRatio', () => {
-    const section = createSection('Scene::devicePixelRatio');
-    const sectionContent = section.querySelector('.content')!;
+    const {section, content: sectionContent} =
+        createSection('Scene::devicePixelRatio');
+    article.appendChild(section);
 
     const devicePixelRatioParameters = [0.5, 1, 1.5, 2, 2.5, 3];
 
@@ -523,8 +433,9 @@ describe('Scene', () => {
   });
 
   describe('hitTest() inclusive', () => {
-    const section = createSection('Scene::hitTest() inclusive');
-    const sectionContent = section.querySelector('.content')!;
+    const {section, content: sectionContent} =
+        createSection('Scene::hitTest() inclusive');
+    article.appendChild(section);
 
     for (let devicePixelRatio = 1; devicePixelRatio <= 3;
          devicePixelRatio += 0.5) {
@@ -630,8 +541,9 @@ describe('Scene', () => {
   });
 
   describe('hitTest() exclusive', () => {
-    const section = createSection('Scene::hitTest() exclusive');
-    const sectionContent = section.querySelector('.content')!;
+    const {section, content: sectionContent} =
+        createSection('Scene::hitTest() exclusive');
+    article.appendChild(section);
 
     for (let devicePixelRatio = 1; devicePixelRatio <= 3;
          devicePixelRatio += 0.5) {
