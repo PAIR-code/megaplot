@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Tests for the Scene.
+ * @fileoverview Integration tests for the Scene's resize() method and its
+ * impact on rendering before and after resize.
  */
 
 import {Scene} from '../src/lib/scene';

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Tests for the Scene.
+ * @fileoverview Integration tests for Scene initialization.
  */
 
 import {Scene} from '../src/lib/scene';

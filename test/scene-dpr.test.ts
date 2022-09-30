@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Tests for the Scene.
+ * @fileoverview Integration tests for the Scene rendering for different
+ * devicePixelRatio values.
  */
 
 import {Scene} from '../src/lib/scene';

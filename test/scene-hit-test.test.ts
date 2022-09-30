@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /**
- * @fileoverview Tests for the Scene.
+ * @fileoverview Integration tests for the Scene hitTest() method.
  */
 
 import {SpriteView} from '../src/lib/generated/sprite-view';
