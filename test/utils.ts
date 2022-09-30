@@ -18,6 +18,11 @@
  * @fileoverview Utility functions used by tests.
  */
 
+import {SpriteView} from '../src/lib/generated/sprite-view';
+
+const GREEN = [0, 255, 0, 1];
+const MAGENTA = [255, 0, 255, 1];
+
 /**
  * Create an <article> element to contain sections.
  */
@@ -129,4 +134,25 @@ export function compareColorArrays(
     }
   }
   return matches / (expected.length / 4);
+}
+
+/**
+ * Set a SpriteView's attributes to make the sprite a magenta filled square with
+ * green border.
+ */
+export function makeGreenMagentaSquare(s: SpriteView) {
+  s.PositionWorld = [0, 0];
+  s.SizeWorld = 1;
+
+  // Shape should be a square.
+  s.Sides = 2;
+
+  // Border should be 1/4 of a world unit, half the radius of the
+  // of the shape.
+  s.BorderPlacement = 0;
+  s.BorderRadiusPixel = 0;
+  s.BorderRadiusRelative = .25;
+
+  s.BorderColor = GREEN;
+  s.FillColor = MAGENTA;
 }
