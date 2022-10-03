@@ -10671,28 +10671,6 @@
             components: ['Width', 'Height'],
         },
         /**
-         * By default, when rendering, sprites are stacked such that later allocated
-         * sprites appear on top of earlier sprites. This guarantees that when sprites
-         * overlap and have partially transparent pixels, the pixel values blend
-         * appropriately.
-         *
-         * However, sometimes it's beneficial to override the Z ordering, even if that
-         * could cause blending issues. For example, when a user hovers over a point,
-         * it could make sense to raise that sprite to the top.
-         *
-         * The OrderZ attribute allows the API user to override the default stacking.
-         * If specified, this value should be in the range 0-1. Any sprite with a
-         * specified non-zero OrderZ will be rendered on top of any sprites with
-         * unspecified OrderZ. When two sprites both have OrderZs set, the one with
-         * the higher value will be on top.
-         */
-        {
-            attributeName: 'OrderZ',
-            isInterpolable: true,
-            minValue: 0,
-            maxValue: 1,
-        },
-        /**
          * Amount to zoom sprite sizes based on current scale. In the shaders, this
          * formula is used:
          *
@@ -10741,7 +10719,7 @@
             components: ['Width', 'Height'],
         },
         /**
-         * Maximum size when rendered in pixels. Any non-positive value is treated
+         * Maxium size when rendered in pixels. Any non-positive value is treated
          * as unbounded.
          */
         {
@@ -10805,17 +10783,15 @@
             components: ['U', 'V', 'Width', 'Height'],
         },
         /**
-         * The border can have width in both pixel coordinates, and relative to the
-         * size of the sprite (width or height, whichever is smaller). These are
-         * additive. Note that the size of the border does not affect the size of the
-         * sprite, so there is no conflict here.
+         * The border can have width in both world and pixel coordinates. These
+         * are additive.
          */
         {
-            attributeName: 'BorderRadiusPixel',
+            attributeName: 'BorderRadiusWorld',
             isInterpolable: true,
         },
         {
-            attributeName: 'BorderRadiusRelative',
+            attributeName: 'BorderRadiusPixel',
             isInterpolable: true,
         },
         /**
@@ -10892,7 +10868,7 @@
             const settings = Object.assign({}, DEFAULT_ATTRIBUTE_MAPPER_SETTINGS, options || {});
             if (!isFinite(settings.maxTextureSize) &&
                 !isFinite(settings.desiredSwatchCapacity)) {
-                throw new RangeError('Cannot map attributes to texture of infinite size');
+                throw new Error('Cannot map attributes to texture of infinite size.');
             }
             this.dataChannelCount = settings.dataChannelCount;
             this.maxTextureSize = settings.maxTextureSize;
@@ -10900,7 +10876,6 @@
             this.attributes = settings.attributes;
             this.attributeComponentIndices = {};
             this.attributeComponentNames = [];
-            this.componentToAttributeMap = {};
             this.isAttributeTimestamp = [];
             // Copy attribute component names into local array and create lookup index.
             for (const attribute of this.attributes) {
@@ -10913,7 +10888,6 @@
                     const index = this.attributeComponentNames.length;
                     this.attributeComponentNames[index] = attributeComponentName;
                     this.attributeComponentIndices[attributeComponentName] = index;
-                    this.componentToAttributeMap[attributeComponentName] = attribute;
                     this.isAttributeTimestamp[index] = !!attribute.isTimestamp;
                 }
             }
@@ -11136,77 +11110,17 @@
      * limitations under the License.
      */
     /**
-     * @fileoverview A CallbackTriggerPoint object maintains an x and y coordinate
-     * pair and invokes a provided callback whenever either are set. Used for the
-     * offset and scale properties.
-     */
-    class CallbackTriggerPoint {
-        constructor(callbackFn) {
-            this.callbackFn = callbackFn;
-            this.xValue = 0;
-            this.yValue = 0;
-        }
-        get x() {
-            return this.xValue;
-        }
-        /**
-         * Sets the x coordinate of this point.
-         * @param x The x value to set (cannot be NaN).
-         * @throws RangeError If the x value passed is NaN.
-         */
-        set x(x) {
-            if (isNaN(+x)) {
-                throw new RangeError('x cannot be NaN');
-            }
-            this.xValue = x;
-            this.callbackFn();
-        }
-        get y() {
-            return this.yValue;
-        }
-        /**
-         * Sets the y coordinate of this point.
-         * @param y The y value to set (cannot be NaN).
-         * @throws RangeError If the y value passed is NaN.
-         */
-        set y(y) {
-            if (isNaN(+y)) {
-                throw new RangeError('y cannot be NaN');
-            }
-            this.yValue = y;
-            this.callbackFn();
-        }
-    }
-
-    /**
-     * @license
-     * Copyright 2021 Google LLC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-    /**
      * @fileoverview Provides a template tag for marking strings of GLSL code.
      */
     /**
-     * Template tag to mark GLSL code fragments, for syntax highlighting in editors
-     * which that it.
+     * Template tag to mark GLSL code fragments.
      */
-    function glsl(strings, ...args) {
+    function glsl(strs, ...args) {
         const interleaved = [];
         for (let i = 0; i < args.length; i++) {
-            interleaved.push(strings[i], `${args[i]}`);
+            interleaved.push(strs[i], `${args[i]}`);
         }
-        interleaved.push(strings[strings.length - 1]);
+        interleaved.push(strs[strs.length - 1]);
         return interleaved.join('');
     }
 
@@ -11227,11 +11141,11 @@
      * limitations under the License.
      */
     /**
-     * List of types for creating vectorized versions of functions.
+     * List of types for creating vectorizied versions of functions.
      */
     const GEN_TYPES = ['float', 'vec2', 'vec3', 'vec4'];
     /**
-     * Range function. Inverse of GLSL built in mix() function.
+     * Range function. Inverse of GLSL built in mix() funcition.
      */
     function range() {
         return glsl `
@@ -11459,15 +11373,6 @@ vec4 computeAspectRatio(vec2 size) {
 precision lowp float;
 
 /**
- * Each sprite receives the same vertex coordinates, which describe a unit
- * square centered at the origin. However, the distance calculations performed
- * by the fragment shader use a distance of 1 to mean the dead center of a
- * circle, which implies a diameter of 2. So to convert from sprite vertex
- * coordinate space to edge distance space requires a dilation of 2.
- */
-const float EDGE_DISTANCE_DILATION = 2.;
-
-/**
  * View matrix for converting from world space to clip space.
  */
 uniform mat3 viewMatrix;
@@ -11487,11 +11392,11 @@ varying float varyingT;
  * Interpolated, per-vertex coordinate attributes for the quad into which the
  * sprite will be rendered.
  */
-varying vec2 varyingVertexCoordinates;
+varying vec4 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
- * inside the shape (Y). Values between constitute the border.
+ * inside the shape (Y). Values between constitue the borde.
  */
 varying vec2 varyingBorderThresholds;
 
@@ -11588,8 +11493,7 @@ float getDistStar(int sides, vec4 radii) {
 
   // The point of interest starts with the varyingVertexCoordinates, but shifted
   // to center the shape vertically.
-  vec2 poi = EDGE_DISTANCE_DILATION * varyingVertexCoordinates +
-    vec2(0., EDGE_DISTANCE_DILATION - height);
+  vec2 poi = 2. * varyingVertexCoordinates.xy + vec2(0., 2. - height);
 
   // Compute theta for point of interest, counter-clockwise from vertical.
   float theta = computeTheta(poi);
@@ -11662,8 +11566,8 @@ float getDistEllipse() {
   vec4 aspectRatio = flipped ? varyingAspectRatio.yxwz : varyingAspectRatio;
 
   // Point of interest in the expanded circle (before aspect ratio stretching).
-  vec2 circlePoint = EDGE_DISTANCE_DILATION * abs(
-      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates);
+  vec2 circlePoint = 2. * abs(
+      flipped ? varyingVertexCoordinates.yx : varyingVertexCoordinates.xy);
 
   // Capture length for inside/outside checking.
   float len = length(circlePoint);
@@ -11707,19 +11611,12 @@ float getDistRect() {
   // All quadrants can be treated the same, so we limit our computation to the
   // top right.
   vec2 ar = varyingAspectRatio.xy;
-  vec2 p = ar * EDGE_DISTANCE_DILATION * abs(varyingVertexCoordinates);
+  vec2 p = ar * 2. * abs(varyingVertexCoordinates.xy);
 
   // If the point of intrest is beyond the top corner, return the negative
   // distance to that corner.
-  bvec2 gt = greaterThan(p, ar);
-  if (all(gt)) {
+  if (all(greaterThan(p, ar))) {
     return -distance(p, ar);
-  }
-  if (gt.x) {
-    return ar.x - p.x;
-  }
-  if (gt.y) {
-    return ar.y - p.y;
   }
 
   // Determine distance to nearest edge.
@@ -11737,30 +11634,10 @@ float getDistRect() {
  * texture within which to sample (corresponds to the glyph being rendered).
  */
 float getDistSDF(vec4 shapeTexture) {
-  // Clamp vertex coordinates to the -1 to 1 range.
-  vec2 clamped = clamp(varyingVertexCoordinates, -1., 1.);
-
-  // For sampling, UV coordinates are Y-flipped and shifted.
-  vec2 coordUv = clamped * vec2(1., -1.) + .5;
-
-  // Focus on the middle 50% of the UV space. Assumes glyphs were rendered with
-  // buffer roughly equal to the font size.
-  //
-  //   +------+       .      .
-  //   |      |         +--+
-  //   |  k   |  =>     |k |
-  //   |      |         +--+
-  //   +------+       .      .
-  //
-  coordUv *= .5;
-  coordUv += .25;
-
-  // Offset into the texture according to the shapeTexture's location and size.
   vec2 textureUv =
       shapeTexture.xy +
-      shapeTexture.zw * coordUv;
-
-  return texture2D(sdfTexture, textureUv).z;
+      shapeTexture.zw * varyingVertexCoordinates.zw;
+  return 2. * texture2D(sdfTexture, textureUv).z - 1.;
 }
 
 /**
@@ -11792,17 +11669,10 @@ void main () {
   float targetDistance = getDist(targetSides, varyingTargetShapeTexture);
   float signedDistance = mix(previousDistance, targetDistance, varyingT);
 
-  vec4 color =
+  gl_FragColor =
     signedDistance < varyingBorderThresholds.x ? vec4(0.) :
     signedDistance < varyingBorderThresholds.y ? varyingBorderColor :
     varyingFillColor;
-
-  if (color.a < .01) {
-    discard;
-    return;
-  }
-
-  gl_FragColor = color;
 }
 `;
     }
@@ -11832,46 +11702,16 @@ void main () {
 precision lowp float;
 
 /**
- * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
- * where each component is clipped to the range (-1,1). The distance from
- * edge-to-edge is therefore 2.
- */
-const float CLIP_SPACE_RANGE = 2.;
-
-/**
- * Each sprite receives the same vertex coordinates, which describe a unit
- * square centered at the origin. However, the distance calculations performed
- * by the fragment shader use a distance of 1 to mean the dead center of a
- * circle, which implies a diameter of 2. So to convert from sprite vertex
- * coordinate space to edge distance space requires a dilation of 2.
- */
-const float EDGE_DISTANCE_DILATION = 2.;
-
-/**
  * Current uniform timestamp for interpolating.
  */
 uniform float ts;
 
 /**
- * Effective devicePixelRatio.
- */
-uniform float devicePixelRatio;
-
-/**
- * Total number of sprite instances being rendered this pass. Used to compute
- * clip-space Z for stacking sprites based on their instanceIndex.
+ * Incremental clip-space Z for stacking sprites based on their instanceIndex.
  * This ensures that partial-opacity pixels of stacked sprites will be
  * alpha-blended. Without this, occluded sprites' pixels may not blend.
  */
-uniform float instanceCount;
-
-/**
- * Granularity expected in the value of OrderZ values. The higher the
- * granularity, the more control the user has over the Z position of sprites.
- * However, this leaves less precision for correctly positioning sprites which
- * have exactly the same OrderZ value.
- */
-uniform float orderZGranularity;
+uniform float instanceZ;
 
 /**
  * View and projection matrices for converting from world space to clip space.
@@ -11896,17 +11736,18 @@ uniform sampler2D targetValuesTexture;
 /**
  * Per-vertex coordinates for the quad into which the sprite will be rendered.
  * XY contain the local cartesian coordinates for a unit square centered at the
- * origin.
+ * origin. The ZW coordinates contain the y-flipped UV coordinates for orienting
+ * the square against texture atlases.
  *
  *   vertexCoordinates: [
- *     [-0.5, -0.5],
- *     [0.5, -0.5],
- *     [-0.5, 0.5],
- *     [0.5, 0.5],
+ *     [-0.5, -0.5, 0, 1],
+ *     [0.5, -0.5, 1, 1],
+ *     [-0.5, 0.5, 0, 0],
+ *     [0.5, 0.5, 1, 0],
  *   ],
  *
  */
-attribute vec2 vertexCoordinates;
+attribute vec4 vertexCoordinates;
 
 /**
  * Instanced, per-sprite index and UV coordinates of the sprite's data swatch.
@@ -11923,11 +11764,11 @@ varying float varyingT;
 /**
  * Interpolated vertexCoordinates for fragment shader.
  */
-varying vec2 varyingVertexCoordinates;
+varying vec4 varyingVertexCoordinates;
 
 /**
  * Threshold distance values to consider the pixel outside the shape (X) or
- * inside the shape (Y). Values between constitute the border.
+ * inside the shape (Y). Values between constitue the borde.
  */
 varying vec2 varyingBorderThresholds;
 
@@ -12069,45 +11910,27 @@ void main () {
   // Compute border attributes in parallel.
   vec3 borderProperties = computeCurrentValue(
       vec3(
+        previousBorderRadiusWorld(),
         previousBorderRadiusPixel(),
-        previousBorderRadiusRelative(),
         previousBorderPlacement()),
       vec3(
+        previousBorderRadiusWorldDelta(),
         previousBorderRadiusPixelDelta(),
-        previousBorderRadiusRelativeDelta(),
         previousBorderPlacementDelta()),
       vec3(
+        targetBorderRadiusWorld(),
         targetBorderRadiusPixel(),
-        targetBorderRadiusRelative(),
         targetBorderPlacement())
   );
-  float currentBorderRadiusPixel = borderProperties.x;
-  float currentBorderRadiusRelative = borderProperties.y;
-  float currentBorderPlacement = borderProperties.z;
-
-  // Project the computed size into pixels by using the viewMatrixScale. Note
-  // that this already includes the effect of the devicePixelRatio, and a 2x
-  // multiplier for clip-space, which goes from -1 to 1 in all dimensions.
-  vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
 
   // The fragment shader needs to know the threshold signed distances that
   // indicate whether each pixel is inside the shape, in the boreder, or outside
-  // of the shape. A point right on the edge of the shape will have a distance
-  // of 0. In edge-distance space, a distance of 1 would be the dead center of a
-  // circle.
-  float edgeDistance = currentBorderRadiusRelative + (
-      currentBorderRadiusPixel *
-      CLIP_SPACE_RANGE *
-      EDGE_DISTANCE_DILATION *
-      devicePixelRatio /
-      min(projectedSizePixel.x, projectedSizePixel.y)
-    );
+  // of the shape.
+  vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
+  float edgeDistance = borderProperties.x +
+    borderProperties.y * 8. / min(projectedSizePixel.x, projectedSizePixel.y);
   varyingBorderThresholds =
-    vec2(0., edgeDistance) + mix(0., -edgeDistance, currentBorderPlacement);
-
-  // Shift the quad vertices outward to account for borders, which may expand
-  // the bounding box of the sprite.
-  varyingVertexCoordinates *= (1. - varyingBorderThresholds.x);
+    vec2(0., edgeDistance) + mix(0., -edgeDistance, borderProperties.z);
 
   // Compute the sprite's aspect ratio and the inverse.
   varyingAspectRatio = computeAspectRatio(computedSize);
@@ -12134,7 +11957,7 @@ void main () {
       computedSize,
       currentPositionRelative,
       currentPositionPixel,
-      varyingVertexCoordinates,
+      vertexCoordinates.xy,
       viewMatrix
   );
 
@@ -12142,26 +11965,9 @@ void main () {
   vec2 clipVertexPosition =
     (projectionMatrix * vec3(viewVertexPosition, 1.)).xy;
 
-  // Compute the current user-specified OrderZ value.
-  float currentOrderZ = computeCurrentValue(
-      previousOrderZ(),
-      previousOrderZDelta(),
-      targetOrderZ());
-
-  // Compute the stacking Z value for index-order blending.
-  float stackZ = (1. + instanceIndex) / (1. + instanceCount);
-
-  // Use provided granularity to combine current and stack Z values.
-  float gInv = 1. / orderZGranularity;
-
-  float combinedZ =
-    mix(0., 1. - gInv, currentOrderZ) +
-    mix(0., gInv, stackZ);
-
-  // Project combined Z into clip space.
-  float clipZ = mix(1., -1., combinedZ);
-
-  gl_Position = vec4(clipVertexPosition, clipZ, 1.);
+  // Align Z axis clip-space coordinate (perpendicular to screen) with instance
+  // index for blending stacked sprites.
+  gl_Position = vec4(clipVertexPosition, -instanceIndex * instanceZ, 1.);
 }
 `;
     }
@@ -12171,82 +11977,57 @@ void main () {
      * texture and the target state texture.
      */
     function setupDrawCommand(coordinator) {
-        // Calling regl() requires a DrawConfig and returns a DrawCommand. The
-        // property names are used in dynamically compiled code using the native
-        // Function constructor, and therefore need to remain unchanged by JavaScript
-        // minifiers/uglifiers.
-        const drawConfig = {
-            // TODO(jimbo): Expose a mechanism to allow the API user to override these.
-            'blend': {
-                'enable': true,
-                'func': {
-                    'srcRGB': 'src alpha',
-                    'srcAlpha': 1,
-                    'dstRGB': 'one minus src alpha',
-                    'dstAlpha': 1
+        const regl = coordinator.regl;
+        return regl({
+            // TODO(jimbo): Expose a mechansim to allow the API user to override these.
+            blend: {
+                enable: true,
+                func: {
+                    srcRGB: 'src alpha',
+                    srcAlpha: 1,
+                    dstRGB: 'one minus src alpha',
+                    dstAlpha: 1
                 },
-                'equation': {
-                    'rgb': 'add',
-                    'alpha': 'add',
+                equation: {
+                    rgb: 'add',
+                    alpha: 'max',
                 },
-                'color': [0, 0, 0, 0]
             },
-            'viewport': () => ({
-                'x': 0,
-                'y': 0,
-                'width': coordinator.canvas.width,
-                'height': coordinator.canvas.height,
-            }),
-            'frag': fragmentShader$2(),
-            'vert': vertexShader$2(coordinator.attributeMapper),
-            'attributes': {
-                // Corners of the rectangle, same for each sprite.
-                'vertexCoordinates': [
-                    [-0.5, -0.5],
-                    [0.5, -0.5],
-                    [-0.5, 0.5],
-                    [0.5, 0.5], // UV: [1, 0].
+            frag: fragmentShader$2(),
+            vert: vertexShader$2(coordinator.attributeMapper),
+            attributes: {
+                // Corners and uv coords of the rectangle, same for each sprite.
+                vertexCoordinates: [
+                    [-0.5, -0.5, 0, 1],
+                    [0.5, -0.5, 1, 1],
+                    [-0.5, 0.5, 0, 0],
+                    [0.5, 0.5, 1, 0],
                 ],
                 // Swatch uv coordinates for retrieving data texture values.
-                'instanceSwatchUv': {
-                    'buffer': coordinator.instanceSwatchUvBuffer,
-                    'divisor': 1,
+                instanceSwatchUv: {
+                    buffer: coordinator.instanceSwatchUvBuffer,
+                    divisor: 1,
                 },
                 // Instance indices for computing default z-ordering.
-                'instanceIndex': {
-                    'buffer': coordinator.instanceIndexBuffer,
-                    'divisor': 1,
+                instanceIndex: {
+                    buffer: coordinator.instanceIndexBuffer,
+                    divisor: 1,
                 },
             },
-            'uniforms': {
-                'ts': () => coordinator.elapsedTimeMs(),
-                'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
-                'instanceCount': () => coordinator.instanceCount,
-                'orderZGranularity': () => coordinator.orderZGranularity,
-                'viewMatrix': () => coordinator.getViewMatrix(),
-                'viewMatrixScale': () => coordinator.getViewMatrixScale(),
-                'projectionMatrix': (context) => {
-                    return coordinator.getProjectionMatrix(context);
-                },
-                'sdfTexture': coordinator.sdfTexture,
-                'previousValuesTexture': coordinator.previousValuesFramebuffer,
-                'targetValuesTexture': coordinator.targetValuesTexture,
+            uniforms: {
+                ts: () => coordinator.elapsedTimeMs(),
+                instanceZ: () => 1 / (1 + coordinator.instanceCount),
+                viewMatrix: () => coordinator.getViewMatrix(),
+                viewMatrixScale: () => coordinator.getViewMatrixScale(),
+                projectionMatrix: context => coordinator.getProjectionMatrix(context),
+                sdfTexture: coordinator.sdfTexture,
+                previousValuesTexture: coordinator.previousValuesFramebuffer,
+                targetValuesTexture: coordinator.targetValuesTexture,
             },
-            'primitive': 'triangle strip',
-            'count': 4,
-            'instances': () => coordinator.instanceCount, // Many sprite instances.
-        };
-        const drawCommand = coordinator.regl(drawConfig);
-        return () => {
-            // Explicitly clear the drawing buffer before rendering.
-            coordinator.regl.clear({
-                'color': [0, 0, 0, 0],
-                'depth': 1,
-                'framebuffer': null,
-                'stencil': 0,
-            });
-            drawCommand.apply(null);
-        };
+            primitive: 'triangle strip',
+            count: 4,
+            instances: () => coordinator.instanceCount, // But many sprite instances.
+        });
     }
 
     /**
@@ -12267,47 +12048,24 @@ void main () {
      */
     /**
      * Generate the fragment (pixel) shader for the hit test command. For each
-     * sprite, this shader writes a packed float value in the range 0-1 into the
-     * output Uint8 RGBA channels. To unpack, multiply by capacity+1, then subtract
-     * 1. This will yield a number in the range (-1,capacity - 1), which is either
-     * -1 for a miss, or the index of the SpriteImpl.
-     *
-     * @see http://marcodiiga.github.io/encoding-normalized-floats-to-rgba8-vectors
+     * sprite, this shader writes whether the screen pixel of interest intersects it
+     * to the RGB color channels of the output texel.
      */
     function fragmentShader$1() {
         return glsl `
 precision lowp float;
 
-// Need to know the maximum possible value for the index of the Sprite to
-// normalize the value for RGBA packing.
-uniform float capacity;
-
 varying float varyingHitTestResult;
 
-vec4 packFloatToVec4i(const float value) {
-  const vec4 bitSh = vec4(256. * 256. * 256., 256. * 256., 256., 1.);
-  const vec4 bitMsk = vec4(0., 1./256., 1./256., 1./256.);
-  vec4 res = fract(value * bitSh);
-  res -= res.xxyz * bitMsk;
-  return res;
-}
-
-float fitToRange(const float result) {
-  // Adding 1 to account for missing values (-1 becomes 0, etc.)
-  return (result + 1.) / (capacity + 1.);
-}
-
 void main () {
-  // Packing requires a number in the range 0-1.
-  float n = fitToRange(varyingHitTestResult);
-  gl_FragColor = packFloatToVec4i(n);
+  gl_FragColor = vec4(vec3(varyingHitTestResult), 1.);
 }
 `;
     }
     /**
      * Generate the vertex shader for the hit test shader program. This positions
      * the coordinates of the rect to exactly cover the single output texel pointed
-     * to by outputUv.
+     * to by instanceHitTestUv.
      *
      * @param hitTestAttributeMapper Mapper for hit test output texels.
      * @param attributeMapper Mapper for sprite state attributes.
@@ -12316,25 +12074,7 @@ void main () {
         return glsl `
 precision lowp float;
 
-/**
- * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
- * where each component is clipped to the range (-1,1). The distance from
- * edge-to-edge is therefore 2.
- */
-const float CLIP_SPACE_RANGE = 2.;
-
-/**
- * Each sprite receives the same vertex coordinates, which describe a unit
- * square centered at the origin. However, the distance calculations performed
- * by the fragment shader use a distance of 1 to mean the dead center of a
- * circle, which implies a diameter of 2. So to convert from sprite vertex
- * coordinate space to edge distance space requires a dilation of 2.
- */
-const float EDGE_DISTANCE_DILATION = 2.;
-
 uniform float ts;
-
-uniform float devicePixelRatio;
 
 /**
  * Screen pixel coordinates for performing the hit test. The XY channels contain
@@ -12342,7 +12082,6 @@ uniform float devicePixelRatio;
  * and height of the bounding box of interest. Currently those are ignored.
  */
 uniform vec4 hitTestCoordinates;
-uniform bool inclusive;
 
 uniform mat3 viewMatrix;
 
@@ -12357,9 +12096,8 @@ uniform sampler2D targetValuesTexture;
 
 attribute vec2 vertexCoordinates;
 
-attribute vec2 inputUv;
-attribute vec2 indexActive;
-attribute vec2 outputUv;
+attribute vec2 instanceSwatchUv;
+attribute vec2 instanceHitTestUv;
 
 #define TEXELS_PER_SWATCH ${hitTestAttributeMapper.texelsPerSwatch}.
 #define TEXTURE_WIDTH ${hitTestAttributeMapper.textureWidth}.
@@ -12387,40 +12125,20 @@ ${computeSize()}
 ${computeViewVertexPosition()}
 
 void readInputTexels() {
-${attributeMapper.generateTexelReaderGLSL('previousTexelValues', 'previousValuesTexture', 'inputUv')}
-${attributeMapper.generateTexelReaderGLSL('targetTexelValues', 'targetValuesTexture', 'inputUv')}
+${attributeMapper.generateTexelReaderGLSL('previousTexelValues', 'previousValuesTexture', 'instanceSwatchUv')}
+${attributeMapper.generateTexelReaderGLSL('targetTexelValues', 'targetValuesTexture', 'instanceSwatchUv')}
 }
 
 const vec2 swatchSize =
   vec2(TEXELS_PER_SWATCH / TEXTURE_WIDTH, 1. / TEXTURE_HEIGHT);
 
-bool spriteOverlapsTest(const vec4 spriteBox, const vec4 testBox) {
-  return (
-    spriteBox.x <= testBox.x + testBox.z &&
-    spriteBox.x + spriteBox.z >= testBox.x &&
-    spriteBox.y >= testBox.y - testBox.w &&
-    spriteBox.y + spriteBox.w <= testBox.y
-  );
-}
-
-bool spriteInsideTest(const vec4 spriteBox, const vec4 testBox) {
-  return (
-    spriteBox.x >= testBox.x &&
-    spriteBox.x + spriteBox.z <= testBox.x + testBox.z &&
-    spriteBox.y <= testBox.y &&
-    spriteBox.y + spriteBox.w >= testBox.y - testBox.w
-  );
-}
-
 void main () {
   readInputTexels();
 
   // Compute time variables.
-  rangeT =
-    ts >= targetTransitionTimeMs() ? 1. :
-    ts <= previousTransitionTimeMs() ? 0. :
-    clamp(range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
-        0., 1.);
+  rangeT = clamp(
+      range(previousTransitionTimeMs(), targetTransitionTimeMs(), ts),
+      0., 1.);
   easeT = cubicEaseInOut(rangeT);
 
   // Compute current size component values by interpolation (parallelized).
@@ -12449,47 +12167,6 @@ void main () {
     currentMinSizePixel
   );
 
-  // Compute border attributes in parallel.
-  vec3 borderProperties = computeCurrentValue(
-      vec3(
-        previousBorderRadiusPixel(),
-        previousBorderRadiusRelative(),
-        previousBorderPlacement()),
-      vec3(
-        previousBorderRadiusPixelDelta(),
-        previousBorderRadiusRelativeDelta(),
-        previousBorderPlacementDelta()),
-      vec3(
-        targetBorderRadiusPixel(),
-        targetBorderRadiusRelative(),
-        targetBorderPlacement())
-  );
-  float currentBorderRadiusPixel = borderProperties.x;
-  float currentBorderRadiusRelative = borderProperties.y;
-  float currentBorderPlacement = borderProperties.z;
-
-  // Project the computed size into pixels by using the viewMatrixScale. Note
-  // that this already includes the effect of the devicePixelRatio, and a 2x
-  // multiplier for clip-space, which goes from -1 to 1 in all dimensions.
-  vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
-
-  // Compute the distance from the sprite edge to the extent of the border. Used
-  // to shift the corners before hit testing to make sure the bounding box
-  // includes borders outside of the shape.
-  float edgeDistance = currentBorderRadiusRelative + (
-      currentBorderRadiusPixel *
-      CLIP_SPACE_RANGE *
-      EDGE_DISTANCE_DILATION *
-      devicePixelRatio /
-      min(projectedSizePixel.x, projectedSizePixel.y)
-    );
-
-  // Shift coorner vertices outward to account for borders, which may expand
-  // the bounding box of the sprite. XY are the bottom left corner, ZW are for
-  // the top right.
-  vec4 cornerCoordinates = vec4(-.5, -.5, .5, .5) *
-    (1. + edgeDistance * currentBorderPlacement);
-
   // Compute the current position component attributes.
   vec2 currentPositionPixel = computeCurrentValue(
       previousPositionPixel(),
@@ -12513,38 +12190,29 @@ void main () {
       computedSize,
       currentPositionRelative,
       currentPositionPixel,
-      cornerCoordinates.xy,
+      vec2(-.5, -.5),
       viewMatrix
-  ) * .5 / devicePixelRatio;
+  ) * .25;
   vec2 topRight = computeViewVertexPosition(
       currentPositionWorld,
       computedSize,
       currentPositionRelative,
       currentPositionPixel,
-      cornerCoordinates.zw,
+      vec2(.5, .5),
       viewMatrix
-  ) * .5 / devicePixelRatio;
-  vec4 spriteBox = vec4(bottomLeft.xy, topRight.xy - bottomLeft.xy);
-
-  // Hit test coordinates are presented based on the top-left corner, so to
-  // orient it from the bottom left we need to subtract the height.
-  vec4 testBox = hitTestCoordinates + vec4(0., hitTestCoordinates.w, 0., 0.);
+  ) * .25;
 
   // Test whether the coordinates of interest are within the sprite quad's
   // bounding box.
-  bool hit = inclusive ?
-    spriteOverlapsTest(spriteBox, testBox) :
-    spriteInsideTest(spriteBox, testBox);
-
-  // The hit test result will either be -1 if it's a miss (or the Sprite was
-  // inactive), or it will be the index of the Sprite.
+  // TODO (jimbo): Use ZW components to test for area of interest.
   varyingHitTestResult =
-    indexActive.y <= 0. ? -1. :
-    !hit ? -1. :
-    indexActive.x;
+    bottomLeft.x < hitTestCoordinates.x &&
+    bottomLeft.y > hitTestCoordinates.y &&
+    topRight.x > hitTestCoordinates.x &&
+    topRight.y < hitTestCoordinates.y ? 1. : 0.;
 
   vec2 swatchUv =
-    outputUv + (vertexCoordinates.xy + .5) * swatchSize;
+    instanceHitTestUv + (vertexCoordinates.xy + .5) * swatchSize;
 
   // Position the verts to write into the appropriate data texel.
   gl_Position = vec4(2. * swatchUv - 1., 0., 1.);
@@ -12558,16 +12226,13 @@ void main () {
      * @param coordinator Upstream renderer implementation.
      */
     function setupHitTestCommand(coordinator) {
-        // Calling regl() requires a DrawConfig and returns a DrawCommand. The
-        // property names are used in dynamically compiled code using the native
-        // Function constructor, and therefore need to remain unchanged by JavaScript
-        // minifiers/uglifiers.
-        const drawConfig = {
-            'frag': fragmentShader$1(),
-            'vert': vertexShader$1(coordinator.hitTestAttributeMapper, coordinator.attributeMapper),
-            'attributes': {
+        const { regl, attributeMapper, hitTestAttributeMapper } = coordinator;
+        return regl({
+            frag: fragmentShader$1(),
+            vert: vertexShader$1(hitTestAttributeMapper, attributeMapper),
+            attributes: {
                 // Corners and UV coords of the rectangle, same for each sprite.
-                'vertexCoordinates': [
+                vertexCoordinates: [
                     [-0.5, -0.5],
                     [0.5, -0.5],
                     [-0.5, 0.5],
@@ -12575,48 +12240,35 @@ void main () {
                 ],
                 // Swatch UV coordinates for retrieving previous and target texture
                 // values.
-                'inputUv': {
-                    'buffer': () => coordinator.instanceHitTestInputUvBuffer,
-                    'divisor': 1,
+                instanceSwatchUv: {
+                    buffer: coordinator.instanceSwatchUvBuffer,
+                    divisor: 1,
                 },
-                // Index and active flag for each Sprite.
-                'indexActive': {
-                    'buffer': () => coordinator.instanceHitTestInputIndexActiveBuffer,
-                    'divisor': 1,
-                },
-                // Output UVs for where to write the result.
-                'outputUv': {
-                    'buffer': coordinator.instanceHitTestOutputUvBuffer,
-                    'divisor': 1,
+                // Instance swatch UV coordinates.
+                instanceHitTestUv: {
+                    buffer: coordinator.instanceHitTestUvBuffer,
+                    divisor: 1,
                 },
             },
-            'uniforms': {
-                'ts': () => coordinator.elapsedTimeMs(),
-                'capacity': () => coordinator.hitTestAttributeMapper.totalSwatches,
-                'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
-                'hitTestCoordinates': () => ([
+            uniforms: {
+                ts: () => coordinator.elapsedTimeMs(),
+                hitTestCoordinates: () => ([
                     coordinator.hitTestParameters.x,
                     coordinator.hitTestParameters.y,
-                    coordinator.hitTestParameters.width || 0,
-                    coordinator.hitTestParameters.height || 0,
+                    coordinator.hitTestParameters.width,
+                    coordinator.hitTestParameters.height,
                 ]),
-                'inclusive': () => coordinator.hitTestParameters === undefined ||
-                    !!coordinator.hitTestParameters.inclusive,
-                'viewMatrix': () => coordinator.getViewMatrix(),
-                'viewMatrixScale': () => coordinator.getViewMatrixScale(),
-                'targetValuesTexture': coordinator.targetValuesTexture,
-                'previousValuesTexture': coordinator.previousValuesTexture,
+                inclusive: () => coordinator.hitTestParameters.inclusive ? 1 : 0,
+                viewMatrix: () => coordinator.getViewMatrix(),
+                viewMatrixScale: () => coordinator.getViewMatrixScale(),
+                targetValuesTexture: coordinator.targetValuesTexture,
+                previousValuesTexture: coordinator.previousValuesTexture,
             },
-            'primitive': 'triangle strip',
-            'count': 4,
-            'instances': () => coordinator.hitTestCount,
-            'framebuffer': () => coordinator.hitTestOutputValuesFramebuffer,
-        };
-        const drawCommand = coordinator.regl(drawConfig);
-        // Wrapping ensures that the caller will not pass in `this`.
-        return () => {
-            drawCommand();
-        };
+            primitive: 'triangle strip',
+            count: 4,
+            instances: () => coordinator.instanceCount,
+            framebuffer: () => coordinator.hitTestValuesFramebuffer,
+        });
     }
 
     /**
@@ -12769,42 +12421,34 @@ void main () {
      * @param coordinator Upstream renderer implementation.
      */
     function setupRebaseCommand(coordinator) {
-        // Calling regl() requires a DrawConfig and returns a DrawCommand. The
-        // property names are used in dynamically compiled code using the native
-        // Function constructor, and therefore need to remain unchanged by JavaScript
-        // minifiers/uglifiers.
-        const drawConfig = {
-            'frag': fragmentShader(coordinator.attributeMapper),
-            'vert': vertexShader(coordinator.attributeMapper),
-            'attributes': {
+        const { regl, attributeMapper } = coordinator;
+        return regl({
+            frag: fragmentShader(attributeMapper),
+            vert: vertexShader(attributeMapper),
+            attributes: {
                 // Corners and uv coords of the rectangle, same for each sprite.
-                'vertexCoordinates': [
+                vertexCoordinates: [
                     [-0.5, -0.5],
                     [0.5, -0.5],
                     [-0.5, 0.5],
                     [0.5, 0.5],
                 ],
                 // Instance swatch UV coordinates.
-                'instanceRebaseUv': {
-                    'buffer': () => coordinator.instanceRebaseUvBuffer,
-                    'divisor': 1,
+                instanceRebaseUv: {
+                    buffer: () => coordinator.instanceRebaseUvBuffer,
+                    divisor: 1,
                 },
             },
-            'uniforms': {
-                'ts': () => coordinator.elapsedTimeMs(),
-                'targetValuesTexture': coordinator.targetValuesTexture,
-                'previousValuesTexture': coordinator.previousValuesTexture,
+            uniforms: {
+                ts: () => coordinator.elapsedTimeMs(),
+                targetValuesTexture: coordinator.targetValuesTexture,
+                previousValuesTexture: coordinator.previousValuesTexture,
             },
-            'primitive': 'triangle strip',
-            'count': 4,
-            'instances': () => coordinator.rebaseCount,
-            'framebuffer': () => coordinator.previousValuesFramebuffer,
-        };
-        const drawCommand = coordinator.regl(drawConfig);
-        // Wrapping ensures that the caller will not pass in `this`.
-        return () => {
-            drawCommand();
-        };
+            primitive: 'triangle strip',
+            count: 4,
+            instances: () => coordinator.rebaseCount,
+            framebuffer: () => coordinator.previousValuesFramebuffer,
+        });
     }
 
     /**
@@ -12829,15 +12473,17 @@ void main () {
      */
     /**
      * To enhance testability, the timing functions are constructor parameters to
-     * the WorkScheduler. This is exported only for testing purposes, and generally
+     * the WorkScheduler. This is exported for testing purposes, but generally
      * should not be of interest to API consumers.
      */
     const DEFAULT_TIMING_FUNCTIONS = Object.freeze({
-        requestAnimationFrame: (callbackFn) => window.requestAnimationFrame(callbackFn),
-        cancelAnimationFrame: (handle) => {
-            window.cancelAnimationFrame(handle);
+        requestAnimationFrame: window.requestAnimationFrame.bind(window),
+        cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
+        setTimeout: (callbackFn, delay = 0, ...args) => {
+            return window.setTimeout(callbackFn, delay, ...args);
         },
-        now: () => Date.now(),
+        clearTimeout: window.clearTimeout.bind(window),
+        now: Date.now.bind(Date),
     });
 
     /**
@@ -12905,12 +12551,9 @@ void main () {
             const size = this.size = this.fontSize + this.buffer * 2;
             this.canvas = document.createElement('canvas');
             this.canvas.width = this.canvas.height = size;
-            const ctx = this.canvas.getContext('2d');
-            if (!ctx) {
-                throw new Error('Could not get canvas 2d context');
-            }
-            this.ctx = ctx;
-            this.ctx.font = `${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
+            this.ctx = this.canvas.getContext('2d');
+            this.ctx.font =
+                this.fontWeight + ' ' + this.fontSize + 'px ' + this.fontFamily;
             this.ctx.textBaseline = 'middle';
             this.ctx.fillStyle = 'black';
             // temporary arrays for the distance transform
@@ -13010,9 +12653,6 @@ void main () {
     function canvasToSDFData(canvas, radius, cutoff = 0.5) {
         const { width, height } = canvas;
         const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            throw new Error('Could not get canvas 2d context');
-        }
         const imgData = ctx.getImageData(0, 0, width, height);
         const gridOuterX = new Float64Array(width * height);
         const gridInnerX = new Float64Array(width * height);
@@ -13073,13 +12713,20 @@ void main () {
      * Default settings for a GlyphMapper instance.
      */
     const DEFAULT_GLYPH_MAPPER_SETTINGS = Object.freeze({
+        /**
+         * See https://webglstats.com/webgl/parameter/MAX_TEXTURE_SIZE
+         */
         maxTextureSize: 2048,
+        // Font size in texels (relative to texture size).
         fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
-        buffer: DEFAULT_GLYPH_FONT_SIZE_PX,
+        // Padding around the glyph in texels.
+        buffer: Math.ceil(DEFAULT_GLYPH_FONT_SIZE_PX / 4),
+        // Radius around the glyph in texels.
         radius: DEFAULT_GLYPH_FONT_SIZE_PX,
-        // This default value ensures that a distance of zero coincides with the
-        // edge of the glyph.
-        cutoff: 1,
+        // How to situate the alpha scale from totally outside (0) to inside (1). This
+        // default value ensures that a distance of zero coincides with the edge of
+        // the glyph.
+        cutoff: 0.5,
         fontFamily: 'monospace',
         fontWeight: 'normal',
     });
@@ -13121,13 +12768,12 @@ void main () {
          * glyph's coordinates.
          */
         addGlyph(glyph) {
-            const existingCoordinates = this.getGlyph(glyph);
-            if (existingCoordinates) {
-                return existingCoordinates;
+            if (this.hasGlyph(glyph)) {
+                return this.getGlyph(glyph);
             }
             const index = this.glyphToCoordinates.size;
             if (index >= this.glyphCapacity) {
-                throw new Error('Cannot add glyph, already at capacity');
+                throw new Error('Cannot add glyph, already at capacity.');
             }
             const row = Math.floor(index / this.glyphsPerRow);
             const col = index % this.glyphsPerRow;
@@ -13153,12 +12799,12 @@ void main () {
                     this.textureData[textureDataIndex] = sdfData[sdfDataIndex];
                 }
             }
-            const coordinates = Object.freeze({
+            const coordinates = {
                 u: col / this.glyphsPerRow,
                 v: row / this.glyphsPerRow,
                 width: this.glyphSize / this.textureSize,
                 height: this.glyphSize / this.textureSize,
-            });
+            };
             this.glyphToCoordinates.set(glyph, coordinates);
             return coordinates;
         }
@@ -13187,7 +12833,7 @@ void main () {
      * limitations under the License.
      */
     /**
-     * Default glyph set is the printable ASCII characters from 33 to 126 (decimal).
+     * Default glyph set is the printible ASCII characters from 33 to 126 (dec).
      */
     const DEFAULT_GLYPHS = '!"#$%&\'()*+,-./0123456789:;<=>?' + // ASCII 33 - 63.
         '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_' + // ASCII 63 - 95.
@@ -13196,15 +12842,76 @@ void main () {
      * Parameters to configure the Scene.
      */
     const DEFAULT_SCENE_SETTINGS = Object.freeze({
+        /**
+         * HTML element into which regl will place a drawable canvas.
+         */
         container: document.body,
+        /**
+         * Default duration of transitions if not otherwise specified.
+         */
         defaultTransitionTimeMs: 250,
-        desiredSpriteCapacity: 1e6,
-        devicePixelRatio: undefined,
+        /**
+         * String of characters to support in glyph mapper.
+         */
         glyphs: DEFAULT_GLYPHS,
-        glyphMapper: DEFAULT_GLYPH_MAPPER_SETTINGS,
-        orderZGranularity: 10,
+        /**
+         * Desired number of sprites to be able to render. As this number could be
+         * arbitrarily large, it may not be possible to satisfy given other system
+         * constraints.
+         */
+        desiredSpriteCapacity: 1e6,
+        /**
+         * Timing functions for WorkScheduler.
+         */
         timingFunctions: DEFAULT_TIMING_FUNCTIONS,
+        /**
+         * Settings for the glyph mapper.
+         */
+        glyphMapper: DEFAULT_GLYPH_MAPPER_SETTINGS,
     });
+
+    /**
+     * @license
+     * Copyright 2021 Google LLC
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+    /**
+     * @fileoverview A DrawTriggerPoint object maintains an x and y coordinate pair
+     * and invokes the coordinator object's queueDraw() whenever either are set.
+     * Used for the offset and scale properties.
+     */
+    class DrawTriggerPoint {
+        constructor(coordinator) {
+            this.coordinator = coordinator;
+            this.xValue = 0;
+            this.yValue = 0;
+        }
+        get x() {
+            return this.xValue;
+        }
+        set x(x) {
+            this.xValue = x;
+            this.coordinator.queueDraw();
+        }
+        get y() {
+            return this.yValue;
+        }
+        set y(y) {
+            this.yValue = y;
+            this.coordinator.queueDraw();
+        }
+    }
 
     /**
      * @license
@@ -13244,7 +12951,7 @@ void main () {
 
     /**
      * @license
-     * Copyright 2022 Google LLC
+     * Copyright 2021 Google LLC
      *
      * Licensed under the Apache License, Version 2.0 (the "License");
      * you may not use this file except in compliance with the License.
@@ -13267,7 +12974,7 @@ void main () {
         }
         set TransitionTimeMs(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('TransitionTimeMs cannot be NaN');
+                throw new RangeError('TransitionTimeMs cannot be NaN.');
             }
             this[DataViewSymbol][0] = attributeValue;
         }
@@ -13276,7 +12983,7 @@ void main () {
         }
         set PositionWorldX(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionWorldX cannot be NaN');
+                throw new RangeError('PositionWorldX cannot be NaN.');
             }
             this[DataViewSymbol][1] = attributeValue;
         }
@@ -13285,7 +12992,7 @@ void main () {
         }
         set PositionWorldY(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionWorldY cannot be NaN');
+                throw new RangeError('PositionWorldY cannot be NaN.');
             }
             this[DataViewSymbol][2] = attributeValue;
         }
@@ -13294,7 +13001,7 @@ void main () {
         }
         set SizeWorldWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('SizeWorldWidth cannot be NaN');
+                throw new RangeError('SizeWorldWidth cannot be NaN.');
             }
             this[DataViewSymbol][3] = attributeValue;
         }
@@ -13303,175 +13010,169 @@ void main () {
         }
         set SizeWorldHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('SizeWorldHeight cannot be NaN');
+                throw new RangeError('SizeWorldHeight cannot be NaN.');
             }
             this[DataViewSymbol][4] = attributeValue;
         }
-        get OrderZ() {
-            return this[DataViewSymbol][5];
-        }
-        set OrderZ(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('OrderZ cannot be NaN');
-            }
-            if (attributeValue < 0) {
-                throw new RangeError('OrderZ cannot be less than 0');
-            }
-            if (attributeValue > 1) {
-                throw new RangeError('OrderZ cannot be greater than 1');
-            }
-            this[DataViewSymbol][5] = attributeValue;
-        }
         get GeometricZoomX() {
-            return this[DataViewSymbol][6];
+            return this[DataViewSymbol][5];
         }
         set GeometricZoomX(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('GeometricZoomX cannot be NaN');
+                throw new RangeError('GeometricZoomX cannot be NaN.');
             }
-            this[DataViewSymbol][6] = attributeValue;
+            this[DataViewSymbol][5] = attributeValue;
         }
         get GeometricZoomY() {
-            return this[DataViewSymbol][7];
+            return this[DataViewSymbol][6];
         }
         set GeometricZoomY(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('GeometricZoomY cannot be NaN');
+                throw new RangeError('GeometricZoomY cannot be NaN.');
             }
-            this[DataViewSymbol][7] = attributeValue;
+            this[DataViewSymbol][6] = attributeValue;
         }
         get PositionPixelX() {
-            return this[DataViewSymbol][8];
+            return this[DataViewSymbol][7];
         }
         set PositionPixelX(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionPixelX cannot be NaN');
+                throw new RangeError('PositionPixelX cannot be NaN.');
             }
-            this[DataViewSymbol][8] = attributeValue;
+            this[DataViewSymbol][7] = attributeValue;
         }
         get PositionPixelY() {
-            return this[DataViewSymbol][9];
+            return this[DataViewSymbol][8];
         }
         set PositionPixelY(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionPixelY cannot be NaN');
+                throw new RangeError('PositionPixelY cannot be NaN.');
             }
-            this[DataViewSymbol][9] = attributeValue;
+            this[DataViewSymbol][8] = attributeValue;
         }
         get SizePixelWidth() {
-            return this[DataViewSymbol][10];
+            return this[DataViewSymbol][9];
         }
         set SizePixelWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('SizePixelWidth cannot be NaN');
+                throw new RangeError('SizePixelWidth cannot be NaN.');
             }
-            this[DataViewSymbol][10] = attributeValue;
+            this[DataViewSymbol][9] = attributeValue;
         }
         get SizePixelHeight() {
-            return this[DataViewSymbol][11];
+            return this[DataViewSymbol][10];
         }
         set SizePixelHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('SizePixelHeight cannot be NaN');
+                throw new RangeError('SizePixelHeight cannot be NaN.');
             }
-            this[DataViewSymbol][11] = attributeValue;
+            this[DataViewSymbol][10] = attributeValue;
         }
         get MaxSizePixelWidth() {
-            return this[DataViewSymbol][12];
+            return this[DataViewSymbol][11];
         }
         set MaxSizePixelWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('MaxSizePixelWidth cannot be NaN');
+                throw new RangeError('MaxSizePixelWidth cannot be NaN.');
             }
-            this[DataViewSymbol][12] = attributeValue;
+            this[DataViewSymbol][11] = attributeValue;
         }
         get MaxSizePixelHeight() {
-            return this[DataViewSymbol][13];
+            return this[DataViewSymbol][12];
         }
         set MaxSizePixelHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('MaxSizePixelHeight cannot be NaN');
+                throw new RangeError('MaxSizePixelHeight cannot be NaN.');
             }
-            this[DataViewSymbol][13] = attributeValue;
+            this[DataViewSymbol][12] = attributeValue;
         }
         get MinSizePixelWidth() {
-            return this[DataViewSymbol][14];
+            return this[DataViewSymbol][13];
         }
         set MinSizePixelWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('MinSizePixelWidth cannot be NaN');
+                throw new RangeError('MinSizePixelWidth cannot be NaN.');
             }
-            this[DataViewSymbol][14] = attributeValue;
+            this[DataViewSymbol][13] = attributeValue;
         }
         get MinSizePixelHeight() {
-            return this[DataViewSymbol][15];
+            return this[DataViewSymbol][14];
         }
         set MinSizePixelHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('MinSizePixelHeight cannot be NaN');
+                throw new RangeError('MinSizePixelHeight cannot be NaN.');
             }
-            this[DataViewSymbol][15] = attributeValue;
+            this[DataViewSymbol][14] = attributeValue;
         }
         get PositionRelativeX() {
-            return this[DataViewSymbol][16];
+            return this[DataViewSymbol][15];
         }
         set PositionRelativeX(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionRelativeX cannot be NaN');
+                throw new RangeError('PositionRelativeX cannot be NaN.');
             }
-            this[DataViewSymbol][16] = attributeValue;
+            this[DataViewSymbol][15] = attributeValue;
         }
         get PositionRelativeY() {
-            return this[DataViewSymbol][17];
+            return this[DataViewSymbol][16];
         }
         set PositionRelativeY(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('PositionRelativeY cannot be NaN');
+                throw new RangeError('PositionRelativeY cannot be NaN.');
             }
-            this[DataViewSymbol][17] = attributeValue;
+            this[DataViewSymbol][16] = attributeValue;
         }
         get Sides() {
-            return this[DataViewSymbol][18];
+            return this[DataViewSymbol][17];
         }
         set Sides(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('Sides cannot be NaN');
+                throw new RangeError('Sides cannot be NaN.');
             }
-            this[DataViewSymbol][18] = attributeValue;
+            this[DataViewSymbol][17] = attributeValue;
         }
         get ShapeTextureU() {
-            return this[DataViewSymbol][19];
+            return this[DataViewSymbol][18];
         }
         set ShapeTextureU(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('ShapeTextureU cannot be NaN');
+                throw new RangeError('ShapeTextureU cannot be NaN.');
             }
-            this[DataViewSymbol][19] = attributeValue;
+            this[DataViewSymbol][18] = attributeValue;
         }
         get ShapeTextureV() {
-            return this[DataViewSymbol][20];
+            return this[DataViewSymbol][19];
         }
         set ShapeTextureV(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('ShapeTextureV cannot be NaN');
+                throw new RangeError('ShapeTextureV cannot be NaN.');
             }
-            this[DataViewSymbol][20] = attributeValue;
+            this[DataViewSymbol][19] = attributeValue;
         }
         get ShapeTextureWidth() {
-            return this[DataViewSymbol][21];
+            return this[DataViewSymbol][20];
         }
         set ShapeTextureWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('ShapeTextureWidth cannot be NaN');
+                throw new RangeError('ShapeTextureWidth cannot be NaN.');
             }
-            this[DataViewSymbol][21] = attributeValue;
+            this[DataViewSymbol][20] = attributeValue;
         }
         get ShapeTextureHeight() {
-            return this[DataViewSymbol][22];
+            return this[DataViewSymbol][21];
         }
         set ShapeTextureHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('ShapeTextureHeight cannot be NaN');
+                throw new RangeError('ShapeTextureHeight cannot be NaN.');
+            }
+            this[DataViewSymbol][21] = attributeValue;
+        }
+        get BorderRadiusWorld() {
+            return this[DataViewSymbol][22];
+        }
+        set BorderRadiusWorld(attributeValue) {
+            if (isNaN(attributeValue)) {
+                throw new RangeError('BorderRadiusWorld cannot be NaN.');
             }
             this[DataViewSymbol][22] = attributeValue;
         }
@@ -13480,144 +13181,135 @@ void main () {
         }
         set BorderRadiusPixel(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderRadiusPixel cannot be NaN');
+                throw new RangeError('BorderRadiusPixel cannot be NaN.');
             }
             this[DataViewSymbol][23] = attributeValue;
         }
-        get BorderRadiusRelative() {
-            return this[DataViewSymbol][24];
-        }
-        set BorderRadiusRelative(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('BorderRadiusRelative cannot be NaN');
-            }
-            this[DataViewSymbol][24] = attributeValue;
-        }
         get BorderPlacement() {
-            return this[DataViewSymbol][25];
+            return this[DataViewSymbol][24];
         }
         set BorderPlacement(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderPlacement cannot be NaN');
+                throw new RangeError('BorderPlacement cannot be NaN.');
             }
-            this[DataViewSymbol][25] = attributeValue;
+            this[DataViewSymbol][24] = attributeValue;
         }
         get BorderColorR() {
-            return this[DataViewSymbol][26];
+            return this[DataViewSymbol][25];
         }
         set BorderColorR(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderColorR cannot be NaN');
+                throw new RangeError('BorderColorR cannot be NaN.');
             }
-            this[DataViewSymbol][26] = attributeValue;
+            this[DataViewSymbol][25] = attributeValue;
         }
         get BorderColorG() {
-            return this[DataViewSymbol][27];
+            return this[DataViewSymbol][26];
         }
         set BorderColorG(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderColorG cannot be NaN');
+                throw new RangeError('BorderColorG cannot be NaN.');
             }
-            this[DataViewSymbol][27] = attributeValue;
+            this[DataViewSymbol][26] = attributeValue;
         }
         get BorderColorB() {
-            return this[DataViewSymbol][28];
+            return this[DataViewSymbol][27];
         }
         set BorderColorB(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderColorB cannot be NaN');
+                throw new RangeError('BorderColorB cannot be NaN.');
             }
-            this[DataViewSymbol][28] = attributeValue;
+            this[DataViewSymbol][27] = attributeValue;
         }
         get BorderColorOpacity() {
-            return this[DataViewSymbol][29];
+            return this[DataViewSymbol][28];
         }
         set BorderColorOpacity(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('BorderColorOpacity cannot be NaN');
+                throw new RangeError('BorderColorOpacity cannot be NaN.');
             }
-            this[DataViewSymbol][29] = attributeValue;
+            this[DataViewSymbol][28] = attributeValue;
         }
         get FillBlend() {
-            return this[DataViewSymbol][30];
+            return this[DataViewSymbol][29];
         }
         set FillBlend(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillBlend cannot be NaN');
+                throw new RangeError('FillBlend cannot be NaN.');
             }
-            this[DataViewSymbol][30] = attributeValue;
+            this[DataViewSymbol][29] = attributeValue;
         }
         get FillColorR() {
-            return this[DataViewSymbol][31];
+            return this[DataViewSymbol][30];
         }
         set FillColorR(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillColorR cannot be NaN');
+                throw new RangeError('FillColorR cannot be NaN.');
             }
-            this[DataViewSymbol][31] = attributeValue;
+            this[DataViewSymbol][30] = attributeValue;
         }
         get FillColorG() {
-            return this[DataViewSymbol][32];
+            return this[DataViewSymbol][31];
         }
         set FillColorG(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillColorG cannot be NaN');
+                throw new RangeError('FillColorG cannot be NaN.');
             }
-            this[DataViewSymbol][32] = attributeValue;
+            this[DataViewSymbol][31] = attributeValue;
         }
         get FillColorB() {
-            return this[DataViewSymbol][33];
+            return this[DataViewSymbol][32];
         }
         set FillColorB(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillColorB cannot be NaN');
+                throw new RangeError('FillColorB cannot be NaN.');
             }
-            this[DataViewSymbol][33] = attributeValue;
+            this[DataViewSymbol][32] = attributeValue;
         }
         get FillColorOpacity() {
-            return this[DataViewSymbol][34];
+            return this[DataViewSymbol][33];
         }
         set FillColorOpacity(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillColorOpacity cannot be NaN');
+                throw new RangeError('FillColorOpacity cannot be NaN.');
             }
-            this[DataViewSymbol][34] = attributeValue;
+            this[DataViewSymbol][33] = attributeValue;
         }
         get FillTextureU() {
-            return this[DataViewSymbol][35];
+            return this[DataViewSymbol][34];
         }
         set FillTextureU(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureU cannot be NaN');
+                throw new RangeError('FillTextureU cannot be NaN.');
             }
-            this[DataViewSymbol][35] = attributeValue;
+            this[DataViewSymbol][34] = attributeValue;
         }
         get FillTextureV() {
-            return this[DataViewSymbol][36];
+            return this[DataViewSymbol][35];
         }
         set FillTextureV(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureV cannot be NaN');
+                throw new RangeError('FillTextureV cannot be NaN.');
             }
-            this[DataViewSymbol][36] = attributeValue;
+            this[DataViewSymbol][35] = attributeValue;
         }
         get FillTextureWidth() {
-            return this[DataViewSymbol][37];
+            return this[DataViewSymbol][36];
         }
         set FillTextureWidth(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureWidth cannot be NaN');
+                throw new RangeError('FillTextureWidth cannot be NaN.');
             }
-            this[DataViewSymbol][37] = attributeValue;
+            this[DataViewSymbol][36] = attributeValue;
         }
         get FillTextureHeight() {
-            return this[DataViewSymbol][38];
+            return this[DataViewSymbol][37];
         }
         set FillTextureHeight(attributeValue) {
             if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureHeight cannot be NaN');
+                throw new RangeError('FillTextureHeight cannot be NaN.');
             }
-            this[DataViewSymbol][38] = attributeValue;
+            this[DataViewSymbol][37] = attributeValue;
         }
         set PositionWorld(value) {
             if (Array.isArray(value)) {
@@ -13631,7 +13323,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionWorld component index values were found');
+                    throw new TypeError('No PositionWorld component index values were found.');
                 }
                 return;
             }
@@ -13646,11 +13338,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionWorld component key values were found');
+                    throw new TypeError('No PositionWorld component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('PositionWorld setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set SizeWorld(value) {
             if (Array.isArray(value)) {
@@ -13664,7 +13356,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No SizeWorld component index values were found');
+                    throw new TypeError('No SizeWorld component index values were found.');
                 }
                 return;
             }
@@ -13679,7 +13371,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No SizeWorld component key values were found');
+                    throw new TypeError('No SizeWorld component key values were found.');
                 }
                 return;
             }
@@ -13698,7 +13390,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No GeometricZoom component index values were found');
+                    throw new TypeError('No GeometricZoom component index values were found.');
                 }
                 return;
             }
@@ -13713,7 +13405,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No GeometricZoom component key values were found');
+                    throw new TypeError('No GeometricZoom component key values were found.');
                 }
                 return;
             }
@@ -13732,7 +13424,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionPixel component index values were found');
+                    throw new TypeError('No PositionPixel component index values were found.');
                 }
                 return;
             }
@@ -13747,11 +13439,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionPixel component key values were found');
+                    throw new TypeError('No PositionPixel component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('PositionPixel setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set SizePixel(value) {
             if (Array.isArray(value)) {
@@ -13765,7 +13457,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No SizePixel component index values were found');
+                    throw new TypeError('No SizePixel component index values were found.');
                 }
                 return;
             }
@@ -13780,7 +13472,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No SizePixel component key values were found');
+                    throw new TypeError('No SizePixel component key values were found.');
                 }
                 return;
             }
@@ -13799,7 +13491,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No MaxSizePixel component index values were found');
+                    throw new TypeError('No MaxSizePixel component index values were found.');
                 }
                 return;
             }
@@ -13814,7 +13506,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No MaxSizePixel component key values were found');
+                    throw new TypeError('No MaxSizePixel component key values were found.');
                 }
                 return;
             }
@@ -13833,7 +13525,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No MinSizePixel component index values were found');
+                    throw new TypeError('No MinSizePixel component index values were found.');
                 }
                 return;
             }
@@ -13848,7 +13540,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No MinSizePixel component key values were found');
+                    throw new TypeError('No MinSizePixel component key values were found.');
                 }
                 return;
             }
@@ -13867,7 +13559,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionRelative component index values were found');
+                    throw new TypeError('No PositionRelative component index values were found.');
                 }
                 return;
             }
@@ -13882,11 +13574,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No PositionRelative component key values were found');
+                    throw new TypeError('No PositionRelative component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('PositionRelative setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set ShapeTexture(value) {
             if (Array.isArray(value)) {
@@ -13908,7 +13600,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No ShapeTexture component index values were found');
+                    throw new TypeError('No ShapeTexture component index values were found.');
                 }
                 return;
             }
@@ -13931,11 +13623,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No ShapeTexture component key values were found');
+                    throw new TypeError('No ShapeTexture component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('ShapeTexture setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set BorderColor(value) {
             if (Array.isArray(value)) {
@@ -13957,7 +13649,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No BorderColor component index values were found');
+                    throw new TypeError('No BorderColor component index values were found.');
                 }
                 return;
             }
@@ -13980,11 +13672,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No BorderColor component key values were found');
+                    throw new TypeError('No BorderColor component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('BorderColor setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set FillColor(value) {
             if (Array.isArray(value)) {
@@ -14006,7 +13698,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No FillColor component index values were found');
+                    throw new TypeError('No FillColor component index values were found.');
                 }
                 return;
             }
@@ -14029,11 +13721,11 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No FillColor component key values were found');
+                    throw new TypeError('No FillColor component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('FillColor setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
         set FillTexture(value) {
             if (Array.isArray(value)) {
@@ -14055,7 +13747,7 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No FillTexture component index values were found');
+                    throw new TypeError('No FillTexture component index values were found.');
                 }
                 return;
             }
@@ -14078,35 +13770,12 @@ void main () {
                     anyComponentSet = true;
                 }
                 if (!anyComponentSet) {
-                    throw new TypeError('No FillTexture component key values were found');
+                    throw new TypeError('No FillTexture component key values were found.');
                 }
                 return;
             }
-            throw new TypeError('FillTexture setter argument must be an array or object');
+            throw new TypeError('Argument must be an array or object.');
         }
-    }
-
-    /**
-     * @license
-     * Copyright 2022 Google LLC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-    /**
-     * @fileoverview Defines the InternalError class for errors which ought not to
-     * occur during operation.
-     */
-    class InternalError extends Error {
     }
 
     /**
@@ -14124,6 +13793,11 @@ void main () {
      * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      * See the License for the specific language governing permissions and
      * limitations under the License.
+     */
+    /**
+     * @fileoverview A Sprite represents a renderable object, internally
+     * implemented as a SpriteImpl. During its lifecyle, it goes through a number of
+     * phases, which are defined here.
      */
     var LifecyclePhase;
     (function (LifecyclePhase) {
@@ -14173,7 +13847,7 @@ void main () {
      * A LifecyclePhase transition is a situation where a Sprite in a particular
      * LifecyclePhase moves to a different LifecyclePhase. Since there are six
      * phases, there are 6x5=30 possible transitions. By assigning each transition a
-     * numeric index, we can use bitwise arithmetic to check whether a given phase
+     * numeric index, we can use bitwise arithmatic to check whether a given phase
      * transition is valid.
      */
     function transitionToFlag(fromPhase, toPhase) {
@@ -14182,7 +13856,7 @@ void main () {
             1 << (5 * fromPhase + toPhase - +(toPhase > fromPhase));
     }
     /**
-     * Create a single integer value which encodes all the allowed LifecyclePhase
+     * Create a single integer value which enocodes all the allowed LifecyclePhase
      * transitions. This value can be AND'd with a phase transition index to test
      * for whether the transition is allowed.
      */
@@ -14212,7 +13886,7 @@ void main () {
         // From NeedsRebase, after the rebase operation completes, the Sprite goes to
         // NeedsTextureSync to have its values flashed.
         mask |= transitionToFlag(NeedsRebase, NeedsTextureSync);
-        // From NeedsTextureSync, once the sync has occurred, the Sprite goes to
+        // From NeedsTextureSync, once the sync has occured, the Sprite goes to
         // HasCallback if there are more callbacks to run, or to Rest, or to Removed
         // if the Sprite has been marked for removal.
         mask |= transitionToFlag(NeedsTextureSync, Rest);
@@ -14227,7 +13901,7 @@ void main () {
      */
     function checkLifecyclePhaseTransition(fromPhase, toPhase) {
         if (!(transitionToFlag(fromPhase, toPhase) & ALLOWED_TRANSITION_MASK)) {
-            throw new InternalError('Illegal sprite lifecycle phase transition');
+            throw new Error('Illegal sprite lifecycle phase transition.');
         }
     }
 
@@ -14303,10 +13977,10 @@ void main () {
          */
         truncateToWithin(lowValue, highValue) {
             if (isNaN(+lowValue) || isNaN(+highValue)) {
-                throw new RangeError('Both values must be numbers');
+                throw new Error('Both values must be numbers');
             }
             if (highValue < lowValue) {
-                throw new RangeError('High bound must be greater than or equal to low bound');
+                throw new Error('High bound must be greater than or equal to low bound.');
             }
             if (!this.isDefined) {
                 return;
@@ -14351,48 +14025,19 @@ void main () {
      * limitations under the License.
      */
     /**
-     * @fileoverview Implements the Selection API.
+     * @fileoverview Implements the Selection API for SceneImpl.
      */
-    /**
-     * Since binding may take some time, this enum lists the various states the
-     * binding operation could be in.
-     */
-    var BindingState;
-    (function (BindingState) {
-        /**
-         * Default state, no bind is waiting to occur or in flight.
-         */
-        BindingState[BindingState["None"] = 0] = "None";
-        /**
-         * If a call to bind() followed a call to clear(), then the bind() may be
-         * blocked waiting for the clear to finish.
-         */
-        BindingState[BindingState["Blocked"] = 1] = "Blocked";
-        /**
-         * Once a call to bind() occurs, the various tasks may not begin until the
-         * a later animation frame. In this case, the bind is scheduled.
-         */
-        BindingState[BindingState["Scheduled"] = 2] = "Scheduled";
-        /**
-         * Binding tasks have started being performed, but not finished.
-         */
-        BindingState[BindingState["Started"] = 3] = "Started";
-    })(BindingState || (BindingState = {}));
     class SelectionImpl {
         /**
          * Create a new Selection which gets its Sprites from the provided Renderer,
          * and schedules tasks via the provided WorkScheduler.
          */
-        constructor(stepsBetweenChecks, coordinator) {
+        constructor(stepsBetweenChecks, renderer, workScheduler) {
             this.stepsBetweenChecks = stepsBetweenChecks;
-            this.coordinator = coordinator;
+            this.renderer = renderer;
+            this.workScheduler = workScheduler;
             this.sprites = [];
             this.boundData = [];
-            this.bindingState = BindingState.None;
-            this.hasWarned = false;
-            // Unique objects to identify this instance's bind() and clear() tasks.
-            this.bindingTaskId = Symbol('bindingTask');
-            this.clearingTaskId = Symbol('clearingTask');
         }
         onBind(bindCallback) {
             this.bindCallback = bindCallback;
@@ -14445,30 +14090,9 @@ void main () {
          *
          * @param data Array of data to bind to the internal Sprites list.
          */
-        bind(data, keyFn) {
+        bind(data) {
             // TODO(jimbo): Implement keyFn for non-index binding.
-            if (keyFn) {
-                throw new Error('keyFn mapping is not yet supported');
-            }
-            // If a previous call to bind() has been scheduled but not started, it
-            // probably indicates a bug in the API user's code.
-            if (!this.hasWarned && this.bindingState === BindingState.Scheduled) {
-                console.warn('Possibly conflicting .bind() invocations detected');
-                this.hasWarned = true;
-            }
-            // If there's a clearingTask already in flight, then short-circuit here and
-            // schedule a future attempt using the bindingTaskId.
-            if (this.clearingTask) {
-                this.bindingState = BindingState.Blocked;
-                this.coordinator.workScheduler.scheduleUniqueTask({
-                    id: this.bindingTaskId,
-                    callback: () => {
-                        this.bindingState = BindingState.None;
-                        this.bind(data, keyFn);
-                    },
-                });
-                return this;
-            }
+            // Key function signature: keyFn?: (datum: T) => string.
             // Keep track of number of steps taken during this task to break up the
             // number of times we check how much time is remaining.
             let step = 0;
@@ -14481,7 +14105,7 @@ void main () {
                     step++;
                     const index = lastEnterIndex++;
                     const datum = data[index];
-                    const sprite = this.coordinator.createSprite();
+                    const sprite = this.renderer.createSprite();
                     this.boundData[index] = datum;
                     this.sprites[index] = sprite;
                     const { initCallback, enterCallback, bindCallback } = this;
@@ -14574,18 +14198,20 @@ void main () {
                     }
                     else {
                         const { exitCallback, bindCallback } = this;
-                        // Schedule the Sprite's exit() callback to run. This will invoke
-                        // the bindCallback and/or the exitCallback, in that order.
-                        sprite.exit(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (exitCallback) {
-                                exitCallback(spriteView, datum);
-                            }
-                        });
+                        if (exitCallback || bindCallback) {
+                            // Schedule the Sprite's exit() callback to run. This will invoke
+                            // the bindCallback and/or the exitCallback, in that order.
+                            sprite.exit(spriteView => {
+                                if (bindCallback) {
+                                    // The bindCallback, if present is always invoked when binding
+                                    // data, immediately before more specific callbacks if present.
+                                    bindCallback(spriteView, datum);
+                                }
+                                if (exitCallback) {
+                                    exitCallback(spriteView, datum);
+                                }
+                            });
+                        }
                     }
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
                         break;
@@ -14604,26 +14230,18 @@ void main () {
             };
             // Define a binding task which will be invoked by the WorkScheduler to
             // incrementally carry out the prevously defined tasks.
-            this.bindingTask = {
+            const bindingTask = {
                 // Setting id to this ensures that there will be only one bindingTask
                 // associated with this object at a time. If the API user calls bind()
                 // again before the previous task finishes, whatever work it had been
                 // doing will be dropped for the new parameters.
-                id: this.bindingTaskId,
-                // Perform at least one unit of work, starting with the exit data binding
-                // tasks, then the updates, then the enters. Doing the exits first makes
-                // it more likely that Sprite memory will be freed by the time we need it
-                // for entering data points.
+                id: this,
+                // Perform one unit of work, starting with the enter data binding tasks,
+                // then the updates, then the exits.
                 callback: (remaining) => {
-                    this.bindingState = BindingState.Started;
                     step = 0;
-                    const result = exitTask(remaining) && updateTask(remaining) &&
+                    return exitTask(remaining) && updateTask(remaining) &&
                         enterTask(remaining);
-                    if (result) {
-                        delete this.bindingTask;
-                        this.bindingState = BindingState.None;
-                    }
-                    return result;
                 },
                 // The return value of the callback indicates whether there's more to do.
                 // Setting runUntilDone to true here signals that if the task cannot run
@@ -14631,149 +14249,10 @@ void main () {
                 // the end of the queue.
                 runUntilDone: true,
             };
-            // Use the provided WorkScheduler to schedule bindingTask.
-            this.coordinator.workScheduler.scheduleUniqueTask(this.bindingTask);
-            this.bindingState = BindingState.Scheduled;
-            // Allow method call chaining.
-            return this;
-        }
-        /**
-         * Clear any previously bound data and Sprites. Previously bound Sprites will
-         * still have their callbacks invoked. This is equivalent to calling bind()
-         * with an empty array, except that it is guaranteed to drop expsting data and
-         * Sprites, whereas calling bind([]) may be interrupted by a later call to
-         * bind().
-         */
-        clear() {
-            let step = 0;
-            // Get a reference to the currently specified exitCallback and bindCallback,
-            // if any. We do this now to ensure that later changes do not affect the way
-            // thate the previously bound sprites leave.
-            const { exitCallback, bindCallback } = this;
-            // Performs exit data binding while there's time remaining, then returns
-            // whether there's more work to do.
-            const exitTask = (remaining) => {
-                let index = 0;
-                while (index < this.boundData.length) {
-                    step++;
-                    const datum = this.boundData[index];
-                    const sprite = this.sprites[index];
-                    // Increment index here, so that it's always one more than the last
-                    // index visited, even if we break early below due to time check.
-                    index++;
-                    if (!sprite.isAbandoned && !sprite.isActive && !sprite.isRemoved) {
-                        // It may be that the exiting sprite was never rendered, for example
-                        // if there was insufficient capacity in the data texture when an
-                        // earlier call to bind() created it. In such a case, the appropriate
-                        // thing to do is to just abandon it.
-                        sprite.abandon();
-                    }
-                    else {
-                        // Schedule the Sprite's exit() callback to run. This will invoke
-                        // the bindCallback and/or the exitCallback, in that order. Even if
-                        // neither bindCallback nor exitCallback are specified, we still need
-                        // to call .exit() to mark the Sprite for removal.
-                        sprite.exit(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (exitCallback) {
-                                exitCallback(spriteView, datum);
-                            }
-                        });
-                    }
-                    if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-                        break;
-                    }
-                }
-                // Remove those data and sprites for which we've successfully established
-                // exit callbacks.
-                this.boundData.splice(0, index);
-                this.sprites.splice(0, index);
-                // Return whether there's more data to clear.
-                return !this.boundData.length;
-            };
-            // Define a clearing task which will be invoked by the WorkScheduler to
-            // incrementally clear all data.
-            this.clearingTask = {
-                // Setting id to this ensures that there will be only one bindingTask
-                // associated with this object at a time. If the API user calls bind()
-                // again before the previous task finishes, whatever work it had been
-                // doing will be dropped for the new parameters.
-                id: this.clearingTaskId,
-                // Perform as much of the clearing work as time allows. When finished,
-                // remove the clearingTask member. This will unblock the bindingTask, if
-                // there is one.
-                callback: (remaining) => {
-                    step = 0;
-                    const result = exitTask(remaining);
-                    if (result) {
-                        delete this.clearingTask;
-                    }
-                    return result;
-                },
-                // The return value of the callback indicates whether there's more to do.
-                // Setting runUntilDone to true here signals that if the task cannot run
-                // to completion due to time, the WorkScheduler should push it back onto
-                // the end of the queue.
-                runUntilDone: true,
-            };
-            // If a binding task was previously scheduled, unschedule it since clear
-            // must take precedence.
-            if (this.bindingTask) {
-                this.coordinator.workScheduler.unscheduleTask(this.bindingTask);
-                delete this.bindingTask;
-            }
             // Use the provided WorkScheduler to schedule the task.
-            this.coordinator.workScheduler.scheduleUniqueTask(this.clearingTask);
-            this.bindingState = BindingState.None;
+            this.workScheduler.scheduleUniqueTask(bindingTask);
             // Allow method call chaining.
             return this;
-        }
-        /**
-         * Given target coordinates relative to the drawable container,
-         * determine which data-bound Sprites' bounding boxes intersect the target,
-         * then resolve with a result that includes an array of the bound data. If
-         * none of the Selection's Sprites intersect the target, then the resolved
-         * array will be empty.
-         *
-         * @param hitTestParameters Coordinates of the box/point to test.
-         * @return CancellablePromise Yielding a hit test result including the data.
-         */
-        hitTest(hitTestParameters) {
-            const hitTestResults = this.coordinator.hitTest(Object.assign(Object.assign({}, hitTestParameters), { sprites: this.sprites }));
-            // Collect the indices of hitTestResults whose values indicate that the
-            // sprite was hit.
-            const hitIndices = new Uint32Array(hitTestResults.length);
-            let hitCount = 0;
-            for (let i = 0; i < hitTestResults.length; i++) {
-                const result = hitTestResults[i];
-                if (result >= 0) {
-                    hitIndices[hitCount++] = i;
-                }
-            }
-            // Short-circuit if it was a total miss.
-            if (!hitCount) {
-                return [];
-            }
-            if (hitTestParameters.sortResults === undefined ||
-                hitTestParameters.sortResults) {
-                // Sort the hitIndices by the hitTestResult values for them. In most
-                // cases, they'll already be mostly or entirely in order, but after
-                // thrashing (creating and removing sprites aggressively) it could be that
-                // later sprites use earlier swatches and would appear out-of-order in the
-                // hitTestResults.
-                hitIndices.subarray(0, hitCount)
-                    .sort((a, b) => hitTestResults[a] - hitTestResults[b]);
-            }
-            // Collect bound data for hit sprites.
-            const results = new Array(hitCount);
-            for (let i = 0; i < hitCount; i++) {
-                results[i] = this.boundData[hitIndices[i]];
-            }
-            return results;
         }
     }
 
@@ -14853,17 +14332,14 @@ void main () {
         }
         enter(enterCallback) {
             if (this.isAbandoned) {
-                throw new Error('Cannot add enter callback to abandoned sprite');
+                throw new Error('Cannot add enter callback to abondend sprite.');
             }
             if (this.isRemoved) {
-                throw new Error('Cannot add enter callback to Removed sprite');
+                throw new Error('Cannot add enter callback to Removed sprite.');
             }
             const properties = this[InternalPropertiesSymbol];
             properties.enterCallback = enterCallback;
             if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-                if (properties.index === undefined) {
-                    throw new InternalError('Sprite lacks index');
-                }
                 this.coordinator.markSpriteCallback(properties.index);
                 properties.lifecyclePhase = LifecyclePhase.HasCallback;
             }
@@ -14871,17 +14347,14 @@ void main () {
         }
         update(updateCallback) {
             if (this.isAbandoned) {
-                throw new Error('Cannot add update callback to abandoned sprite');
+                throw new Error('Cannot add update callback to abandoned sprite.');
             }
             if (this.isRemoved) {
-                throw new Error('Cannot add update callback to Removed sprite');
+                throw new Error('Cannot add update callback to Removed sprite.');
             }
             const properties = this[InternalPropertiesSymbol];
             properties.updateCallback = updateCallback;
             if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-                if (properties.index === undefined) {
-                    throw new InternalError('Sprite lacks index');
-                }
                 this.coordinator.markSpriteCallback(properties.index);
                 properties.lifecyclePhase = LifecyclePhase.HasCallback;
             }
@@ -14889,18 +14362,15 @@ void main () {
         }
         exit(exitCallback) {
             if (this.isAbandoned) {
-                throw new Error('Cannot add exit callback to abandoned sprite');
+                throw new Error('Cannot add exit callback to abandoned sprite.');
             }
             if (this.isRemoved) {
-                throw new Error('Cannot add exit callback to Removed sprite');
+                throw new Error('Cannot add exit callback to Removed sprite.');
             }
             const properties = this[InternalPropertiesSymbol];
             properties.exitCallback = exitCallback;
             properties.toBeRemoved = true;
             if (properties.lifecyclePhase === LifecyclePhase.Rest) {
-                if (properties.index === undefined) {
-                    throw new InternalError('Sprite lacks index');
-                }
                 this.coordinator.markSpriteCallback(properties.index);
                 properties.lifecyclePhase = LifecyclePhase.HasCallback;
             }
@@ -14908,13 +14378,13 @@ void main () {
         }
         abandon() {
             if (this.isAbandoned) {
-                throw new Error('Cannot abandon a Sprite already marked abandoned');
+                throw new Error('Cannot abandon a Sprite already marked abandoned.');
             }
             if (this.isRemoved) {
-                throw new Error('Cannot abandon a Sprite that has been removed');
+                throw new Error('Cannot abandon a Sprite that has been removed.');
             }
             if (this.isActive) {
-                throw new Error('Cannot abandon an active Sprite');
+                throw new Error('Cannot abandon an active Sprite.');
             }
             const properties = this[InternalPropertiesSymbol];
             properties.isAbandoned = true;
@@ -14972,7 +14442,7 @@ void main () {
      * the remaining time function. Must be a non-negative integer. Should be in the
      * 100-1000 range. Higher numbers reduce the frequency of time checks, but run
      * the risk of running too long before returning control to the UI thread
-     * (laggy user experience).
+     * (laggy user experince).
      */
     function runAssignWaiting(coordinator, remaining, stepsBetweenChecks) {
         const { removedIndexRange, sprites, waitingSprites, } = coordinator;
@@ -14980,13 +14450,13 @@ void main () {
             // This indicates an error condition in which there was an assign task
             // queued but before it could run the removed index ranges were somehow
             // used up.
-            throw new InternalError('No removed indices available to assign');
+            throw new Error('No removed indices available to assign.');
         }
         if (!waitingSprites.length) {
             // This indicates an error condition in which there is additional capacity
             // to dequeue waiting sprites, but somehow there are no waiting sprites to
             // dequeue.
-            throw new InternalError('No waiting sprites to assign');
+            throw new Error('No waiting sprites to assign.');
         }
         // Inside the while loop, we'll be iterating through both the removed index
         // range and the waiting sprites queue. Both of these lists contain items
@@ -15039,23 +14509,16 @@ void main () {
                 // are not in the Removed lifecycle phase. Therefore as we iterate through
                 // the range, when we get to the end, it should definitely be a removed
                 // sprite whose index and swatch we can reuse.
-                throw new InternalError('Removed index range ended on a non-removed sprite');
+                throw new Error('Removed index range ended on a non-removed sprite.');
             }
             // Now that we've found both a non-abandoned waiting sprite, and a removed
             // sprite, we can give the removed sprite's index (and swatch) to the
             // waiting sprite.
             const waitingSprite = waitingSprites[waitingIndex];
             const removedSprite = sprites[removedIndex];
-            const removedProperties = removedSprite[InternalPropertiesSymbol];
-            const waitingProperties = waitingSprite[InternalPropertiesSymbol];
-            if (removedProperties.index === undefined) {
-                throw new InternalError('Removed Sprite lacks index');
-            }
-            coordinator.assignSpriteToIndex(waitingSprite, removedProperties.index);
-            if (waitingProperties.index === undefined) {
-                throw new InternalError('Sprite index was not assigned');
-            }
+            coordinator.assignSpriteToIndex(waitingSprite, removedSprite[InternalPropertiesSymbol].index);
             // Upgrade the waiting Sprite's phase from Rest to HasCallback if needed.
+            const waitingProperties = waitingSprite[InternalPropertiesSymbol];
             if (waitingProperties.hasCallback) {
                 anyHasCallback = true;
                 waitingProperties.lifecyclePhase = LifecyclePhase.HasCallback;
@@ -15118,7 +14581,7 @@ void main () {
     function runCallbacks(coordinator, remaining, stepsBetweenChecks) {
         if (!coordinator.callbacksIndexRange.isDefined) {
             // This indicates a timing error in the code.
-            throw new InternalError('Running callbacks requires a range of indices');
+            throw new Error('Running callbacks requires a range of indices.');
         }
         // Make note of the exit index range for looping purposes.
         const { lowBound, highBound } = coordinator.callbacksIndexRange;
@@ -15140,32 +14603,25 @@ void main () {
         // invoked. Defined here so that its available in both try and catch.
         const afterCallback = () => {
             if (!properties) {
-                throw new InternalError('Attempted to re-run afterCallback steps');
-            }
-            const { spriteView, index } = properties;
-            if (!spriteView || index === undefined) {
-                throw new InternalError('Sprite missing required properties');
+                throw new Error('Attempted to re-run afterCallback steps.');
             }
             // Append the current time to the arrival time value.
+            const spriteView = properties.spriteView;
             spriteView.TransitionTimeMs += currentTimeMs;
-            // Make sure that the draw Ts range includes the current transition time
-            // plus a buffer to account for time taken by work tasks. Without the
-            // buffer, it can happen that the last drawn frame does not include the
-            // final resting state of the Sprite, especially when the user-specified
-            // transition time is near or below one frame (about 17ms).
-            coordinator.toDrawTsRange.expandToInclude(spriteView.TransitionTimeMs + coordinator.workScheduler.maxWorkTimeMs);
+            // Make sure the the draw Ts range includes the current transition time.
+            coordinator.toDrawTsRange.expandToInclude(spriteView.TransitionTimeMs);
             if (spriteView.TransitionTimeMs > currentTimeMs) {
                 // If the callback set a future arrival time (Ts), then this sprite
                 // needs a rebase.
                 anyNeedsRebase = true;
                 properties.lifecyclePhase = LifecyclePhase.NeedsRebase;
-                coordinator.needsRebaseIndexRange.expandToInclude(index);
+                coordinator.needsRebaseIndexRange.expandToInclude(properties.index);
             }
             else {
                 // Otherwise it's ready for texture sync immediately.
                 anyNeedsTextureSync = true;
                 properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
-                coordinator.needsTextureSyncIndexRange.expandToInclude(index);
+                coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index);
                 if (properties.toBeRemoved && !properties.hasCallback) {
                     // If this sprite is slated for removal, and it has no further
                     // callbacks to invoke, then we need to flash zeros to the float array
@@ -15207,9 +14663,6 @@ void main () {
                 if (properties.lifecyclePhase !== LifecyclePhase.HasCallback) {
                     continue;
                 }
-                if (!properties.spriteView) {
-                    throw new InternalError('Sprite in HasCallback lifecycle phase missing SpriteView');
-                }
                 // Pick earliest callback to run (enter, then update, then exit).
                 let callback;
                 if (properties.enterCallback) {
@@ -15229,7 +14682,7 @@ void main () {
                     // HasCallback lifecycle phase but did not, in fact, have any
                     // callbacks. This should not be possible under normal operations
                     // and indicates a bug in the phase transition logic.
-                    throw new InternalError('Sprite in HasCallback state missing callbacks');
+                    throw new Error('Sprite in HasCallback state missing callbacks.');
                 }
                 // Poke the defaultTransitionTimeMs into the spriteView arrival time.
                 // This value may be updated by the callback to specify a different
@@ -15282,76 +14735,8 @@ void main () {
                 coordinator.queueDraw();
             }
         }
-    }
-
-    /**
-     * Perform a hit test and read back the results.
-     *
-     * @param coordinator Upstream object upon which this task operates.
-     */
-    function runHitTest(coordinator) {
-        // These values are API-user provided, but are already be checked for
-        // correctness upstream in SceneInternal.
-        const { sprites, width, height, inclusive } = coordinator.hitTestParameters;
-        coordinator.hitTestCount = sprites.length;
-        const results = coordinator.hitTestOutputResults.subarray(0, coordinator.hitTestCount);
-        // Short-circuit if the parameters guarantee there will be no hits.
-        if (!inclusive && (!width || !height)) {
-            console.warn('Inclusive hit test on a box with zero size always misses');
-            results.fill(-1);
-            return;
-        }
-        // Shorthand variables to make code more readable.
-        const inputUv = coordinator.instanceHitTestInputUvValues;
-        const indexActive = coordinator.instanceHitTestInputIndexActiveValues;
-        const swatchUv = coordinator.instanceSwatchUvValues;
-        // Copy swatch UVs into the input UV values array. This way, when the command
-        // runs, it will reference the correct swatches for the candidate sprites.
-        for (let i = 0; i < sprites.length; i++) {
-            const sprite = sprites[i];
-            const swatchIndex = sprite[InternalPropertiesSymbol].index || 0;
-            inputUv[i * 2] = swatchUv[swatchIndex * 2];
-            inputUv[i * 2 + 1] = swatchUv[swatchIndex * 2 + 1];
-            indexActive[i * 2] = swatchIndex;
-            indexActive[i * 2 + 1] = sprite.isActive ? 1 : 0;
-        }
-        // Re-bind the UV and Index/Active values to their buffers.
-        coordinator.instanceHitTestInputUvBuffer(inputUv.subarray(0, coordinator.hitTestCount * 2));
-        coordinator.instanceHitTestInputIndexActiveBuffer(indexActive.subarray(0, coordinator.hitTestCount * 2));
-        // Invoke the hit test command.
-        coordinator.hitTestCommand();
-        const readHeight = Math.ceil(coordinator.hitTestCount /
-            coordinator.hitTestAttributeMapper.swatchesPerRow);
-        // Read values back from framebuffer. This is SLOW! Upwards of 50ms-200ms
-        // depending on the amount of data being read back. It's a blocking and
-        // stalling procedure. Reading from the framebuffer requires that all the
-        // queued GPU actions are finished and flushed.
-        coordinator.regl.read({
-            x: 0,
-            y: 0,
-            width: coordinator.hitTestAttributeMapper.textureWidth,
-            height: readHeight,
-            data: coordinator.hitTestOutputValues,
-            framebuffer: coordinator.hitTestOutputValuesFramebuffer,
-        });
-        // Unpack results.
-        const { totalSwatches } = coordinator.hitTestAttributeMapper;
-        const outputValues = coordinator.hitTestOutputValues;
-        for (let i = 0; i < coordinator.hitTestCount; i++) {
-            // Read RGBA Uint8 color channels.
-            const r = outputValues[i * 4];
-            const g = outputValues[i * 4 + 1];
-            const b = outputValues[i * 4 + 2];
-            const a = outputValues[i * 4 + 3];
-            // Unpack to recover floating point representation in the range 0-1.
-            const n = (r / (256 * 256 * 256) + g / (256 * 256) + b / 256 + a) / 255;
-            // Recover swatch index value, or -1 for a miss. These values will not be
-            // 100% accurate due to loss of precision when normalizing and
-            // packing/unpacking. However, misses will be definitely equal to -1, and
-            // the values will be ordinally correct, meaning that greater numbers
-            // equate to higher up the z-order.
-            results[i] = n * (totalSwatches + 1) - 1;
-        }
+        // We're done with this task.
+        return true;
     }
 
     /**
@@ -15361,9 +14746,9 @@ void main () {
      * @param coordinator Upstream object upon which this task operates.
      */
     function runRebase(coordinator) {
-        // Sanity check: nothing to do if the rebase index range is empty.
+        // Sanity check: nothing to do if there's nothing in the rebase queue.
         if (!coordinator.needsRebaseIndexRange.isDefined) {
-            throw new InternalError('No sprites are queued for rebase');
+            throw new Error('No sprites are queued for rebase.');
         }
         // For each queued sprite to rebase, copy its UV values into the
         // instanceRebaseUvValues array.
@@ -15389,7 +14774,7 @@ void main () {
         if (!coordinator.rebaseCount) {
             // This signals that while the rebase index range was defined, none of the
             // sprites in that range were actually due for rebase.
-            throw new InternalError('No sprites were found to need rebase');
+            throw new Error('No sprites were found to need rebase.');
         }
         // Queue a texture sync, since that's always the next lifecycle phase for
         // any sprites that have been rebased.
@@ -15439,7 +14824,7 @@ void main () {
             // This signals an error in lifecycle phase change logic of the coordinator.
             // This method should not be invoke until there are sprites slated for
             // removal.
-            throw new InternalError('No sprites are queued for removal');
+            throw new Error('No sprites are queued for removal.');
         }
         const currentTimeMs = coordinator.elapsedTimeMs();
         const lowTs = coordinator.toBeRemovedTsRange.lowBound;
@@ -15447,9 +14832,9 @@ void main () {
         // their target times. If not, then we queue a future removal task.
         if (currentTimeMs < lowTs) {
             coordinator.queueRemovalTask();
-            return;
+            return true;
         }
-        const { lowBound: lowIndex, highBound: highIndex } = coordinator.toBeRemovedIndexRange;
+        let { lowBound: lowIndex, highBound: highIndex } = coordinator.toBeRemovedIndexRange;
         // Clear the removal index and ts ranges. They will be added to as needed.
         coordinator.toBeRemovedIndexRange.clear();
         coordinator.toBeRemovedTsRange.clear();
@@ -15474,9 +14859,6 @@ void main () {
                     properties.lifecyclePhase !== LifecyclePhase.Rest) {
                     continue;
                 }
-                if (!properties.spriteView || properties.index === undefined) {
-                    throw new InternalError('Sprite missing required properties');
-                }
                 // If the sprite's time has not yet finished, then add it back to the
                 // index range. We'll reschedule another run after the loop.
                 if (properties.spriteView.TransitionTimeMs > currentTimeMs) {
@@ -15485,7 +14867,7 @@ void main () {
                     continue;
                 }
                 // The sprite has been marked for removal, its in the right
-                // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
+                // LifeciclePhase, and its time has expired. Flash zeros to the sprite's
                 // data view and schedule it for a texture sync.
                 properties.spriteView[DataViewSymbol].fill(0);
                 properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
@@ -15508,13 +14890,6 @@ void main () {
                     const properties = sprite[InternalPropertiesSymbol];
                     if (properties.toBeRemoved === true &&
                         properties.lifecyclePhase === LifecyclePhase.Rest) {
-                        if (!properties.spriteView) {
-                            // Indicates a bug in Megaplot. A Sprite in the Rest lifecycle phase
-                            // ought to have been allocated a swatch and thus a SpriteView for
-                            // interacting with it.
-                            // eslint-disable-next-line no-unsafe-finally
-                            throw new InternalError('Sprite lacks a SpriteView');
-                        }
                         coordinator.toBeRemovedTsRange.expandToInclude(properties.spriteView.TransitionTimeMs);
                     }
                 }
@@ -15525,6 +14900,7 @@ void main () {
                 coordinator.queueRemovalTask();
             }
         }
+        return true;
     }
 
     /**
@@ -15565,7 +14941,7 @@ void main () {
     function runTextureSync(coordinator) {
         // Short-circuit of there are no dirty indices to update.
         if (!coordinator.needsTextureSyncIndexRange.isDefined) {
-            throw new InternalError('No sprites are in need of texture sync');
+            throw new Error('No sprites are in need of texture sync.');
         }
         const { swatchesPerRow, textureWidth, valuesPerRow } = coordinator.attributeMapper;
         // Check to see if there's a collision between the block of sprites whose
@@ -15579,7 +14955,7 @@ void main () {
                 // rebase operation, and then make another attempt at texture sync.
                 coordinator.queueRebase();
                 coordinator.queueTextureSync();
-                return;
+                return true;
             }
         }
         const { lowBound, highBound } = coordinator.needsTextureSyncIndexRange;
@@ -15605,18 +14981,12 @@ void main () {
                 // loop. It would be an error to sync its values to the texture because
                 // doing so would destroy the information that the rebase command needs
                 // to determine the intermediate attribute values and deltas.
-                throw new InternalError('Sprite is in the wrong lifecycle phase for sync');
+                throw new Error('Sprite is in the wrong lifecycle phase for sync.');
             }
             if (properties.lifecyclePhase !== LifecyclePhase.NeedsTextureSync) {
                 // This sprite was a passive participant in the texture sync operation.
                 // Its blob/array swatch and texture swatch were already sync'd.
                 continue;
-            }
-            if (!properties.spriteView) {
-                // Indicates a bug in Megaplot. Any Sprite in the NeedsTextureSync
-                // lifecycle phase ought to have been allocated a swatch and thus a
-                // SpriteView to update it.
-                throw new InternalError('Sprite queued for texture sync lacks a SpriteView');
             }
             if (properties.hasCallback) {
                 // If the sprite has any pending callbacks, then the correct next
@@ -15658,13 +15028,17 @@ void main () {
         if (anyToBeRemoved) {
             coordinator.queueRemovalTask();
         }
+        // By definition, we've updated all sprites that surround the low and high
+        // dirty indices.
         coordinator.needsTextureSyncIndexRange.clear();
+        // TODO(jimbo): 'subimage' seems to be missing from REGL texture type.
         const subimageData = {
             data: dataView,
             width: textureWidth,
             height: rowHeight,
         };
         coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
+        return true;
     }
 
     /**
@@ -15699,9 +15073,6 @@ void main () {
             this.glyphMapper = glyphMapper;
             this.selections = [];
             this.boundData = [];
-            // Unique objects to identify this instance's bind() and clear() tasks.
-            this.bindingTaskId = Symbol('bindingTask');
-            this.clearingTaskId = Symbol('clearingTask');
             this.textCallback = ((datum) => `${datum}`);
             this.alignCallback = (() => DEFAULT_ALIGN_VALUE);
             this.verticalAlignCallback = (() => DEFAULT_VERTICAL_ALIGN_VALUE);
@@ -15739,8 +15110,7 @@ void main () {
             return this;
         }
         datumToGlyphs(datum) {
-            const text = (this.textCallback ? this.textCallback.call(datum, datum) :
-                `${datum}`)
+            const text = (this.textCallback ? this.textCallback.call(datum, datum) : `${datum}`)
                 .trim();
             const align = (this.alignCallback && this.alignCallback(datum)) ||
                 DEFAULT_ALIGN_VALUE;
@@ -15775,26 +15145,13 @@ void main () {
             }
             return glyphs;
         }
-        bind(data, keyFn) {
-            // TODO(jimbo): Implement keyFn for non-index binding.
-            if (keyFn) {
-                throw new Error('keyFn mapping is not yet supported');
-            }
-            // If there's a clearingTask already in flight, then short-circuit here and
-            // schedule a future attempt using the bindingTaskId.
-            if (this.clearingTask) {
-                this.workScheduler.scheduleUniqueTask({
-                    id: this.bindingTaskId,
-                    callback: () => this.bind(data, keyFn),
-                });
-                return this;
-            }
+        bind(data) {
             // Keep track of number of steps taken during this task to break up the
             // number of times we check how much time is remaining.
             let step = 0;
             const dataLength = data.length;
             let lastEnterIndex = this.boundData.length;
-            // Performs enter data binding while there's time remaining, then returns
+            // Performs enter data binding while there's time remaning, then returns
             // whether there's more work to do.
             const enterTask = (remaining) => {
                 while (lastEnterIndex < dataLength) {
@@ -15834,7 +15191,7 @@ void main () {
                     });
                     selection.bind(this.datumToGlyphs(datum));
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-                        break;
+                        return false;
                     }
                 }
                 return lastEnterIndex >= dataLength;
@@ -15860,25 +15217,23 @@ void main () {
             // Performs exit data binding while there's time remaining, then returns
             // whether there's more work to do.
             const exitTask = (remaining) => {
-                let index = dataLength;
-                while (index < this.boundData.length) {
+                // TODO(jimbo): Instead, iterate forward through the list.
+                while (dataLength < this.boundData.length) {
                     step++;
-                    const selection = this.selections[index];
-                    index++;
+                    this.boundData.pop();
+                    const selection = this.selections.pop();
                     selection.bind([]);
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-                        break;
+                        return false;
                     }
                 }
-                this.boundData.splice(dataLength, index - dataLength);
-                this.selections.splice(dataLength, index - dataLength);
                 return dataLength >= this.boundData.length;
             };
             // Perform one unit of work, starting with any exit tasks, then updates,
             // then enter tasks. This way, previously used texture memory can be
             // recycled more quickly, keeping the area of used texture memory more
             // compact.
-            this.bindingTask = {
+            const bindingTask = {
                 id: this,
                 callback: (remaining) => {
                     step = 0;
@@ -15887,82 +15242,8 @@ void main () {
                 },
                 runUntilDone: true,
             };
-            this.workScheduler.scheduleUniqueTask(this.bindingTask);
+            this.workScheduler.scheduleUniqueTask(bindingTask);
             return this;
-        }
-        /**
-         * Clear any previously bound data and Sprites. Previously bound Sprites will
-         * still have their callbacks invoked. This is equivalent to calling bind()
-         * with an empty array, except that it is guaranteed to drop expsting data and
-         * Sprites, whereas calling bind([]) may be interrupted by a later call to
-         * bind().
-         */
-        clear() {
-            let step = 0;
-            // Performs exit data binding while there's time remaining, then returns
-            // whether there's more work to do.
-            const exitTask = (remaining) => {
-                let index = 0;
-                while (index < this.boundData.length) {
-                    step++;
-                    const selection = this.selections[index];
-                    index++;
-                    selection.clear();
-                    if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-                        break;
-                    }
-                }
-                this.boundData.splice(0, index);
-                this.selections.splice(0, index);
-                return !this.boundData.length;
-            };
-            // Define a clearing task which will be invoked by the WorkScheduler to
-            // incrementally clear all data.
-            this.clearingTask = {
-                // Setting id to this ensures that there will be only one bindingTask
-                // associated with this object at a time. If the API user calls bind()
-                // again before the previous task finishes, whatever work it had been
-                // doing will be dropped for the new parameters.
-                id: this.clearingTaskId,
-                // Perform as much of the clearing work as time allows. When finished,
-                // remove the clearingTask member. This will unblock the bindingTask, if
-                // there is one.
-                callback: (remaining) => {
-                    step = 0;
-                    const result = exitTask(remaining);
-                    if (result) {
-                        delete this.clearingTask;
-                    }
-                    return result;
-                },
-                // The return value of the callback indicates whether there's more to do.
-                // Setting runUntilDone to true here signals that if the task cannot run
-                // to completion due to time, the WorkScheduler should push it back onto
-                // the end of the queue.
-                runUntilDone: true,
-            };
-            // If a binding task was previously scheduled, unschedule it since clear
-            // must take precedence.
-            if (this.bindingTask) {
-                this.workScheduler.unscheduleTask(this.bindingTask);
-                delete this.bindingTask;
-            }
-            // Use the provided WorkScheduler to schedule the task.
-            this.workScheduler.scheduleUniqueTask(this.clearingTask);
-            // Allow method call chaining.
-            return this;
-        }
-        /**
-         * Given target coordinates relative to the drawable container,
-         * determine which data-bound Sprites' bounding boxes intersect the target,
-         * then resolve with a result that includes an array of the bound data. If
-         * none of the Selection's Sprites intersect the target, then the resolved
-         * array will be empty.
-         *
-         * @param hitTestParameters Coordinates of the box/point to test.
-         */
-        hitTest(hitTestParameters) {
-            throw new Error('Not yet implemented');
         }
     }
 
@@ -15984,7 +15265,7 @@ void main () {
      */
     /**
      * @fileoverview The WorkScheduler operates on WorkTasks, which are callback
-     * functions plus additional identifying and state information.
+     * functions plus additional identifing and state information.
      */
     /**
      * Given a WorkTask or Function, determine if it meets the minimum necessary
@@ -16001,7 +15282,7 @@ void main () {
      */
     function getWorkTaskId(workTaskOrFunction) {
         if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-            throw new Error('Provided object was not a work task or function');
+            throw new Error('Provided object was not a work task or function.');
         }
         // The id of a naked Function is just the function itself.
         if (workTaskOrFunction instanceof Function) {
@@ -16012,7 +15293,7 @@ void main () {
             return workTaskOrFunction.id;
         }
         // The id of a WorkTask object that does not have an explicit id is its
-        // callback function.
+        // callback funciton.
         return workTaskOrFunction.callback;
     }
     /**
@@ -16026,7 +15307,7 @@ void main () {
      */
     function ensureOrCreateWorkTask(workTaskOrFunction) {
         if (!isWorkTaskOrFunction(workTaskOrFunction)) {
-            throw new Error('Provided object was not a work task or function');
+            throw new Error('Provided object was not a work task or function.');
         }
         // Wrap naked function in an object with the minimum required properties.
         if (workTaskOrFunction instanceof Function) {
@@ -16064,7 +15345,7 @@ void main () {
      * A WorkQueue consists of an array of work tasks with Ids, and a set for
      * looking up tasks by their Id to check for existence. Any given task,
      * identified by its id, can only be in the WorkQueue once at a time. After a
-     * task has been removed, it can be re-added.
+     * task has been removed, it can be readded.
      */
     class WorkQueue {
         constructor() {
@@ -16107,7 +15388,7 @@ void main () {
             const index = this.findTaskIndexById(id);
             // Sanity check.
             if (index === -1) {
-                throw new InternalError('Could not find matching task in task list');
+                throw new Error('Could not find matching task in task list.');
             }
             return this.taskList[index];
         }
@@ -16128,10 +15409,10 @@ void main () {
          * Dequeue a task from the front of the task list. If no tasks remain, throw.
          */
         dequeueTask() {
-            const task = this.taskList.shift();
-            if (!task) {
-                throw new Error('No tasks remain to dequeue');
+            if (!this.length) {
+                throw new Error('No tasks remain to dequeue.');
             }
+            const task = this.taskList.shift();
             this.idSet.delete(task.id);
             return task;
         }
@@ -16147,7 +15428,7 @@ void main () {
             const index = this.findTaskIndexById(id);
             // Sanity check.
             if (index === -1) {
-                throw new InternalError('Could not find matching task in task list');
+                throw new Error('Could not find matching task in task list.');
             }
             const [task] = this.taskList.splice(index, 1);
             this.idSet.delete(task.id);
@@ -16170,7 +15451,7 @@ void main () {
                 if (this.taskList[i].id === id) {
                     // Sanity check.
                     if (index !== -1) {
-                        throw new InternalError('Duplicate task found in task list');
+                        throw new Error('Duplicate task found in task list.');
                     }
                     index = i;
                 }
@@ -16209,6 +15490,11 @@ void main () {
          * control back to the caller.
          */
         maxWorkTimeMs: 20,
+        /**
+         * When using setTimout() to schedule future off-screen runnable tasks, use
+         * this number of milliseconds.
+         */
+        timeoutMs: 0,
     });
     /**
      * The WorkScheduler class handles scheduling and working on tasks.
@@ -16224,7 +15510,7 @@ void main () {
              * Flag indicating whether the WorkScheduler is currently enabled. When it is
              * enabled, then it will be scheduling callbacks and running them. While this
              * value is initialized to false here, the WorkScheduler's enable() method is
-             * called during construction, which flips this value to true.
+             * called during construciton, which flips this value to true.
              */
             this.isEnabled = false;
             /**
@@ -16232,6 +15518,16 @@ void main () {
              * detect and prevent nested calls.
              */
             this.isPerformingWork = false;
+            /**
+             * Flag indicating whether work is currently being performed in the midst of
+             * an animation frame. This is to detect and prevent nested calls.
+             */
+            this.isPerformingAnimationFrameWork = false;
+            /**
+             * Flag indicating whether work is currently being performed in the midst of
+             * a timeout callback. This is to detect and prevent nested calls.
+             */
+            this.isPerformingTimoutWork = false;
             /**
              * Queue of work tasks to complete.
              */
@@ -16249,6 +15545,7 @@ void main () {
             this.timingFunctions = Object.freeze(Object.assign({}, DEFAULT_TIMING_FUNCTIONS, (settings && settings.timingFunctions) || {}));
             // Copy other settings.
             this.maxWorkTimeMs = settings.maxWorkTimeMs;
+            this.timeoutMs = settings.timeoutMs;
             // Enable the work scheduler.
             this.enable();
         }
@@ -16276,7 +15573,8 @@ void main () {
                     this.presentWorkQueue.enqueueTask(workTask);
                 }
             }
-            this.updateTimer();
+            // Make sure timers are set.
+            this.updateTimers();
             return workTask;
         }
         /**
@@ -16289,7 +15587,7 @@ void main () {
             // Sanity check. It should not be possible for the same task to be in both
             // the present and future work queues.
             if (presentTask && futureTask) {
-                throw new InternalError('Found two matching tasks when at most one is allowed');
+                throw new Error('Found two matching tasks when at most one is allowed.');
             }
             return presentTask || futureTask || undefined;
         }
@@ -16304,9 +15602,10 @@ void main () {
             // Sanity check. It should not be possible for the same task to be in both
             // the present and future work queues.
             if (presentRemovedTask && futureRemovedTask) {
-                throw new InternalError('Found two matching tasks when at most one is allowed');
+                throw new Error('Found two matching tasks when at most one is allowed.');
             }
-            this.updateTimer();
+            // Make sure timers are set.
+            this.updateTimers();
             return presentRemovedTask || futureRemovedTask || undefined;
         }
         /**
@@ -16339,7 +15638,7 @@ void main () {
          */
         enable() {
             this.isEnabled = true;
-            this.updateTimer();
+            this.updateTimers();
             return this;
         }
         /**
@@ -16347,31 +15646,54 @@ void main () {
          */
         disable() {
             this.isEnabled = false;
-            this.updateTimer();
+            this.updateTimers();
             return this;
         }
         /**
-         * Set or unset the animation frame timer based on whether the work scheduler
-         * is enabled and there's any work to do. Inside this method is the only place
-         * where requestAnimationFrame or cancelAnimationFrame should be called.
+         * Make sure timers are set if the WorkScheduler is enabled and there is work
+         * to do. If the WorkScheduler is disabled, or if there is no work, then clear
+         * the timers.
          */
-        updateTimer() {
-            // Check if scheduler is enabled and there's work to do.
-            if (this.isEnabled && this.presentWorkQueue.length) {
-                if (this.animationFrameTimer === undefined) {
-                    const { requestAnimationFrame } = this.timingFunctions;
-                    this.animationFrameTimer = requestAnimationFrame(() => {
-                        this.animationFrameTimer = undefined;
-                        this.performWork();
-                    });
+        updateTimers() {
+            const { requestAnimationFrame, cancelAnimationFrame, setTimeout, clearTimeout, } = this.timingFunctions;
+            // If the WorkScheduler is disabled, or there's no work left to do, then
+            // remove the outstanding timers.
+            if (!this.isEnabled ||
+                (!this.presentWorkQueue.length && !this.futureWorkQueue.length)) {
+                if (this.animationFrameTimer !== undefined) {
+                    cancelAnimationFrame(this.animationFrameTimer);
+                    this.animationFrameTimer = undefined;
+                }
+                if (this.timeoutTimer !== undefined) {
+                    clearTimeout(this.timeoutTimer);
+                    this.timeoutTimer = undefined;
                 }
                 return;
             }
-            // Scheduler is not enabled, or there's no work to do.
-            if (this.animationFrameTimer !== undefined) {
-                const { cancelAnimationFrame } = this.timingFunctions;
-                cancelAnimationFrame(this.animationFrameTimer);
-                this.animationFrameTimer = undefined;
+            // Since the WorkScheduler is enabled and there's work left to do, make sure
+            // the timers are set up.
+            if (this.animationFrameTimer === undefined) {
+                const animationFrameCallback = () => {
+                    if (!this.isEnabled) {
+                        this.animationFrameTimer = undefined;
+                        return;
+                    }
+                    this.animationFrameTimer =
+                        requestAnimationFrame(animationFrameCallback);
+                    this.performAnimationFrameWork();
+                };
+                this.animationFrameTimer = requestAnimationFrame(animationFrameCallback);
+            }
+            if (this.timeoutTimer === undefined) {
+                const timeoutCallback = () => {
+                    if (!this.isEnabled) {
+                        this.timeoutTimer = undefined;
+                        return;
+                    }
+                    this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
+                    this.performTimeoutWork();
+                };
+                this.timeoutTimer = setTimeout(timeoutCallback, this.timeoutMs);
             }
         }
         /**
@@ -16379,24 +15701,32 @@ void main () {
          */
         performWork() {
             if (this.isPerformingWork) {
-                throw new InternalError('Only one invocation of performWork is allowed at a time');
+                throw new Error('Only one invocation of performWork is allowed at a time.');
             }
             this.isPerformingWork = true;
             const { now } = this.timingFunctions;
             // Keep track of how many tasks have been performed.
             let tasksRan = 0;
-            const startTime = now();
-            const remaining = () => this.maxWorkTimeMs + startTime - now();
             // For performance, the try/catch block encloses the loop that runs through
             // tasks to perform.
             try {
+                const startTime = now();
+                const remaining = () => this.maxWorkTimeMs + startTime - now();
                 while (this.presentWorkQueue.length) {
                     // If at least one task has been dequeued, and if we've run out of
                     // execution time, then break out of the loop.
                     if (tasksRan > 0 && remaining() <= 0) {
                         break;
                     }
-                    const task = this.presentWorkQueue.dequeueTask();
+                    let task = this.presentWorkQueue.dequeueTask();
+                    if (!this.isPerformingAnimationFrameWork &&
+                        (task.animationOnly === undefined || task.animationOnly)) {
+                        // Unfortunately, this task is set to only run on animation frames,
+                        // and we're not currently in one. Add the task to the future work
+                        // queue and continue.
+                        this.futureWorkQueue.enqueueTask(task);
+                        continue;
+                    }
                     tasksRan++;
                     const result = task.callback.call(null, remaining);
                     if (!task.runUntilDone || result) {
@@ -16419,13 +15749,42 @@ void main () {
             }
             finally {
                 this.isPerformingWork = false;
-                // Take any work tasks which were set aside during work and place them
-                // into the queue at their correct place.
-                while (this.futureWorkQueue.length) {
-                    const futureTask = this.futureWorkQueue.dequeueTask();
-                    this.scheduleTask(futureTask);
-                }
-                this.updateTimer();
+            }
+            // Take any work tasks which were set aside during work and place them
+            // into the queue at their correct place.
+            while (this.futureWorkQueue.length) {
+                const futureTask = this.futureWorkQueue.dequeueTask();
+                this.scheduleTask(futureTask);
+            }
+        }
+        /**
+         * Perform work that is suitable for an animation frame.
+         */
+        performAnimationFrameWork() {
+            if (this.isPerformingAnimationFrameWork) {
+                throw new Error('Only one invocation of performAnimationFrameWork at a time.');
+            }
+            this.isPerformingAnimationFrameWork = true;
+            try {
+                this.performWork();
+            }
+            finally {
+                this.isPerformingAnimationFrameWork = false;
+            }
+        }
+        /**
+         * Perform work that is suitable for a timeout callback.
+         */
+        performTimeoutWork() {
+            if (this.isPerformingTimoutWork) {
+                throw new Error('Only one invocation of performTimoutWork at a time.');
+            }
+            this.isPerformingTimoutWork = true;
+            try {
+                this.performWork();
+            }
+            finally {
+                this.isPerformingTimoutWork = false;
             }
         }
     }
@@ -16437,32 +15796,18 @@ void main () {
      * check in the affected loops.
      */
     const STEPS_BETWEEN_REMAINING_TIME_CHECKS = 500;
-    /**
-     * WebGL vertex shaders output coordinates in clip space, which is a 3D volume
-     * where each component is clipped to the range (-1,1). The distance from
-     * edge-to-edge is therefore 2.
-     */
-    const CLIP_SPACE_RANGE = 2;
     class SceneInternal {
         constructor(params = {}) {
             /**
              * Number of screen pixels to one world unit in the X and Y dimensions. When
-             * the x or y values are set, handleViewChange() will be called.
-             *
-             * The scale and offset contribute to the view.
+             * the x or y values are set, queueDraw() will be called.
              */
-            this.scale = new CallbackTriggerPoint(() => {
-                this.handleViewChange();
-            });
+            this.scale = new DrawTriggerPoint(this);
             /**
-             * Offset (camera) coordinates. When the x or y values are set,
-             * handleViewChange() will be called.
-             *
-             * The scale and offset contribute to the view.
+             * Offset (camera) coordinates. When the x or y values are set, queueDraw()
+             * will be called.
              */
-            this.offset = new CallbackTriggerPoint(() => {
-                this.handleViewChange();
-            });
+            this.offset = new DrawTriggerPoint(this);
             /**
              * Collection of Sprites that have been created and have swatches
              * assigned.
@@ -16504,7 +15849,7 @@ void main () {
              * The range of arrival times (Ts) of sprites slated for removal. This may not
              * exactly match the times of sprites to be removed, for example if a sprite
              * to be removed has changed lifecycle phases. That's OK, this is used only to
-             * short-circuit the runRemoval() task in the event that we know that no
+             * short-circuit the runRemoval() task in the evet that we know that no
              * sprites are due for removal.
              */
             this.toBeRemovedTsRange = new NumericRange();
@@ -16533,10 +15878,6 @@ void main () {
              */
             this.rebaseCount = 0;
             /**
-             * Number of candidate sprites about to be hit tested.
-             */
-            this.hitTestCount = 0;
-            /**
              * Task id to uniquely identify the removal task.
              */
             this.runRemovalTaskId = Symbol('runRemovalTaskId');
@@ -16554,79 +15895,69 @@ void main () {
              */
             this.runCallbacksTaskId = Symbol('runCallbacksTask');
             /**
-             * Track whether scale and offset have been initialized.
+             * Task id to uniquely identify the hit test task.
              */
-            this.isViewInitialized = false;
+            this.hitTestTaskId = Symbol('hitTestTask');
+            /**
+             * Pixel coordinates relative to the container to perform the hit test.
+             */
+            this.hitTestParameters = {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                inclusive: true,
+            };
             // Set up settings based on incoming parameters.
-            const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
-            const { timingFunctions } = settings;
+            const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params || {});
+            const timingFunctions = Object.assign({}, DEFAULT_SCENE_SETTINGS.timingFunctions, settings.timingFunctions || {});
             // Set up the elapsedTimeMs() method.
             const { now } = timingFunctions;
             this.basisTs = now();
             this.elapsedTimeMs = () => now() - this.basisTs;
             // Set up work scheduler to use timing functions.
             this.workScheduler = new WorkScheduler({ timingFunctions });
-            // Override getDevicePixelRatio() method if an alternative was supplied.
-            if (typeof settings.devicePixelRatio === 'function') {
-                const devicePixelRatioCallback = settings.devicePixelRatio;
-                this.getDevicePixelRatio = () => {
-                    const devicePixelRatio = devicePixelRatioCallback();
-                    if (isNaN(devicePixelRatio) || devicePixelRatio <= 0) {
-                        throw new RangeError('Callback returned invalid devicePixelRatio');
-                    }
-                    return devicePixelRatio;
-                };
-            }
-            else if (typeof settings.devicePixelRatio === 'number') {
-                const { devicePixelRatio } = settings;
-                if (isNaN(devicePixelRatio) || devicePixelRatio <= 0) {
-                    throw new RangeError('Provided devicePixelRatio value is invalid');
-                }
-                this.getDevicePixelRatio = () => devicePixelRatio;
-            }
             this.container = settings.container;
             this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
-            this.orderZGranularity = settings.orderZGranularity;
+            // Take note of the container element's children before Regl inserts its
+            // canvas.
+            const previousChildren = new Set(Array.from(this.container.children));
             // Look for either the REGL module or createREGL global since both are
             // supported. The latter is for hot-loading the standalone Regl JS file.
             const win = window;
             const createREGL = win['createREGL'] || regl;
             if (!createREGL) {
-                throw new Error('Could not find REGL');
+                throw new Error('Could not find REGL.');
             }
-            this.canvas = document.createElement('canvas');
-            Object.assign(this.canvas.style, {
-                border: 0,
-                height: '100%',
-                left: 0,
-                margin: 0,
-                padding: 0,
-                top: 0,
-                width: '100%',
-            });
-            this.container.appendChild(this.canvas);
-            const { width, height } = this.canvas.getBoundingClientRect();
-            const devicePixelRatio = this.getDevicePixelRatio();
-            this.canvas.height = height * devicePixelRatio;
-            this.canvas.width = width * devicePixelRatio;
             const regl$1 = this.regl = createREGL({
-                'attributes': {
-                    'preserveDrawingBuffer': true,
-                },
-                'canvas': this.canvas,
-                'extensions': [
+                container: this.container,
+                extensions: [
                     'angle_instanced_arrays',
+                    'EXT_blend_minmax',
                     'OES_texture_float',
                     'OES_texture_float_linear',
                 ],
             });
-            // Initialize the scale and offset, which contribute to the view, if
-            // possible. If the canvas has zero width or height (for example if it is
-            // not attached to the DOM), then these properties will not be initialized.
-            this.initView();
+            const insertedChildren = Array.from(this.container.children).filter(child => {
+                return child instanceof HTMLCanvasElement &&
+                    !previousChildren.has(child);
+            });
+            if (!insertedChildren.length) {
+                throw new Error('Container is missing an inserted canvas.');
+            }
+            this.canvas = insertedChildren[0];
+            // Initialize scale and offset to put world 0,0 in the center.
+            // TODO(jimbo): Confirm initial scale/offset for all device pixel ratios.
+            const { width, height } = this.canvas.getBoundingClientRect();
+            const defaultScale = Math.min(width, height) || Math.max(width, height) ||
+                Math.min(window.innerWidth, window.innerHeight);
+            this.scale.x = defaultScale;
+            this.scale.y = defaultScale;
+            this.offset.x = width / 2;
+            this.offset.y = height / 2;
             // The attribute mapper is responsible for keeping track of how to shuttle
-            // data between the Sprite state representation, and data values in
-            // channels in the data textures.
+            // data between the Sprite state representation, and data values in channels
+            // in the data textures.
             const attributeMapper = this.attributeMapper = new AttributeMapper({
                 maxTextureSize: regl$1.limits.maxTextureSize,
                 desiredSwatchCapacity: settings.desiredSpriteCapacity,
@@ -16646,8 +15977,8 @@ void main () {
                 depthStencil: false,
             });
             // The previousValuesTexture contains the same data as the
-            // previousValuesFramebuffer, but after a delay. It is used as the input
-            // to the rebase command.
+            // previousValuesFramebuffer, but after a delay. It is used as the input to
+            // the rebase command.
             this.previousValuesTexture = regl$1.texture({
                 width: attributeMapper.textureWidth,
                 height: attributeMapper.textureHeight,
@@ -16657,10 +15988,9 @@ void main () {
                 min: 'nearest',
             });
             this.targetValuesArray = new Float32Array(attributeMapper.totalValues);
-            // Ultimately, to render the sprites, the GPU needs to be able to access
-            // the data, and so it is flashed over to a texture. This texture is
-            // written to only by the CPU via subimage write calls, and read from by
-            // the GPU.
+            // Ultimately, to render the sprites, the GPU needs to be able to access the
+            // data, and so it is flashed over to a texture. This texture is written to
+            // only by the CPU via subimage write calls, and read from by the GPU.
             this.targetValuesTexture = regl$1.texture({
                 width: attributeMapper.textureWidth,
                 height: attributeMapper.textureHeight,
@@ -16688,27 +16018,13 @@ void main () {
                         { attributeName: 'Hit' },
                     ],
                 });
-            // The instance hit test output UVs point to the places in the hit test
-            // texture where the output of the test is written for each tested sprite.
-            this.instanceHitTestOutputUvValues =
+            // The instance hit test UVs point to the places in the hit test texture
+            // where the output of the test is written.
+            this.instanceHitTestUvValues =
                 this.hitTestAttributeMapper.generateInstanceSwatchUvValues();
-            // Just before running a hit test, the specific list of candidate Sprites'
-            // swatch UVs will be copied here, so that when the shader runs, it'll
-            // know where to look for the previous and target values. The output UVs
-            // however do not change. The Nth sprite in the HitTestParameters's
-            // sprites array will always write to the Nth texel of the output
-            // framebuffer.
-            this.instanceHitTestInputUvValues =
-                new Float32Array(this.instanceSwatchUvValues.length);
-            // To accommodate the possibility of performing a hit test on all sprites
-            // that have swatches, we allocate enough space for the index and the
-            // active flag of a full complement. In the hit test shader, these values
-            // will be mapped to a vec2 attribute.
-            this.instanceHitTestInputIndexActiveValues =
-                new Float32Array(attributeMapper.totalSwatches * 2);
-            // The hitTestOutputValuesFramebuffer is written to by the hit test
-            // command.
-            this.hitTestOutputValuesFramebuffer = regl$1.framebuffer({
+            // The hitTestValuesFramebuffer is written to by the hit test command and
+            // read from by sampling.
+            this.hitTestValuesFramebuffer = regl$1.framebuffer({
                 color: regl$1.texture({
                     width: hitTestAttributeMapper.textureWidth,
                     height: hitTestAttributeMapper.textureHeight,
@@ -16719,12 +16035,8 @@ void main () {
                 }),
                 depthStencil: false,
             });
-            // The hit test command writes floating point values encoded as RGBA
-            // components, which we then decode back into floats.
-            this.hitTestOutputValues = new Uint8Array(hitTestAttributeMapper.dataChannelCount *
+            this.hitTestValues = new Uint8Array(hitTestAttributeMapper.dataChannelCount *
                 hitTestAttributeMapper.totalSwatches);
-            this.hitTestOutputResults =
-                new Float32Array(hitTestAttributeMapper.totalSwatches);
             this.glyphMapper = new GlyphMapper(settings.glyphMapper);
             for (const glyph of settings.glyphs.split('')) {
                 this.glyphMapper.addGlyph(glyph);
@@ -16742,14 +16054,10 @@ void main () {
             });
             this.instanceSwatchUvBuffer = this.regl.buffer(this.instanceSwatchUvValues);
             this.instanceIndexBuffer = this.regl.buffer(this.instanceIndexValues);
-            this.instanceHitTestInputUvBuffer =
-                this.regl.buffer(this.instanceHitTestInputUvValues);
-            this.instanceHitTestInputIndexActiveBuffer =
-                this.regl.buffer(this.instanceHitTestInputIndexActiveValues);
-            this.instanceHitTestOutputUvBuffer =
-                this.regl.buffer(this.instanceHitTestOutputUvValues);
-            // Rebase UV array is long enough to accommodate all sprites, but usually
-            // it won't have this many.
+            this.instanceHitTestUvBuffer =
+                this.regl.buffer(this.instanceHitTestUvValues);
+            // Rebase UV array is long enough to accomodate all sprites, but usually it
+            // won't have this many.
             this.instanceRebaseUvValues =
                 new Float32Array(this.instanceSwatchUvValues.length);
             this.instanceRebaseUvBuffer = this.regl.buffer({
@@ -16763,130 +16071,94 @@ void main () {
             this.queueDraw();
         }
         /**
-         * Wrap lookups for devicePixelRatio to satisfy aggressive compilation.
+         * Schedule a hit test (if one is not already scheduled) and return a Promise
+         * that will be resolved with the results. Only one hit test can be scheduled
+         * at a time, so if there is one scheduled already, all we do here is
+         * overwrite the parameters so that when the hit test runs, it reports based
+         * on the most recent coordinates.
          */
-        getDevicePixelRatio() {
-            return typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-        }
-        /**
-         * Initialize the scale and offset of the Scene if possible. If the canvas has
-         * zero width or height, then the scale and offset will not be initialized.
-         */
-        initView() {
-            if (this.isViewInitialized) {
-                return;
+        hitTest(x, y, width = 0, height = 0, inclusive = true) {
+            this.hitTestParameters.x = x;
+            this.hitTestParameters.y = y;
+            this.hitTestParameters.width = width;
+            this.hitTestParameters.height = height;
+            this.hitTestParameters.inclusive = inclusive;
+            // If a promise already exists, return that. Only the last hitTest's
+            // coordinates will be tested.
+            if (this.hitTestPromise) {
+                return this.hitTestPromise;
             }
-            const { width, height } = this.canvas.getBoundingClientRect();
-            if (!width || !height) {
-                return;
-            }
-            this.lastDevicePixelRatio = this.getDevicePixelRatio();
-            this.canvas.width = width * this.lastDevicePixelRatio;
-            this.canvas.height = height * this.lastDevicePixelRatio;
-            // Initialize scale and offset to put world 0,0 in the center.
-            const defaultScale = Math.min(width, height) || Math.max(width, height) ||
-                Math.min(window.innerWidth, window.innerHeight);
-            this.scale.x = defaultScale;
-            this.scale.y = defaultScale;
-            this.offset.x = width / 2;
-            this.offset.y = height / 2;
-            this.isViewInitialized = true;
-        }
-        /**
-         * The view is determined by the scale and offset. When any component of scale
-         * or offset is changed, this method is invoked.
-         */
-        handleViewChange() {
-            this.isViewInitialized = true;
-            this.queueDraw();
-        }
-        /**
-         * Adjust the offset and canvas properties to match the updated canvas shape.
-         * This operation does not affect the scale of the Scene, the relationship
-         * between world coordinate size and pixels.
-         *
-         * The optional fixedCanvasPoint will remain stationary before and after the
-         * resizing operation. For example, (0,0) would preserve the top left corner.
-         * If left unspecified, the center point will be preserved.
-         *
-         * @param fixedCanvasPoint Point in canvas coordinates which remains fixed
-         * after resize (defaults to center).
-         */
-        resize(fixedCanvasPoint) {
-            // Initialize view if it hasn't been initialized already.
-            if (!this.isViewInitialized) {
-                this.initView();
-                return;
-            }
-            if (!this.lastDevicePixelRatio) {
-                throw new InternalError('initView must set lastDevicePixelRatio');
-            }
-            const previousWidth = this.canvas.width / this.lastDevicePixelRatio;
-            const previousHeight = this.canvas.height / this.lastDevicePixelRatio;
-            fixedCanvasPoint =
-                fixedCanvasPoint || { x: previousWidth / 2, y: previousHeight / 2 };
-            // Avoid NaN on division by checking first.
-            const proportionX = previousWidth > 0 ? fixedCanvasPoint.x / previousWidth : .5;
-            const proportionY = previousHeight > 0 ? fixedCanvasPoint.y / previousHeight : .5;
-            const { width: rectWidth, height: rectHeight } = this.canvas.getBoundingClientRect();
-            this.lastDevicePixelRatio = this.getDevicePixelRatio();
-            this.canvas.width = rectWidth * this.lastDevicePixelRatio;
-            this.canvas.height = rectHeight * this.lastDevicePixelRatio;
-            this.offset.x += proportionX * (rectWidth - previousWidth);
-            this.offset.y += proportionY * (rectHeight - previousHeight);
-            this.queueDraw();
-        }
-        /**
-         * A hit test determines which Sprites from a candidate list intersect a
-         * provided box in pixel coordinates relative to the canvas.
-         */
-        hitTest(hitTestParameters) {
-            const { sprites, x, y, width, height, inclusive } = hitTestParameters;
-            if (!Array.isArray(sprites)) {
-                throw new Error('Hit testing requires an array of candidate sprites');
-            }
-            if (isNaN(x) || isNaN(y)) {
-                throw new Error('Hit testing requires numeric x and y coordinates');
-            }
-            if ((width !== undefined && isNaN(width)) ||
-                (height !== undefined && isNaN(height))) {
-                throw new Error('If specified, width and height must be numeric');
-            }
-            this.hitTestParameters = {
-                sprites,
-                x,
-                y,
-                width: width || 0,
-                height: height || 0,
-                inclusive: inclusive === undefined || !!inclusive,
+            // Set up the hit test promise and capture its callback functions.
+            let hitTestCallbacks;
+            this.hitTestPromise = new Promise((resolve, reject) => {
+                hitTestCallbacks = { resolve, reject };
+            });
+            // Set up the hit test task to be scheduled by WorkScheduler.
+            const hitTestTask = {
+                id: this.hitTestTaskId,
+                callback: () => {
+                    try {
+                        const result = this.performHitTest();
+                        hitTestCallbacks.resolve(result);
+                    }
+                    catch (err) {
+                        hitTestCallbacks.reject(err);
+                    }
+                    finally {
+                        delete this.hitTestPromise;
+                    }
+                }
             };
-            // Short-circuit if there are no candidate sprites to test.
-            if (!sprites.length) {
-                return new Float32Array(0);
+            // Set up cancellation procedure.
+            this.hitTestPromise.cancel = () => {
+                this.workScheduler.unscheduleTask(hitTestTask);
+                delete this.hitTestPromise;
+                hitTestCallbacks.reject(new Error('HitTest Cancelled.'));
+            };
+            // Schedule a hit test which will resolve the promise.
+            this.workScheduler.scheduleUniqueTask(hitTestTask);
+            return this.hitTestPromise;
+        }
+        performHitTest() {
+            this.hitTestCommand();
+            // TODO(jimbo): This read takes 50+ ms for 200k sprites. Speed up!
+            this.regl.read({
+                x: 0,
+                y: 0,
+                width: this.hitTestAttributeMapper.textureWidth,
+                height: this.hitTestAttributeMapper.textureHeight,
+                data: this.hitTestValues,
+                framebuffer: this.hitTestValuesFramebuffer,
+            });
+            const hits = [];
+            for (let index = 0; index < this.instanceCount; index++) {
+                if (this.hitTestValues[index * 4] > 0) {
+                    const sprite = this.sprites[index];
+                    const properties = sprite[InternalPropertiesSymbol];
+                    if (properties.lifecyclePhase !== LifecyclePhase.Removed) {
+                        hits.push(this.sprites[index]);
+                    }
+                }
             }
-            // Perform the real hit test work.
-            runHitTest(this);
-            // Return results. Note that this is a .subarray(), not a .slice(), which
-            // would copy the results. This is faster because it doesn't require a
-            // memory operation, but it means the recipient needs to make use of it
-            // immediately before the next hit test overwrites the results.
-            // TODO(jimbo): Consider adding an option to copy results for safety.
-            return this.hitTestOutputResults.subarray(0, sprites.length);
+            return {
+                parameters: this.hitTestParameters,
+                hits,
+            };
         }
         doDraw() {
-            // Initialize view if it hasn't been already.
-            this.initView();
             const currentTimeMs = this.elapsedTimeMs();
-            this.drawCommand();
-            if (this.toDrawTsRange.isDefined) {
+            try {
+                this.drawCommand();
+            }
+            finally {
                 this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
-                this.queueDraw(false);
+                if (this.toDrawTsRange.isDefined) {
+                    this.queueDraw(false);
+                }
             }
         }
         queueDraw(beginImmediately = true) {
-            this.queueTask(this.drawTaskId, () => {
-                this.doDraw();
-            }, beginImmediately);
+            this.queueTask(this.drawTaskId, () => this.doDraw(), beginImmediately);
         }
         /**
          * Get a snapshot of the canvas by drawing to it then immediately asking for
@@ -16894,10 +16166,9 @@ void main () {
          */
         snapshot() {
             return __awaiter(this, void 0, void 0, function* () {
+                this.drawCommand();
                 return new Promise((resolve, reject) => {
-                    this.canvas.toBlob(blob => {
-                        blob ? resolve(blob) : reject(blob);
-                    });
+                    this.canvas.toBlob(blob => blob ? resolve(blob) : reject(blob));
                 });
             });
         }
@@ -16905,22 +16176,18 @@ void main () {
          * View matrix converts world units into view (pixel) coordinates.
          */
         getViewMatrix() {
-            if (!this.lastDevicePixelRatio) {
-                throw new InternalError('initView must set lastDevicePixelRatio');
-            }
-            const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
             return [
                 // Column 0.
-                this.scale.x * scaleFactor,
+                4 * this.scale.x,
                 0,
                 0,
                 // Column 1.
                 0,
-                this.scale.y * -scaleFactor,
+                -4 * this.scale.y,
                 0,
                 // Column 2.
-                this.offset.x * scaleFactor,
-                this.offset.y * scaleFactor,
+                4 * this.offset.x,
+                4 * this.offset.y,
                 1,
             ];
         }
@@ -16929,13 +16196,12 @@ void main () {
          * vertex shader.
          */
         getViewMatrixScale() {
-            if (!this.lastDevicePixelRatio) {
-                throw new InternalError('initView must set lastDevicePixelRatio');
-            }
-            const scaleFactor = CLIP_SPACE_RANGE * this.lastDevicePixelRatio;
-            const scaleX = this.scale.x * scaleFactor;
-            const scaleY = this.scale.y * scaleFactor;
-            return [scaleX, scaleY, 1 / scaleX, 1 / scaleY];
+            return [
+                4 * this.scale.x,
+                4 * this.scale.y,
+                .25 / this.scale.x,
+                .25 / this.scale.y,
+            ];
         }
         /**
          * Projection matrix converts view (pixel) coordinates into clip space.
@@ -16970,8 +16236,7 @@ void main () {
                     this.sprites.length :
                     undefined;
             }
-            // Scan the removed index range for the next available index and return
-            // it.
+            // Scan the removed index range for the next available index and return it.
             const { lowBound, highBound } = this.removedIndexRange;
             for (let index = lowBound; index <= highBound; index++) {
                 const sprite = this.sprites[index];
@@ -16990,7 +16255,7 @@ void main () {
             }
             // This signals a state maintenance bug. Somehow the removed index range
             // expanded to cover a range in which there are no removed sprites.
-            throw new InternalError('No removed sprites found in removed index range');
+            throw new Error('No removed sprites found in removed index range.');
         }
         createSprite() {
             const sprite = Object.seal(new SpriteImpl(this));
@@ -16998,18 +16263,14 @@ void main () {
                 (!this.removedIndexRange.isDefined &&
                     this.sprites.length >= this.attributeMapper.totalSwatches)) {
                 // Either there are already sprites queued and waiting, or there is
-                // insufficient swatch capacity remaining. Either way, we need to add
-                // this one to the queue.
+                // insufficient swatch capacity remaining. Either way, we need to add this
+                // one to the queue.
                 this.waitingSprites.push(sprite);
             }
             else {
                 // Since there's available capacity, assign this sprite to the next
                 // available index.
-                const nextIndex = this.getNextIndex();
-                if (nextIndex === undefined) {
-                    throw new InternalError('Next index undefined despite available capacity');
-                }
-                this.assignSpriteToIndex(sprite, nextIndex);
+                this.assignSpriteToIndex(sprite, this.getNextIndex());
             }
             return sprite;
         }
@@ -17020,9 +16281,9 @@ void main () {
             const properties = sprite[InternalPropertiesSymbol];
             if (properties.lifecyclePhase !== LifecyclePhase.Created) {
                 // This error indicates a bug in the logic handling Created (waiting)
-                // sprites. Only Sprites which have never been assigned indices should
-                // be considered for assignment.
-                throw new InternalError('Only sprites in the Created phase can be assigned indices');
+                // sprites. Only Sprites which have never been assigned indices should be
+                // considered for assignment.
+                throw new Error('Only sprites in the Created phase can be assigned indices');
             }
             const { valuesPerSwatch } = this.attributeMapper;
             const dataView = this.targetValuesArray.subarray(index * valuesPerSwatch, (index + 1) * valuesPerSwatch);
@@ -17046,32 +16307,19 @@ void main () {
          */
         removeSprite(sprite) {
             if (sprite.isRemoved) {
-                throw new InternalError('Sprite can be removed only once');
+                throw new Error('Sprite can be removed only once.');
             }
             const properties = sprite[InternalPropertiesSymbol];
             if (properties.index === this.instanceCount - 1) {
                 // In the case where the removed sprite happens to be the one at the end
                 // of the list, decrement the instance count to compensate. In any other
                 // case, the degenerate sprite will be left alone, having had zeros
-                // flashed to its swatch values.
+                // flashed to its swatches.
                 this.instanceCount--;
             }
             properties.lifecyclePhase = LifecyclePhase.Removed;
-            if (properties.spriteView) {
-                // SpriteView instances are passed to user-land callbacks with the
-                // expectation that those instances are not kept outside of the scope of
-                // the callback function. But it is not possible to force the user to
-                // abide this expectation. The user could keep a reference to the
-                // SpriteView by setting a variable whose scope is outside the callback.
-                // So here, we forcibly dissociate the SpriteView with its underlying
-                // swatch. That way, if, for any reason, the SpriteView is used later,
-                // it will throw.
-                properties.spriteView[DataViewSymbol] =
-                    undefined;
-            }
-            if (properties.index !== undefined) {
-                this.removedIndexRange.expandToInclude(properties.index);
-            }
+            properties.spriteView[DataViewSymbol] = undefined;
+            this.removedIndexRange.expandToInclude(properties.index);
         }
         /**
          * Helper method to queue a run method.
@@ -17080,55 +16328,60 @@ void main () {
             if (!this.workScheduler.isScheduledId(taskId)) {
                 this.workScheduler.scheduleTask({
                     id: taskId,
-                    callback: runMethod,
+                    callback: runMethod.bind(this),
                     beginImmediately,
                 });
             }
         }
         queueRebase() {
-            this.queueTask(this.rebaseTaskId, () => {
-                runRebase(this);
-            });
+            this.queueTask(this.rebaseTaskId, () => runRebase(this));
         }
         /**
          * This method schedules runAssignWaiting to be invoked if it isn't already.
-         * It uses available swatch capacity to take waiting sprites out of the queue.
          */
         queueAssignWaiting() {
-            const runMethod = (remaining) => {
-                runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
-            };
-            this.queueTask(this.runAssignWaitingTaskId, runMethod);
+            this.queueTask(this.runAssignWaitingTaskId, this.runAssignWaiting);
+        }
+        /**
+         * Use available swatch capacity to take waiting sprites out of the queue.
+         */
+        runAssignWaiting(remaining) {
+            return runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
         }
         /**
          * This method schedules runCallbacks to be invoked if it isn't already.
          */
         queueRunCallbacks() {
-            const runMethod = (remaining) => {
-                runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
-            };
-            this.queueTask(this.runCallbacksTaskId, runMethod);
+            this.queueTask(this.runCallbacksTaskId, this.runCallbacks);
+        }
+        /**
+         * Method to run callbacks for sprites that have them. This should be invoked
+         * by the WorkScheduler.
+         */
+        runCallbacks(remaining) {
+            return runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
         }
         /**
          * This method schedules a task to remove sprites that have been marked for
-         * removal. The task looks for sprites that have been marked for removal and
+         * removal.
+         */
+        queueRemovalTask() {
+            this.queueTask(this.runRemovalTaskId, this.runRemoval);
+        }
+        /**
+         * This batch task looks for sprites that have been marked for removal and
          * whose arrival times have passed. Those sprites need to have their values
          * flashed to zero and to be marked for texture sync. That way, the swatch
          * that the sprite used to command can be reused for another sprite later.
          */
-        queueRemovalTask() {
-            const runMethod = (remaining) => {
-                runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
-            };
-            this.queueTask(this.runRemovalTaskId, runMethod);
+        runRemoval(remaining) {
+            return runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
         }
         queueTextureSync() {
-            this.queueTask(this.textureSyncTaskId, () => {
-                runTextureSync(this);
-            });
+            this.queueTask(this.textureSyncTaskId, () => runTextureSync(this));
         }
         createSelection() {
-            return new SelectionImpl(STEPS_BETWEEN_REMAINING_TIME_CHECKS, this);
+            return new SelectionImpl(STEPS_BETWEEN_REMAINING_TIME_CHECKS, this, this.workScheduler);
         }
         createTextSelection() {
             return new TextSelectionImpl(STEPS_BETWEEN_REMAINING_TIME_CHECKS, this, this.workScheduler, this.glyphMapper);
@@ -17178,15 +16431,6 @@ void main () {
             return this[SceneInternalSymbol].canvas;
         }
         /**
-         * Adjust offset and canvas properties to match updated canvas shape.
-         *
-         * @param fixedWorldPoint Optional world point to preserve relative to the
-         * canvas frame. Defaults to the world origin (0,0).
-         */
-        resize(fixedWorldPoint) {
-            this[SceneInternalSymbol].resize(fixedWorldPoint);
-        }
-        /**
          * This method returns the total elapsed time in milliseconds since the
          * renderer was constructed. Using regular JavaScript timestamps (milliseconds
          * since the Unix epoch) is not feasible because the values need to preserve
@@ -17203,11 +16447,14 @@ void main () {
             return this[SceneInternalSymbol].createSprite();
         }
         /**
-         * A hit test determines which Sprites from a candidate list intersect a
-         * provided box in pixel coordinates relative to the canvas.
+         * Given a pair of mouse coordinates relative to the drawable container,
+         * determine which Sprites' bounding boxes intersect that point and return
+         * them. If multiple hit tests are in flight simultaneously, the same promise
+         * may be returned and only the final specified set of coordinates will be
+         * used.
          */
-        hitTest(hitTestParameters) {
-            return this[SceneInternalSymbol].hitTest(hitTestParameters);
+        hitTest(x, y, width = 0, height = 0, inclusive = true) {
+            return this[SceneInternalSymbol].hitTest(x, y, width, height, inclusive);
         }
         /**
          * Provide a Selection object for mapping data points to sprites.

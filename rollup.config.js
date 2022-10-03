@@ -160,23 +160,21 @@ module.exports = cmdOptions => {
   const name = 'megaplot';
   const extend = true;
   const browserFormat = 'umd';
-  const fileName = `${name}-v${version}`;
+  const fileName = `megaplot-v${version}`;
 
-  // Browser ES2015 unminified, standalone. index.js is main in package.json
-  [`dist/index.js`, `dist/${fileName}.es2015.js`].forEach((file) => {
-    bundles.push(config({
-      output: {
-        format: browserFormat,
-        name,
-        extend,
-        file,
-        globals: {'regl': 'REGL'},
-      },
-      external: ['regl'],
-      visualize: true,
-      tsCompilerOptions: {target: 'es2015'},
-    }));
-  });
+  // Browser ES2015 unminified, standalone.
+  bundles.push(config({
+    output: {
+      format: browserFormat,
+      name,
+      extend,
+      file: `dist/${fileName}.es2015.js`,
+      globals: {'regl': 'REGL'},
+    },
+    external: ['regl'],
+    visualize: true,
+    tsCompilerOptions: {target: 'es2015'},
+  }));
 
   // Browser ES2015 minified, standalone.
   bundles.push(config({
