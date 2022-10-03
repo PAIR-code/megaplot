@@ -6689,4 +6689,4 @@ void main () {
     Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-//# sourceMappingURL=megaplot-v0.1.2.es2015.js.map
+//# sourceMappingURL=index.js.map
