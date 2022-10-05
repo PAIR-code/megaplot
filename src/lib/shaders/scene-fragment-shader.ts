@@ -25,7 +25,7 @@
  * 3. Based on the pixel's inside/outside/border designation, set the
  *    gl_FragColor or discard the pixel.
  *
- * Deterimining the pixel's signed distance requires interpolating between the
+ * Determining the pixel's signed distance requires interpolating between the
  * previous and target distance, each of which is computed and then mixed using
  * the supplied varyingT. This allows the sprite to 'morph' from one shape to
  * another smoothly over time.

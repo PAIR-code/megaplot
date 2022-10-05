@@ -44,7 +44,7 @@
  *  - Vertex coordinates + Instance world coordinates/dimensions ->
  *  - World coordinates -> View matrix ->
  *  - Pixel coordinates + Instance pixel coordinates/dimensions ->
- *    Projection maxtrix -> Clip space
+ *    Projection matrix -> Clip space
  */
 
 import {AttributeMapper} from '../attribute-mapper';
@@ -345,7 +345,7 @@ void main () {
   varyingVertexCoordinates *= (1. - varyingBorderThresholds.x);
 
   // Compute the sprite's aspect ratio and the inverse.
-  varyingAspectRatio = computeAspectRatio(computedSize);
+  varyingAspectRatio = computeAspectRatio(projectedSizePixel);
 
   // Compute the current position component attributes.
   vec2 currentPositionPixel = computeCurrentValue(
