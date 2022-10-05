@@ -150,8 +150,6 @@ function main() {
     word.end = TEXT.length;
   }
 
-  console.log(corpus);
-
   const textSelection = scene.createTextSelection<Word>();
 
   // Function to call when GUI options are changed.
