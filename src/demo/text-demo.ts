@@ -48,7 +48,7 @@ and also to look for bugs in the binding logic.
 
 ////////////////////////////////////////////////////////////////////////////////
 
-${Array(71).fill('').join(fragmentShader())}
+${Array(71).fill('').join(FRAGMENT_SHADER)}
 `;
 
 /**
