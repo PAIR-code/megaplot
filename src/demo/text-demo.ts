@@ -24,13 +24,32 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene} from '../index';
-import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
 
 import {TransformEvent} from './transform-event';
 
 require('./styles.css');
+
+import {fragmentShader} from '../lib/shaders/scene-fragment-shader';
+
+const FRAGMENT_SHADER = fragmentShader();
+
+const TEXT = `
+For testing, here we render a bunch of text where each word represents a datum.
+The text is taken from the Megaplot scene fragment shader, repeated 70 times.
+This produces a corpus of over 125 thousands words (sequences of non-spaces).
+
+By dragging the corpusOffset and/or corpusPercentage sliders, you can adjust
+how much of this corpus is rendered. Each change triggers a re-bind of the
+TextSelection, and so this represents a repeatable way to thrash the memory used
+by Megaplot in rendering labels. This can be used to test performance at scale
+and also to look for bugs in the binding logic.
+
+////////////////////////////////////////////////////////////////////////////////
+
+${Array(71).fill('').join(FRAGMENT_SHADER)}
+`;
 
 /**
  * Creates a repeating background that looks like graph paper by stacking two
@@ -57,6 +76,10 @@ function main() {
     container,
     defaultTransitionTimeMs: 0,
   });
+  scene.scale.x /= 4;
+  scene.scale.y /= 4;
+  scene.offset.x = 0;
+  scene.offset.y = 0;
 
   // Add frame rate stats panel.
   const stats = new Stats();
@@ -78,50 +101,56 @@ function main() {
   // Configuration option for dat.GUI settings.
   const settings = {
     transitionTimeMs: 250,
+    corpusOffset: 0,
+    corpusPercentage: 10,
     borderPlacement: 1,
     borderRadiusRelative: .1,
     maxBatchTimeMs: 20,
     align: 'left' as AlignmentOption,
     verticalAlign: 'middle' as VerticalAlignmentOption,
-    sort: 'ascending',
-    facet: 'type',
     borderColor: '#000000',
     fillColor: '#ffffff',
     clearBeforeUpdate: false,
   };
 
-  // As a synthetic data set, use the properties on the Window object.
-  const win = window as unknown as {[key: string]: unknown};
-
-  interface Property {
-    name: string;
-    type: string;
+  interface Word {
+    row: number;
+    col: number;
+    start: number;
+    end: number;
   }
 
-  const properties: Property[] = Object.keys(win).map((key) => {
-    return {
-      name: key,
-      type: typeof win[key],
-    };
-  });
+  let col = 0;
+  let row = 0;
+  let word: Word|undefined = undefined;
+  const corpus: Word[] = [];
 
-  interface Label {
-    x: number;
-    y: number;
-    text: string;
-    property: Property;
+  for (let pos = 0; pos < TEXT.length; pos++) {
+    const ch = TEXT.charAt(pos);
+
+    if (/\n/.test(ch)) {
+      row++;
+      col = 0;
+    }
+
+    if (!word) {
+      if (/\S/.test(ch)) {
+        word = {col, row, start: pos, end: NaN};
+        corpus.push(word);
+      }
+    } else if (/\s/.test(ch)) {
+      word.end = pos;
+      word = undefined;
+    }
+
+    col++;
   }
 
-  const labels = properties.map((property) => {
-    return {
-      x: 0,
-      y: 0,
-      text: `${property.name}: ${property.type}`,
-      property,
-    };
-  });
+  if (word) {
+    word.end = TEXT.length;
+  }
 
-  const textSelection = scene.createTextSelection<Label>();
+  const textSelection = scene.createTextSelection<Word>();
 
   // Function to call when GUI options are changed.
   function update() {
@@ -129,57 +158,18 @@ function main() {
       textSelection.clear();
     }
 
-    const facets = new Map<string, Label[]>();
+    const start = Math.ceil(corpus.length * settings.corpusOffset / 100);
+    const end =
+        start + Math.ceil(corpus.length * settings.corpusPercentage / 100);
+    const words = corpus.slice(start, end);
 
-    for (const label of labels) {
-      // Determine whether to face by type or first letter alphabetically.
-      let facetKey = '';
-      if (settings.facet === 'type') {
-        facetKey = label.property.type;
-      } else if (settings.facet === 'alpha') {
-        facetKey = label.property.name.charAt(0).toLowerCase();
-      }
-
-      // Add this label to the appropriate group.
-      let facetLabels = facets.get(facetKey);
-      if (!facetLabels) {
-        facetLabels = [];
-        facets.set(facetKey, facetLabels);
-      }
-      facetLabels.push(label);
-    }
-
-    // Place labels into columns for display.
-    let column = 0;
-    const facetKeys = [...facets.keys()].sort((a, b) => a.localeCompare(b));
-    for (const facetKey of facetKeys) {
-      // For each facetKey, collect the labels and sort them.
-      const facetLabels = facets.get(facetKey);
-
-      if (!facetLabels) {
-        throw new InternalError('Could not find labels for facet key');
-      }
-
-      facetLabels.sort(
-          (a, b) => a.text.localeCompare(b.text) *
-              (settings.sort === 'ascending' ? 1 : -1));
-
-      // Place each labels in the current column, vertically by sorted index.
-      facetLabels.forEach((label, index) => {
-        label.x = column * .1;
-        label.y = -index * .1;
-      });
-
-      // Increment column counter for next column.
-      const maxLength = d3.max(facetLabels.map(l => l.text.length));
-      column += (maxLength || 0) * .5 + 1;
-    }
+    const top = words[0].row;
 
     const borderColor = d3.color(settings.borderColor) as d3.RGBColor;
     const fillColor = d3.color(settings.fillColor) as d3.RGBColor;
 
     // Specify how text is determined based on data. Map alignment to settings.
-    textSelection.text((label) => label.text);
+    textSelection.text(({start, end}) => TEXT.substring(start, end));
     textSelection.align(() => settings.align);
     textSelection.verticalAlign(() => settings.verticalAlign);
 
@@ -188,21 +178,29 @@ function main() {
       s.SizeWorldWidth = .1;
       s.SizeWorldHeight = .1;
 
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
+      // Have sprites enter green.
+      s.BorderColorOpacity = 1;
+      s.FillColorR = 0;
+      s.FillColorG = 255;
+      s.FillColorR = 0;
+      s.FillColorOpacity = 1;
     });
 
-    // Fade out on exit.
+    // Turn red on exit.
     textSelection.onExit(s => {
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
+      s.BorderColorOpacity = 1;
+      s.FillColorR = 255;
+      s.FillColorG = 0;
+      s.FillColorB = 0;
+      s.FillColorOpacity = 1;
     });
 
     // On bind, update position and border properties based on settings.
-    textSelection.onBind((s, d) => {
+    textSelection.onBind((s, word) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
-      s.PositionWorld = d;
+      s.PositionWorldX = word.col * .05;
+      s.PositionWorldY = (word.row - top) * -.075;
 
       s.BorderPlacement = settings.borderPlacement;
       s.BorderRadiusRelative = settings.borderRadiusRelative;
@@ -211,7 +209,7 @@ function main() {
       s.FillColor = fillColor;
     });
 
-    textSelection.bind(labels.slice(0));
+    textSelection.bind(words);
   }
 
   const {workScheduler} = scene[SceneInternalSymbol];
@@ -224,16 +222,16 @@ function main() {
     top: 0,
   });
   gui.add(settings, 'transitionTimeMs', 0, 5000, 1);
+  gui.add(settings, 'corpusOffset', 0, 99, 1).onChange(update);
+  gui.add(settings, 'corpusPercentage', 1, 100, 1).onChange(update);
   gui.add(settings, 'maxBatchTimeMs', 1, 1000, 1).onChange(() => {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
-  gui.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
+  gui.add(settings, 'borderPlacement', 0, 1, .1);
   gui.add(settings, 'borderRadiusRelative', 0, 1, .1).onChange(update);
   gui.add(settings, 'align', ['left', 'center', 'right']).onChange(update);
   gui.add(settings, 'verticalAlign', ['top', 'middle', 'bottom'])
       .onChange(update);
-  gui.add(settings, 'sort', ['ascending', 'descending']).onChange(update);
-  gui.add(settings, 'facet', ['type', 'alpha']).onChange(update);
   gui.addColor(settings, 'borderColor').onChange(update);
   gui.addColor(settings, 'fillColor').onChange(update);
   gui.add(settings, 'clearBeforeUpdate');
