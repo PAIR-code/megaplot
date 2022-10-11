@@ -79,6 +79,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
+    exitOpacity: 0,
     staggerAnimation: true,
     flipZ: false,
     randomize: false,
@@ -226,9 +227,9 @@ function main() {
         .onExit((s) => {
           s.TransitionTimeMs = settings.transitionTimeMs;
 
-          // Fade in.
-          s.BorderColorOpacity = 0;
-          s.FillColorOpacity = 0;
+          // Fade out.
+          s.BorderColorOpacity = settings.exitOpacity;
+          s.FillColorOpacity = settings.exitOpacity;
         })
 
     selection;
@@ -262,6 +263,7 @@ function main() {
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+  gui.add(settings, 'exitOpacity', 0, 1, .25).onChange(update);
   gui.add(settings, 'staggerAnimation');
   gui.add(settings, 'flipZ').onChange(update);
   gui.add(settings, 'randomize').onChange(update);
