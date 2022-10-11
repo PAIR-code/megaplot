@@ -25,7 +25,7 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {Scene} from '../index';
+import {Scene, SpriteView} from '../index';
 import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 
@@ -149,17 +149,7 @@ function main() {
     const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
 
-    selection.onInit((s) => {
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
-    });
-
-    selection.onExit((s) => {
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
-    });
-
-    selection.onBind((s, index) => {
+    const placeSprite = (s: SpriteView, index: number) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
       if (settings.staggerAnimation && index < settings.total) {
@@ -221,7 +211,27 @@ function main() {
         s.BorderColor = TEXT_BORDER;
         s.FillColor = TEXT_FILL;
       }
-    });
+    };
+
+    selection
+        .onInit((s, index) => {
+          placeSprite(s, index);
+
+          // Fade in.
+          s.BorderColorOpacity = 0;
+          s.FillColorOpacity = 0;
+        })
+        .onEnter(placeSprite)
+        .onUpdate(placeSprite)
+        .onExit((s) => {
+          s.TransitionTimeMs = settings.transitionTimeMs;
+
+          // Fade in.
+          s.BorderColorOpacity = 0;
+          s.FillColorOpacity = 0;
+        })
+
+    selection;
 
     selection.bind(indices.slice(0, count * count));
   }
