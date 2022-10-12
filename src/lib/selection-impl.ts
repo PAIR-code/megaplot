@@ -78,7 +78,6 @@ export class SelectionImpl<T> implements Selection<T> {
   private bindingTask?: WorkTaskWithId;
   private clearingTask?: WorkTaskWithId;
 
-  private bindCallback?: SelectionCallback<T>;
   private initCallback?: SelectionCallback<T>;
   private enterCallback?: SelectionCallback<T>;
   private updateCallback?: SelectionCallback<T>;
@@ -92,11 +91,6 @@ export class SelectionImpl<T> implements Selection<T> {
       private readonly stepsBetweenChecks: number,
       private readonly coordinator: CoordinatorAPI,
   ) {}
-
-  onBind(bindCallback: SelectionCallback<T>) {
-    this.bindCallback = bindCallback;
-    return this;
-  }
 
   onInit(initCallback: SelectionCallback<T>) {
     this.initCallback = initCallback;
@@ -123,7 +117,7 @@ export class SelectionImpl<T> implements Selection<T> {
    * returns immediately, but queues an incremental task to be carried out by
    * the WorkScheduler.
    *
-   * Note that whereas the Selection API offers the user callbacks for onBind(),
+   * Note that whereas the Selection API offers the user callbacks for,
    * onInit(), onEnter(), onUpdate() and onExit(), the underlying Sprite API
    * offers only enter(), update() and exit(). To handle this mismatch, the
    * Sprite's update() callback must be used to invoke more than one of the
@@ -133,14 +127,6 @@ export class SelectionImpl<T> implements Selection<T> {
    *  - Selection::onEnter() - Sprite::update()
    *  - Selection::onUpdate() - Sprite::update()
    *  - Selection::onExit() - Sprite::exit()
-   *  - Selection::onBind() - Sprite::enter(), ::update() and ::exit().
-   *
-   * The Selection's onBind() callback, if specified, will be invoked
-   * immediately prior to every other callback. So for an entering datum, the
-   * invocation schedule is as follows:
-   *
-   *  - Sprite::enter() calls Selection::onBind() then Selection::onInit()
-   *  - Sprite::update() calls Selection::onBind() then Selection::onEnter()
    *
    * The underlying Sprite implementation ensures that its enter() callback will
    * be invoked before its update() callback. If both have been specified, they
@@ -184,6 +170,9 @@ export class SelectionImpl<T> implements Selection<T> {
 
     let lastEnterIndex = this.boundData.length;
 
+    // Capture callback functions immediately.
+    const {initCallback, enterCallback, updateCallback, exitCallback} = this;
+
     // Performs data binding for entering data while there's time remaining,
     // then returns whether there's more work to do.
     const enterTask = (remaining: RemainingTimeFn) => {
@@ -196,38 +185,20 @@ export class SelectionImpl<T> implements Selection<T> {
         this.boundData[index] = datum;
         this.sprites[index] = sprite;
 
-        const {initCallback, enterCallback, bindCallback} = this;
-
-        if (initCallback || bindCallback) {
-          // Schedule the Sprite's enter() callback to run. This will invoke
-          // the bindCallback and/or the initCallback, in that order.
+        if (initCallback) {
+          // Use Sprite's enter() to invoke initCallback.
           sprite.enter(spriteView => {
-            if (bindCallback) {
-              // The bindCallback, if present is always invoked when binding
-              // data, immediately before more specific callbacks if present.
-              bindCallback(spriteView, datum);
-            }
-            if (initCallback) {
-              initCallback(spriteView, datum);
-            }
+            initCallback(spriteView, datum);
             // NOTE: Because init() applies to the first frame of an entering
             // data point, it should never have a transition time.
             spriteView.TransitionTimeMs = 0;
           });
         }
 
-        if (enterCallback || bindCallback) {
-          // Schedule the Sprite's update() callback to run. This will invoke
-          // the bindCallback and/or the enterCallback, in that order.
+        if (enterCallback) {
+          // Use Sprite's update() to invoke enterCallback.
           sprite.update(spriteView => {
-            if (bindCallback) {
-              // The bindCallback, if present is always invoked when binding
-              // data, immediately before more specific callbacks if present.
-              bindCallback(spriteView, datum);
-            }
-            if (enterCallback) {
-              enterCallback(spriteView, datum);
-            }
+            enterCallback(spriteView, datum);
           });
         }
 
@@ -253,20 +224,10 @@ export class SelectionImpl<T> implements Selection<T> {
 
         this.boundData[index] = datum;
 
-        const {updateCallback, bindCallback} = this;
-
-        if (updateCallback || bindCallback) {
-          // Schedule the Sprite's update() callback to run. This will invoke
-          // the bindCallback and/or the updateCallback, in that order.
+        if (updateCallback) {
+          // Use the Sprite's update() to invoke the updateCallback.
           sprite.update(spriteView => {
-            if (bindCallback) {
-              // The bindCallback, if present is always invoked when binding
-              // data, immediately before more specific callbacks if present.
-              bindCallback(spriteView, datum);
-            }
-            if (updateCallback) {
-              updateCallback(spriteView, datum);
-            }
+            updateCallback(spriteView, datum);
           });
         }
 
@@ -301,16 +262,8 @@ export class SelectionImpl<T> implements Selection<T> {
           sprite.abandon();
 
         } else {
-          const {exitCallback, bindCallback} = this;
-
-          // Schedule the Sprite's exit() callback to run. This will invoke
-          // the bindCallback and/or the exitCallback, in that order.
+          // Use the Sprite's exit() to invoke the exitCallback.
           sprite.exit(spriteView => {
-            if (bindCallback) {
-              // The bindCallback, if present is always invoked when binding
-              // data, immediately before more specific callbacks if present.
-              bindCallback(spriteView, datum);
-            }
             if (exitCallback) {
               exitCallback(spriteView, datum);
             }
@@ -336,9 +289,9 @@ export class SelectionImpl<T> implements Selection<T> {
     };
 
     // Define a binding task which will be invoked by the WorkScheduler to
-    // incrementally carry out the prevously defined tasks.
+    // incrementally carry out the previously defined tasks.
     this.bindingTask = {
-      // Setting id to this ensures that there will be only one bindingTask
+      // Setting the id ensures that there will be only one bindingTask
       // associated with this object at a time. If the API user calls bind()
       // again before the previous task finishes, whatever work it had been
       // doing will be dropped for the new parameters.
@@ -385,10 +338,10 @@ export class SelectionImpl<T> implements Selection<T> {
   clear() {
     let step = 0;
 
-    // Get a reference to the currently specified exitCallback and bindCallback,
-    // if any. We do this now to ensure that later changes do not affect the way
-    // thate the previously bound sprites leave.
-    const {exitCallback, bindCallback} = this;
+    // Get a reference to the currently specified exitCallback, if any. We do
+    // this now to ensure that later changes do not affect the way that the
+    // previously bound sprites leave.
+    const {exitCallback} = this;
 
     // Performs exit data binding while there's time remaining, then returns
     // whether there's more work to do.
@@ -413,15 +366,8 @@ export class SelectionImpl<T> implements Selection<T> {
           sprite.abandon();
         } else {
           // Schedule the Sprite's exit() callback to run. This will invoke
-          // the bindCallback and/or the exitCallback, in that order. Even if
-          // neither bindCallback nor exitCallback are specified, we still need
-          // to call .exit() to mark the Sprite for removal.
+          // the exitCallback, if any.
           sprite.exit(spriteView => {
-            if (bindCallback) {
-              // The bindCallback, if present is always invoked when binding
-              // data, immediately before more specific callbacks if present.
-              bindCallback(spriteView, datum);
-            }
             if (exitCallback) {
               exitCallback(spriteView, datum);
             }
@@ -445,10 +391,8 @@ export class SelectionImpl<T> implements Selection<T> {
     // Define a clearing task which will be invoked by the WorkScheduler to
     // incrementally clear all data.
     this.clearingTask = {
-      // Setting id to this ensures that there will be only one bindingTask
-      // associated with this object at a time. If the API user calls bind()
-      // again before the previous task finishes, whatever work it had been
-      // doing will be dropped for the new parameters.
+      // Setting the id ensures that there will be only one clearingTask
+      // associated with this object at a time.
       id: this.clearingTaskId,
 
       // Perform as much of the clearing work as time allows. When finished,
