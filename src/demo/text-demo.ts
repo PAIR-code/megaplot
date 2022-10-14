@@ -130,8 +130,8 @@ function main() {
   let word: Word|undefined = undefined;
   const corpus: Word[] = [];
 
-  for (let pos = 0; pos < TEXT.length; pos++) {
-    const ch = TEXT.charAt(pos);
+  for (let index = 0; index < TEXT.length; index++) {
+    const ch = TEXT.charAt(index);
 
     if (/\n/.test(ch)) {
       row++;
@@ -140,11 +140,11 @@ function main() {
 
     if (!word) {
       if (/\S/.test(ch)) {
-        word = {col, row, start: pos, end: NaN};
+        word = {col, row, start: index, end: NaN};
         corpus.push(word);
       }
     } else if (/\s/.test(ch)) {
-      word.end = pos;
+      word.end = index;
       word = undefined;
     }
 

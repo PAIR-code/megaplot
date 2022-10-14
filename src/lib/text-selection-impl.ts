@@ -59,7 +59,7 @@ function setGlyphAttributes<T>(spriteView: SpriteView, glyph: TextGlyph<T>) {
   spriteView.Sides = 0;
   spriteView.ShapeTexture = glyph.coords;
   spriteView.PositionRelative = glyph.position;
-};
+}
 
 export class TextSelectionImpl<T> implements TextSelection<T> {
   private readonly selections: Selection<TextGlyph<T>>[] = [];
