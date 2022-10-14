@@ -53,6 +53,9 @@ document.body.style.backgroundImage = `
       <path fill="none" stroke="#058" stroke-opacity=".5" stroke-width=".5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
 
+const BLACK = [0, 0, 0, 1];
+const GREEN = [0, 255, 0, 1];
+
 function main() {
   // Configuration option for dat.GUI settings.
   const settings = {
@@ -60,12 +63,13 @@ function main() {
     count: 5,
     transitionTimeMs: 2000,
     paddingPx: 0,
-    maxBatchTimeMs: 20,
-    borderRadiusRelative: 0.5,
-    borderRadiusPx: 0,
-    borderPlacement: 1,
+    stepsBetweenChecks: 1,  // 500,
+    maxBatchTimeMs: 0,      // 20,
+    borderRadiusRelative: 0.25,
+    borderRadiusPx: 0.25,
+    borderPlacement: 0,
     positionRelative: 0,
-    positionMultiplier: 1.5,
+    positionMultiplier: 1,
     sizeMultiplier: 1,
     sizeAddPx: 0,
     geometricZoom: 0,
@@ -73,7 +77,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
-    exitOpacity: 0,
+    exitOpacity: 1,  // 0,
     staggerAnimation: true,
     flipZ: false,
     randomize: false,
@@ -110,6 +114,7 @@ function main() {
   scene.canvas.style.imageRendering = settings.pixelated ? 'pixelated' : 'auto';
 
   const {workScheduler} = scene[SceneInternalSymbol];
+  workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
 
   // Add frame rate stats panel.
   const stats = new Stats();
@@ -147,6 +152,9 @@ function main() {
     if (settings.clearBeforeUpdate) {
       selection.clear();
     }
+
+    // scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks =
+    // settings.stepsBetweenChecks;
 
     const count = settings.count;
     settings.total = count * count;
@@ -230,21 +238,23 @@ function main() {
         .onInit((s, index) => {
           placeSprite(s, index);
 
-          // Fade in.
-          s.BorderColorOpacity = 0;
-          s.FillColorOpacity = 0;
+          // Fade in from green.
+          s.BorderColor = GREEN;
+          s.BorderColorOpacity = settings.exitOpacity;
+          s.FillColor = GREEN;
+          s.FillColorOpacity = settings.exitOpacity;
         })
         .onEnter(placeSprite)
         .onUpdate(placeSprite)
         .onExit((s) => {
           s.TransitionTimeMs = settings.transitionTimeMs;
 
-          // Fade out.
+          // Fade to black.
+          s.BorderColor = BLACK;
           s.BorderColorOpacity = settings.exitOpacity;
+          s.FillColor = BLACK;
           s.FillColorOpacity = settings.exitOpacity;
-        })
-
-    selection;
+        });
 
     selection.bind(indices.slice(0, count * count));
   }
@@ -273,6 +283,7 @@ function main() {
     scene[SceneInternalSymbol].antialiasingFactor = settings.antialiasingFactor;
     scene[SceneInternalSymbol].queueDraw();
   });
+  systemFolder.add(settings, 'stepsBetweenChecks', 1, 1000, 1);
   systemFolder.add(settings, 'devicePixelRatio', 0.1, 2, .1).onChange(() => {
     scene.resize();
   });
