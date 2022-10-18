@@ -78,10 +78,10 @@ export class SelectionImpl<T> implements Selection<T> {
   private bindingTask?: WorkTaskWithId;
   private clearingTask?: WorkTaskWithId;
 
-  private initCallback?: SelectionCallback<T>;
-  private enterCallback?: SelectionCallback<T>;
-  private updateCallback?: SelectionCallback<T>;
-  private exitCallback?: SelectionCallback<T>;
+  private onInitCallback?: SelectionCallback<T>;
+  private onEnterCallback?: SelectionCallback<T>;
+  private onUpdateCallback?: SelectionCallback<T>;
+  private onExitCallback?: SelectionCallback<T>;
 
   /**
    * Create a new Selection which gets its Sprites from the provided Renderer,
@@ -92,23 +92,23 @@ export class SelectionImpl<T> implements Selection<T> {
       private readonly coordinator: CoordinatorAPI,
   ) {}
 
-  onInit(initCallback: SelectionCallback<T>) {
-    this.initCallback = initCallback;
+  onInit(onInitCallback: SelectionCallback<T>) {
+    this.onInitCallback = onInitCallback;
     return this;
   }
 
-  onEnter(enterCallback: SelectionCallback<T>) {
-    this.enterCallback = enterCallback;
+  onEnter(onEnterCallback: SelectionCallback<T>) {
+    this.onEnterCallback = onEnterCallback;
     return this;
   }
 
-  onUpdate(updateCallback: SelectionCallback<T>) {
-    this.updateCallback = updateCallback;
+  onUpdate(onUpdateCallback: SelectionCallback<T>) {
+    this.onUpdateCallback = onUpdateCallback;
     return this;
   }
 
-  onExit(exitCallback: SelectionCallback<T>) {
-    this.exitCallback = exitCallback;
+  onExit(onExitCallback: SelectionCallback<T>) {
+    this.onExitCallback = onExitCallback;
     return this;
   }
 
@@ -171,7 +171,8 @@ export class SelectionImpl<T> implements Selection<T> {
     let lastEnterIndex = this.boundData.length;
 
     // Capture callback functions immediately.
-    const {initCallback, enterCallback, updateCallback, exitCallback} = this;
+    const {onInitCallback, onEnterCallback, onUpdateCallback, onExitCallback} =
+        this;
 
     // Performs data binding for entering data while there's time remaining,
     // then returns whether there's more work to do.
@@ -185,20 +186,34 @@ export class SelectionImpl<T> implements Selection<T> {
         this.boundData[index] = datum;
         this.sprites[index] = sprite;
 
-        if (initCallback) {
-          // Use Sprite's enter() to invoke initCallback.
+        // The underlying Sprite API offers three methods for changing Sprite
+        // attributes: enter(), update() and exit(). Each method takes a
+        // user-provided callback which will be invoked asynchronously.
+        // Callbacks are guaranteed to be invoked in order. (See the API
+        // documentation in sprite.d.ts for more detail).
+        //
+        // In the case of an entering datum, we want to guarantee that the
+        // onInitCallback is invoked BEFORE the onEnterCallback. For this
+        // reason, we use the Sprite's .enter() method to schedule the
+        // onInitCallback since that has highest priority.
+        if (onInitCallback) {
+          // Use Sprite's enter() to invoke onInitCallback.
           sprite.enter(spriteView => {
-            initCallback(spriteView, datum);
+            onInitCallback(spriteView, datum);
             // NOTE: Because init() applies to the first frame of an entering
             // data point, it should never have a transition time.
             spriteView.TransitionTimeMs = 0;
           });
         }
 
-        if (enterCallback) {
-          // Use Sprite's update() to invoke enterCallback.
+        // Since we want to guarantee that the onInitCallback will is invoked
+        // before the onEnterCallback, and because we already used the Sprite's
+        // .enter() method to schedule the onInitCallback, here we use the
+        // Sprite's .update() method to schedule the onEnterCallback.
+        if (onEnterCallback) {
+          // Use Sprite's update() to invoke onEnterCallback.
           sprite.update(spriteView => {
-            enterCallback(spriteView, datum);
+            onEnterCallback(spriteView, datum);
           });
         }
 
@@ -224,10 +239,10 @@ export class SelectionImpl<T> implements Selection<T> {
 
         this.boundData[index] = datum;
 
-        if (updateCallback) {
-          // Use the Sprite's update() to invoke the updateCallback.
+        if (onUpdateCallback) {
+          // Use the Sprite's update() to invoke the onUpdateCallback.
           sprite.update(spriteView => {
-            updateCallback(spriteView, datum);
+            onUpdateCallback(spriteView, datum);
           });
         }
 
@@ -262,10 +277,10 @@ export class SelectionImpl<T> implements Selection<T> {
           sprite.abandon();
 
         } else {
-          // Use the Sprite's exit() to invoke the exitCallback.
+          // Use the Sprite's exit() to invoke the onExitCallback.
           sprite.exit(spriteView => {
-            if (exitCallback) {
-              exitCallback(spriteView, datum);
+            if (onExitCallback) {
+              onExitCallback(spriteView, datum);
             }
           });
         }
@@ -338,10 +353,10 @@ export class SelectionImpl<T> implements Selection<T> {
   clear() {
     let step = 0;
 
-    // Get a reference to the currently specified exitCallback, if any. We do
+    // Get a reference to the currently specified onExitCallback, if any. We do
     // this now to ensure that later changes do not affect the way that the
     // previously bound sprites leave.
-    const {exitCallback} = this;
+    const {onExitCallback} = this;
 
     // Performs exit data binding while there's time remaining, then returns
     // whether there's more work to do.
@@ -366,10 +381,10 @@ export class SelectionImpl<T> implements Selection<T> {
           sprite.abandon();
         } else {
           // Schedule the Sprite's exit() callback to run. This will invoke
-          // the exitCallback, if any.
+          // the onExitCallback, if any.
           sprite.exit(spriteView => {
-            if (exitCallback) {
-              exitCallback(spriteView, datum);
+            if (onExitCallback) {
+              onExitCallback(spriteView, datum);
             }
           });
         }
