@@ -458,6 +458,16 @@ export class SceneInternal implements Renderer {
    */
   private lastDevicePixelRatio?: number;
 
+  /**
+   * This constant controls how many steps in a loop should pass before asking
+   * the WorkScheduler how much time is remaining by invoking the remaining()
+   * callback function. This lets us replace a function call with a less
+   * expensive modulo check in the affected loops.
+   *
+   * Exposed here for testing/debugging purposes.
+   */
+  stepsBetweenRemainingTimeChecks = STEPS_BETWEEN_REMAINING_TIME_CHECKS;
+
   constructor(params: Partial<SceneSettings> = {}) {
     // Set up settings based on incoming parameters.
     const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
@@ -1110,7 +1120,7 @@ export class SceneInternal implements Renderer {
    */
   queueAssignWaiting() {
     const runMethod = (remaining: RemainingTimeFn) => {
-      runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+      runAssignWaiting(this, remaining, this.stepsBetweenRemainingTimeChecks);
     };
     this.queueTask(this.runAssignWaitingTaskId, runMethod);
   }
@@ -1120,7 +1130,7 @@ export class SceneInternal implements Renderer {
    */
   queueRunCallbacks() {
     const runMethod = (remaining: RemainingTimeFn) => {
-      runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+      runCallbacks(this, remaining, this.stepsBetweenRemainingTimeChecks);
     };
     this.queueTask(this.runCallbacksTaskId, runMethod);
   }
@@ -1134,7 +1144,7 @@ export class SceneInternal implements Renderer {
    */
   queueRemovalTask() {
     const runMethod = (remaining: RemainingTimeFn) => {
-      runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+      runRemoval(this, remaining, this.stepsBetweenRemainingTimeChecks);
     };
     this.queueTask(this.runRemovalTaskId, runMethod);
   }
@@ -1147,14 +1157,14 @@ export class SceneInternal implements Renderer {
 
   createSelection<T>(): Selection<T> {
     return new SelectionImpl<T>(
-        STEPS_BETWEEN_REMAINING_TIME_CHECKS,
+        this.stepsBetweenRemainingTimeChecks,
         this,
     );
   }
 
   createTextSelection<T>(): TextSelection<T> {
     return new TextSelectionImpl<T>(
-        STEPS_BETWEEN_REMAINING_TIME_CHECKS,
+        this.stepsBetweenRemainingTimeChecks,
         this,
         this.workScheduler,
         this.glyphMapper,

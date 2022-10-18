@@ -23,7 +23,7 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {Scene} from '../index';
+import {Scene, SpriteView} from '../index';
 import {SceneInternalSymbol} from '../lib/symbols';
 import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
 
@@ -51,20 +51,25 @@ and also to look for bugs in the binding logic.
 ${Array(71).fill('').join(FRAGMENT_SHADER)}
 `;
 
+// Hard coded enter/exit colors to make changes highly visible.
+const INIT_COLOR = [0, 255, 0, 1];
+const EXIT_COLOR = [255, 0, 0, 1];
+
 /**
  * Creates a repeating background that looks like graph paper by stacking two
  * SVG images. Together they form a 100x100 pixel grid with light blue lines
  * every 10px and thick blue lines every 100px. Useful for estimating aspects of
  * rendered sprites like size and border width.
  */
-document.body.style.background = `
+document.body.style.backgroundColor = '#012';
+document.body.style.backgroundImage = `
   url('data:image/svg+xml;base64,${btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" height="100" width="100">
-      <path fill="none" stroke="blue" stroke-opacity="1" stroke-width="1"
+      <path fill="none" stroke="#035" stroke-opacity="1" stroke-width="1"
         d="M 0,0.5 h 100 M 0.5,0 v 100" /></svg>`)}'),
   url('data:image/svg+xml;base64,${btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" height="10" width="10">
-      <path fill="none" stroke="blue" stroke-opacity="0.2" stroke-width="0.5"
+      <path fill="none" stroke="#035" stroke-opacity=".2" stroke-width=".5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
 
 function main() {
@@ -125,8 +130,8 @@ function main() {
   let word: Word|undefined = undefined;
   const corpus: Word[] = [];
 
-  for (let pos = 0; pos < TEXT.length; pos++) {
-    const ch = TEXT.charAt(pos);
+  for (let index = 0; index < TEXT.length; index++) {
+    const ch = TEXT.charAt(index);
 
     if (/\n/.test(ch)) {
       row++;
@@ -135,11 +140,11 @@ function main() {
 
     if (!word) {
       if (/\S/.test(ch)) {
-        word = {col, row, start: pos, end: NaN};
+        word = {col, row, start: index, end: NaN};
         corpus.push(word);
       }
     } else if (/\s/.test(ch)) {
-      word.end = pos;
+      word.end = index;
       word = undefined;
     }
 
@@ -165,38 +170,17 @@ function main() {
 
     const top = words[0].row;
 
+    // Create these color objects OUTSIDE of the placeSprite() callback. Calling
+    // d3.color() inside a callback would thrash memory as short-lived objects
+    // are created and then garbage collected.
     const borderColor = d3.color(settings.borderColor) as d3.RGBColor;
     const fillColor = d3.color(settings.fillColor) as d3.RGBColor;
-
     // Specify how text is determined based on data. Map alignment to settings.
     textSelection.text(({start, end}) => TEXT.substring(start, end));
     textSelection.align(() => settings.align);
     textSelection.verticalAlign(() => settings.verticalAlign);
 
-    // Initialize static properties.
-    textSelection.onInit(s => {
-      s.SizeWorldWidth = .1;
-      s.SizeWorldHeight = .1;
-
-      // Have sprites enter green.
-      s.BorderColorOpacity = 1;
-      s.FillColorR = 0;
-      s.FillColorG = 255;
-      s.FillColorR = 0;
-      s.FillColorOpacity = 1;
-    });
-
-    // Turn red on exit.
-    textSelection.onExit(s => {
-      s.BorderColorOpacity = 1;
-      s.FillColorR = 255;
-      s.FillColorG = 0;
-      s.FillColorB = 0;
-      s.FillColorOpacity = 1;
-    });
-
-    // On bind, update position and border properties based on settings.
-    textSelection.onBind((s, word) => {
+    const placeSprite = (s: SpriteView, word: Word) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
       s.PositionWorldX = word.col * .05;
@@ -207,7 +191,27 @@ function main() {
 
       s.BorderColor = borderColor;
       s.FillColor = fillColor;
-    });
+    };
+
+    textSelection
+        .onInit((s, word) => {
+          // Initialize static properties.
+          s.SizeWorldWidth = .1;
+          s.SizeWorldHeight = .1;
+
+          // Start in the right place.
+          placeSprite(s, word);
+
+          // Override color. Must be AFTER placeSprite() which also sets the
+          // fill color.
+          s.FillColor = INIT_COLOR;
+        })
+        .onEnter(placeSprite)
+        .onUpdate(placeSprite)
+        .onExit(s => {
+          s.TransitionTimeMs = settings.transitionTimeMs;
+          s.FillColor = EXIT_COLOR;
+        });
 
     textSelection.bind(words);
   }

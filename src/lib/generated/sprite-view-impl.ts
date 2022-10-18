@@ -397,20 +397,8 @@ export class SpriteViewImpl implements SpriteView {
     this[DataViewSymbol][29] = attributeValue;
   }
 
-  get FillBlend(): number {
-    return this[DataViewSymbol][30];
-  }
-
-  set FillBlend(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('FillBlend cannot be NaN');
-    }
-
-    this[DataViewSymbol][30] = attributeValue;
-  }
-
   get FillColorR(): number {
-    return this[DataViewSymbol][31];
+    return this[DataViewSymbol][30];
   }
 
   set FillColorR(attributeValue: number) {
@@ -418,11 +406,11 @@ export class SpriteViewImpl implements SpriteView {
       throw new RangeError('FillColorR cannot be NaN');
     }
 
-    this[DataViewSymbol][31] = attributeValue;
+    this[DataViewSymbol][30] = attributeValue;
   }
 
   get FillColorG(): number {
-    return this[DataViewSymbol][32];
+    return this[DataViewSymbol][31];
   }
 
   set FillColorG(attributeValue: number) {
@@ -430,11 +418,11 @@ export class SpriteViewImpl implements SpriteView {
       throw new RangeError('FillColorG cannot be NaN');
     }
 
-    this[DataViewSymbol][32] = attributeValue;
+    this[DataViewSymbol][31] = attributeValue;
   }
 
   get FillColorB(): number {
-    return this[DataViewSymbol][33];
+    return this[DataViewSymbol][32];
   }
 
   set FillColorB(attributeValue: number) {
@@ -442,11 +430,11 @@ export class SpriteViewImpl implements SpriteView {
       throw new RangeError('FillColorB cannot be NaN');
     }
 
-    this[DataViewSymbol][33] = attributeValue;
+    this[DataViewSymbol][32] = attributeValue;
   }
 
   get FillColorOpacity(): number {
-    return this[DataViewSymbol][34];
+    return this[DataViewSymbol][33];
   }
 
   set FillColorOpacity(attributeValue: number) {
@@ -454,55 +442,7 @@ export class SpriteViewImpl implements SpriteView {
       throw new RangeError('FillColorOpacity cannot be NaN');
     }
 
-    this[DataViewSymbol][34] = attributeValue;
-  }
-
-  get FillTextureU(): number {
-    return this[DataViewSymbol][35];
-  }
-
-  set FillTextureU(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureU cannot be NaN');
-    }
-
-    this[DataViewSymbol][35] = attributeValue;
-  }
-
-  get FillTextureV(): number {
-    return this[DataViewSymbol][36];
-  }
-
-  set FillTextureV(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureV cannot be NaN');
-    }
-
-    this[DataViewSymbol][36] = attributeValue;
-  }
-
-  get FillTextureWidth(): number {
-    return this[DataViewSymbol][37];
-  }
-
-  set FillTextureWidth(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureWidth cannot be NaN');
-    }
-
-    this[DataViewSymbol][37] = attributeValue;
-  }
-
-  get FillTextureHeight(): number {
-    return this[DataViewSymbol][38];
-  }
-
-  set FillTextureHeight(attributeValue: number) {
-    if (isNaN(attributeValue)) {
-      throw new RangeError('FillTextureHeight cannot be NaN');
-    }
-
-    this[DataViewSymbol][38] = attributeValue;
+    this[DataViewSymbol][33] = attributeValue;
   }
 
   set PositionWorld(value: (number[] | {x?: number; y?: number;})) {
@@ -974,59 +914,5 @@ export class SpriteViewImpl implements SpriteView {
     }
 
     throw new TypeError('FillColor setter argument must be an array or object');
-  }
-
-  set FillTexture(value: (number[] | {u?: number; v?: number; width?: number; height?: number;})) {
-    if (Array.isArray(value)) {
-      let anyComponentSet = false;
-      if ('0' in value) {
-        this.FillTextureU = value[0] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('1' in value) {
-        this.FillTextureV = value[1] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('2' in value) {
-        this.FillTextureWidth = value[2] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('3' in value) {
-        this.FillTextureHeight = value[3] as unknown as number;
-        anyComponentSet = true;
-      }
-      if (!anyComponentSet) {
-        throw new TypeError(
-            'No FillTexture component index values were found');
-      }
-      return;
-    }
-
-    if (typeof value === 'object') {
-      let anyComponentSet = false;
-      if ('u' in value) {
-        this.FillTextureU = value['u'] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('v' in value) {
-        this.FillTextureV = value['v'] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('width' in value) {
-        this.FillTextureWidth = value['width'] as unknown as number;
-        anyComponentSet = true;
-      }
-      if ('height' in value) {
-        this.FillTextureHeight = value['height'] as unknown as number;
-        anyComponentSet = true;
-      }
-      if (!anyComponentSet) {
-        throw new TypeError(
-            'No FillTexture component key values were found');
-      }
-      return;
-    }
-
-    throw new TypeError('FillTexture setter argument must be an array or object');
   }
 }

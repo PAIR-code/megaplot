@@ -55,20 +55,22 @@ scene.scale.y /= 2;
 
 const selection = scene.createSelection();
 
-selection.onBind((s, corner) => {
-  s.Sides = 1;
-  s.SizeWorld = .5;
-  s.PositionWorld = corner;
-  s.FillColor = DOT_COLOR;
-});
+selection
+  .onInit((s, corner) => {
+    // Set up persisted attributes.
+    s.PositionWorld = corner;
+    s.Sides = 1;
+    s.SizeWorld = .5;
+    s.FillColor = DOT_COLOR;
 
-selection.onInit((s, corner) => {
-  s.FillColorOpacity = 0;  // Initialize to 0 opacity (transparent).
-});
-
-selection.onExit((s, corner) => {
-  s.FillColorOpacity = 0;  // Fade out to 0 opacity.
-});
+    s.FillColorOpacity = 0;  // Initialize to 0 opacity (transparent).
+  })
+  .onEnter((s) => {
+    s.FillColorOpacity = 1;  // Fade in.
+  })
+  .onExit((s) => {
+    s.FillColorOpacity = 0;  // Fade out to 0 opacity.
+  });
 
 setTimeout(() => selection.bind(corners), 1000);
 

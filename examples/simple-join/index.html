@@ -18,7 +18,7 @@ const scene = new megaplot.Scene();
 
 const selection = scene.createSelection();
 
-selection.onBind(s => {
+selection.onInit(s => {
   s.PositionWorldX = 0;
   s.PositionWorldY = 0;
 
@@ -30,7 +30,7 @@ selection.onBind(s => {
   s.BorderColorB = 255;
   s.BorderColorOpacity = 1;
 
-  s.BorderRadiusWorld = 0.25;
+  s.BorderRadiusRelative = 0.25;
 
   s.Sides = 1;
 

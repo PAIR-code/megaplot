@@ -124,7 +124,6 @@ describe('Scene', () => {
       const selection = scene.createSelection<Datum>();
 
       expect(selection).toBeDefined();
-      expect(selection.onBind).toBeInstanceOf(Function);
       expect(selection.onInit).toBeInstanceOf(Function);
       expect(selection.onEnter).toBeInstanceOf(Function);
       expect(selection.onUpdate).toBeInstanceOf(Function);

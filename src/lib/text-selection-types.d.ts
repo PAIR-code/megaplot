@@ -30,16 +30,8 @@ export type VerticalAlignmentOption = 'top'|'middle'|'bottom';
  */
 export interface TextSelection<T> extends Selection<T> {
   /**
-   * Sets the callback to be invoked every time a sprite is bound to its datum.
-   * The bindCallback is invoked before the specific lifecycle phase callback
-   * (init, enter, update and exit).
-   */
-  onBind: (bindCallback: SelectionCallback<T>) => TextSelection<T>;
-
-  /**
-   * Sets the callback to be invoked before a sprite first appears. This is
-   * called after the onBind callback, and any update to the transition time
-   * will be ignored.
+   * Sets the callback to be invoked before a sprite first appears. Transition
+   * time, if set will be ignored.
    */
   onInit: (initCallback: SelectionCallback<T>) => TextSelection<T>;
 

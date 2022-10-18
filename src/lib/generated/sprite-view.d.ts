@@ -49,15 +49,10 @@ export interface SpriteView {
   BorderColorG: number;
   BorderColorB: number;
   BorderColorOpacity: number;
-  FillBlend: number;
   FillColorR: number;
   FillColorG: number;
   FillColorB: number;
   FillColorOpacity: number;
-  FillTextureU: number;
-  FillTextureV: number;
-  FillTextureWidth: number;
-  FillTextureHeight: number;
   PositionWorld: (number[] | {x?: number; y?: number;});
   SizeWorld: (number[] | {width?: number; height?: number;} | number);
   GeometricZoom: (number[] | {x?: number; y?: number;} | number);
@@ -69,5 +64,4 @@ export interface SpriteView {
   ShapeTexture: (number[] | {u?: number; v?: number; width?: number; height?: number;});
   BorderColor: (number[] | {r?: number; g?: number; b?: number; opacity?: number;});
   FillColor: (number[] | {r?: number; g?: number; b?: number; opacity?: number;});
-  FillTexture: (number[] | {u?: number; v?: number; width?: number; height?: number;});
 }

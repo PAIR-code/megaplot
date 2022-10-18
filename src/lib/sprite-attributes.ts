@@ -277,6 +277,11 @@ export const SPRITE_ATTRIBUTES: readonly SpriteAttribute[] = [
     isInterpolable: true,
   },
 
+  /**
+   * Color of the border. R, G and B components range 0-255. Opacity range is
+   * 0-1. This makes the destructuring setter consistent with D3 color objects
+   * and rgba() CSS attribute values.
+   */
   {
     attributeName: 'BorderColor',
     isInterpolable: true,
@@ -284,20 +289,13 @@ export const SPRITE_ATTRIBUTES: readonly SpriteAttribute[] = [
   },
 
   /**
-   * Fill blend determines whether the fill should be entirely defined by
-   * the fill color (0), or entirely by the sampled atlas texture (1).
+   * Color of the interior of the shape. R, G and B components range 0-255.
+   * Opacity range is 0-1. This makes the destructuring setter consistent with
+   * D3 color objects and rgba() CSS attribute values.
    */
-  {
-    attributeName: 'FillBlend',
-    isInterpolable: true,
-  },
   {
     attributeName: 'FillColor',
     isInterpolable: true,
     components: ['R', 'G', 'B', 'Opacity'],
-  },
-  {
-    attributeName: 'FillTexture',
-    components: ['U', 'V', 'Width', 'Height'],
   },
 ];

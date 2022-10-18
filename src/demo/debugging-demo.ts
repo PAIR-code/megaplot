@@ -25,7 +25,7 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {Scene} from '../index';
+import {Scene, SpriteView} from '../index';
 import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 
@@ -79,6 +79,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
+    exitOpacity: 0,
     staggerAnimation: true,
     flipZ: false,
     randomize: false,
@@ -149,17 +150,7 @@ function main() {
     const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
 
-    selection.onInit((s) => {
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
-    });
-
-    selection.onExit((s) => {
-      s.BorderColorOpacity = 0;
-      s.FillColorOpacity = 0;
-    });
-
-    selection.onBind((s, index) => {
+    const placeSprite = (s: SpriteView, index: number) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
       if (settings.staggerAnimation && index < settings.total) {
@@ -221,7 +212,27 @@ function main() {
         s.BorderColor = TEXT_BORDER;
         s.FillColor = TEXT_FILL;
       }
-    });
+    };
+
+    selection
+        .onInit((s, index) => {
+          placeSprite(s, index);
+
+          // Fade in.
+          s.BorderColorOpacity = 0;
+          s.FillColorOpacity = 0;
+        })
+        .onEnter(placeSprite)
+        .onUpdate(placeSprite)
+        .onExit((s) => {
+          s.TransitionTimeMs = settings.transitionTimeMs;
+
+          // Fade out.
+          s.BorderColorOpacity = settings.exitOpacity;
+          s.FillColorOpacity = settings.exitOpacity;
+        })
+
+    selection;
 
     selection.bind(indices.slice(0, count * count));
   }
@@ -252,6 +263,7 @@ function main() {
   gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
   gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+  gui.add(settings, 'exitOpacity', 0, 1, .25).onChange(update);
   gui.add(settings, 'staggerAnimation');
   gui.add(settings, 'flipZ').onChange(update);
   gui.add(settings, 'randomize').onChange(update);

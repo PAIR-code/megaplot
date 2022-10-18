@@ -50,8 +50,8 @@ export type SpriteViewCallback = (spriteView: SpriteView) => void;
  *
  * Once an exit callback has been set, the Sprite is marked for eventual
  * removal. Setting enter or update callbacks after this will not change the
- * fact that the Sprite is to be removed, however those callbacks will be
- * invoked.
+ * fact that the Sprite is to be removed. However, those late-added callbacks
+ * WILL be invoked.
  *
  * After the Sprite has been removed from use, additional calls to its enter(),
  * update() or exit() methods will throw an Error.
@@ -70,17 +70,38 @@ export type SpriteViewCallback = (spriteView: SpriteView) => void;
 export interface Sprite {
   /**
    * Set the enter callback, return the Sprite for optional chaining.
+   *
+   * This method does NOT set up an event handler. It schedules an asynchronous
+   * callback which to be be invoked once, as soon as possible, and then
+   * forgotten.
    */
   enter: (enterCallback: SpriteViewCallback) => Sprite;
 
   /**
    * Set the update callback, return the Sprite for optional chaining.
+   *
+   * This method does NOT set up an event handler. It schedules an asynchronous
+   * callback which to be be invoked once, as soon as possible, and then
+   * forgotten.
+   *
+   * If there's already a queued enterCallback, then that is guaranteed to be
+   * invoked before the updateCallback specified here, which will have to wait
+   * for a later animation frame.
    */
   update: (updateCallback: SpriteViewCallback) => Sprite;
 
   /**
    * Set the exit callback, return the Sprite for optional chaining. Once
-   * invoked, the Sprite is irreversibly marked for removal.
+   * the provided exitCallback is invoked, the Sprite is irreversibly marked for
+   * removal.
+   *
+   * This method does NOT set up an event handler. It schedules an asynchronous
+   * callback which to be be invoked once, as soon as possible, and then
+   * forgotten.
+   *
+   * If there's already a queued enterCallback or updateCallback, then those are
+   * guaranteed to be invoked before the exitCallback specified here, which will
+   * have to wait for a later animation frame.
    */
   exit: (exitCallback: SpriteViewCallback) => Sprite;
 
@@ -88,10 +109,10 @@ export interface Sprite {
    * Abandon the sprite if it has not been assigned a swatch. If the Sprite is
    * already active or removed, this method will throw an error.
    *
-   * Since the enter, update and exit callbacks are all asynchronous, and since
-   * the Sprite may be waiting in the Created state for resources to become
-   * available, there may be cases where the API user wishes to abandon the
-   * Sprite rather than have its callbacks invoked.
+   * Since the enterCallback, updateCallback and exitCallback are all invoked
+   * asynchronously, and since the Sprite may be waiting in the Created state
+   * for resources to become available, there may be cases where the API user
+   * wishes to abandon the Sprite rather than have its callbacks invoked.
    */
   abandon: () => void;
 

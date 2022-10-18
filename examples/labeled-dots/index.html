@@ -53,7 +53,7 @@ scene.scale.y /= 2;
 
 const selection = scene.createSelection();
 
-selection.onBind((s, corner) => {
+selection.onInit((s, corner) => {
   s.Sides = 1;
   s.SizeWorld = .5;
   s.PositionWorld = corner;
@@ -67,7 +67,7 @@ const textSelection = scene.createTextSelection();
 textSelection.text(({label}) => label);
 textSelection.align(() => 'center');
 
-textSelection.onBind((s, corner) => {
+textSelection.onInit((s, corner) => {
   s.SizeWorld = .2;
   s.PositionWorld = corner;
   s.FillColor = TEXT_COLOR;

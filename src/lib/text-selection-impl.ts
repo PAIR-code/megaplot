@@ -18,6 +18,7 @@
  * @fileoverview Implements the TextSelection API for SceneImpl.
  */
 
+import {SpriteView} from './generated/sprite-view';
 import {GlyphCoordinates, GlyphMapper} from './glyph-mapper';
 import {Renderer} from './renderer-types';
 import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
@@ -51,6 +52,15 @@ interface TextGlyph<T> {
   position: {x: number; y: number;};
 }
 
+/**
+ * Utility function called inside Sprite callbacks to set glyph shape.
+ */
+function setGlyphAttributes<T>(spriteView: SpriteView, glyph: TextGlyph<T>) {
+  spriteView.Sides = 0;
+  spriteView.ShapeTexture = glyph.coords;
+  spriteView.PositionRelative = glyph.position;
+}
+
 export class TextSelectionImpl<T> implements TextSelection<T> {
   private readonly selections: Selection<TextGlyph<T>>[] = [];
 
@@ -67,7 +77,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   private textCallback?:
       ((datum: T) => string) = ((datum: T) => `${datum as unknown as string}`);
 
-  private bindCallback?: SelectionCallback<T>;
   private initCallback?: SelectionCallback<T>;
   private enterCallback?: SelectionCallback<T>;
   private updateCallback?: SelectionCallback<T>;
@@ -103,11 +112,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
     return this;
   }
 
-  onBind(bindCallback: SelectionCallback<T>) {
-    this.bindCallback = bindCallback;
-    return this;
-  }
-
   onInit(initCallback: SelectionCallback<T>) {
     this.initCallback = initCallback;
     return this;
@@ -126,46 +130,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   onExit(exitCallback: SelectionCallback<T>) {
     this.exitCallback = exitCallback;
     return this;
-  }
-
-  private datumToGlyphs(datum: T): Array<TextGlyph<T>> {
-    const text = (this.textCallback ? this.textCallback.call(datum, datum) :
-                                      `${datum as unknown as string}`)
-                     .trim();
-
-    const align = (this.alignCallback && this.alignCallback(datum)) ||
-        DEFAULT_ALIGN_VALUE;
-    const verticalAlign =
-        (this.verticalAlignCallback && this.verticalAlignCallback(datum)) ||
-        DEFAULT_VERTICAL_ALIGN_VALUE;
-
-    const glyphs: Array<TextGlyph<T>> = [];
-
-    for (let i = 0; i < text.length; i++) {
-      let x: number;
-      if (align === 'left') {
-        x = (i + 1) * .5;
-      } else if (align === 'right') {
-        x = (i + 1 - text.length) * 0.5;
-      } else {
-        x = (i + .75 - text.length * 0.5) * 0.5;
-      }
-
-      let y: number;
-      if (verticalAlign === 'top') {
-        y = -0.5;
-      } else if (verticalAlign === 'bottom') {
-        y = 0.5;
-      } else {
-        y = 0;
-      }
-
-      const coords = this.glyphMapper.getGlyph(text.charAt(i));
-      if (coords) {
-        glyphs.push({datum, coords, position: {x, y}});
-      }
-    }
-    return glyphs;
   }
 
   bind(data: T[], keyFn?: (datum: T) => string) {
@@ -192,6 +156,85 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
     let lastEnterIndex = this.boundData.length;
 
+    // Capture properties immediately.
+    const {textCallback, alignCallback, verticalAlignCallback} = this;
+
+    // Utility function to convert a datum into a sequence of glyphs for
+    // binding.
+    const datumToGlyphs = (datum: T): Array<TextGlyph<T>> => {
+      const text =
+          (textCallback ? textCallback(datum) : `${datum as unknown as string}`)
+              .trim();
+      const align =
+          (alignCallback && alignCallback(datum)) || DEFAULT_ALIGN_VALUE;
+      const verticalAlign =
+          (verticalAlignCallback && verticalAlignCallback(datum)) ||
+          DEFAULT_VERTICAL_ALIGN_VALUE;
+
+      const glyphs: Array<TextGlyph<T>> = [];
+
+      for (let i = 0; i < text.length; i++) {
+        let x: number;
+        if (align === 'left') {
+          x = (i + 1) * .5;
+        } else if (align === 'right') {
+          x = (i + 1 - text.length) * 0.5;
+        } else {
+          x = (i + .75 - text.length * 0.5) * 0.5;
+        }
+
+        let y: number;
+        if (verticalAlign === 'top') {
+          y = -0.5;
+        } else if (verticalAlign === 'bottom') {
+          y = 0.5;
+        } else {
+          y = 0;
+        }
+
+        const coords = this.glyphMapper.getGlyph(text.charAt(i));
+        if (coords) {
+          glyphs.push({datum, coords, position: {x, y}});
+        }
+      }
+      return glyphs;
+    };
+
+    // Capture callback functions immediately.
+    const {initCallback, enterCallback, updateCallback, exitCallback} = this;
+
+    // Given a selection, set all of its callbacks based on the captured
+    // callback functions. Needs to be invoked for entering, updating and
+    // exiting data since the callbacks may have changed since the previous
+    // bind() invocation.
+    const setCallbacks = (selection: Selection<TextGlyph<T>>) => {
+      selection
+          .onInit((spriteView, glyph) => {
+            setGlyphAttributes(spriteView, glyph);
+            if (initCallback) {
+              initCallback(spriteView, glyph.datum);
+            }
+          })
+          .onEnter((spriteView, glyph) => {
+            setGlyphAttributes(spriteView, glyph);
+            if (enterCallback) {
+              enterCallback(spriteView, glyph.datum);
+            }
+          })
+          .onUpdate((spriteView, glyph) => {
+            setGlyphAttributes(spriteView, glyph);
+            if (updateCallback) {
+              updateCallback(spriteView, glyph.datum);
+            }
+          })
+          .onExit((spriteView, glyph) => {
+            setGlyphAttributes(spriteView, glyph);
+            if (exitCallback) {
+              exitCallback(spriteView, glyph.datum);
+            }
+          });
+    };
+
     // Performs enter data binding while there's time remaining, then returns
     // whether there's more work to do.
     const enterTask = (remaining: RemainingTimeFn) => {
@@ -204,42 +247,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
         this.boundData.push(datum);
         this.selections.push(selection);
 
-        selection.onInit((spriteView, glyph) => {
-          if (this.initCallback) {
-            this.initCallback(spriteView, glyph.datum);
-          }
-        });
+        setCallbacks(selection);
 
-        selection.onEnter((spriteView, glyph) => {
-          if (this.enterCallback) {
-            this.enterCallback(spriteView, glyph.datum);
-          }
-        });
-
-        selection.onUpdate((spriteView, glyph) => {
-          if (this.updateCallback) {
-            this.updateCallback(spriteView, glyph.datum);
-          }
-        });
-
-        selection.onExit((spriteView, glyph) => {
-          if (this.exitCallback) {
-            this.exitCallback(spriteView, glyph.datum);
-          }
-        });
-
-        selection.onBind((spriteView, glyph) => {
-          spriteView.Sides = 0;
-          spriteView.ShapeTexture = glyph.coords;
-
-          spriteView.PositionRelative = glyph.position;
-
-          if (this.bindCallback) {
-            this.bindCallback(spriteView, glyph.datum);
-          }
-        });
-
-        selection.bind(this.datumToGlyphs(datum));
+        selection.bind(datumToGlyphs(datum));
 
         if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
           break;
@@ -263,10 +273,12 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
         this.boundData[index] = datum;
 
-        selection.bind(this.datumToGlyphs(datum));
+        setCallbacks(selection);
+
+        selection.bind(datumToGlyphs(datum));
 
         if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-          return false;
+          break;
         }
       }
 
@@ -284,6 +296,8 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
         const selection = this.selections[index];
 
         index++;
+
+        setCallbacks(selection);
 
         selection.bind([]);
 
