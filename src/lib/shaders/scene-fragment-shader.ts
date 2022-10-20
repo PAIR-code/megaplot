@@ -405,15 +405,26 @@ void main () {
   contrib /= width;
   contrib = clamp(contrib, 0., 1.);
 
-  // Combine border and fill color contributions to create final color.
-  vec4 color = contrib.x * varyingBorderColor + contrib.y * varyingFillColor;
+  // Mix alpha channels according to their absolute contributions.
+  float alpha =
+    contrib.x * varyingBorderColor.a +
+    contrib.y * varyingFillColor.a;
 
-  if (color.a < .01) {
+  // Discard low-alpha pixels so that sprites that are out of their natural
+  // order (due to OrderZ) are visible underneath higher sprites.
+  if (alpha < .01) {
     discard;
     return;
   }
 
-  gl_FragColor = color;
+  // Mix RGB channels of border and fill according to their relative
+  // contributions to the total.
+  float total = contrib.x + contrib.y;
+  vec3 color =
+    contrib.x / total * varyingBorderColor.rgb +
+    contrib.y / total * varyingFillColor.rgb;
+
+  gl_FragColor = vec4(color, alpha);
 }
 `;
 }
