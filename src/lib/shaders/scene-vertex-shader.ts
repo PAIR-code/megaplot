@@ -161,6 +161,12 @@ varying vec2 varyingVertexCoordinates;
 varying vec2 varyingBorderThresholds;
 
 /**
+ * Scale value for converting edge distances to pixel distances is the fragment
+ * shader.
+ */
+varying float varyingEdgeToPixelScale;
+
+/**
  * Aspect ratio of the sprite's renderable area (XY) and their inverses (ZW).
  * One component of each pair will be 1. For the XY pair, the other component
  * be be greater than 1. and for the inverse pair it will be smaller.
@@ -325,20 +331,21 @@ void main () {
   // multiplier for clip-space, which goes from -1 to 1 in all dimensions.
   vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
 
+  varyingEdgeToPixelScale =
+    CLIP_SPACE_RANGE * EDGE_DISTANCE_DILATION /
+    min(projectedSizePixel.x, projectedSizePixel.y);
+
   // The fragment shader needs to know the threshold signed distances that
-  // indicate whether each pixel is inside the shape, in the boreder, or outside
+  // indicate whether each pixel is inside the shape, in the border, or outside
   // of the shape. A point right on the edge of the shape will have a distance
   // of 0. In edge-distance space, a distance of 1 would be the dead center of a
   // circle.
   float edgeDistance = currentBorderRadiusRelative + (
-      currentBorderRadiusPixel *
-      CLIP_SPACE_RANGE *
-      EDGE_DISTANCE_DILATION *
-      devicePixelRatio /
-      min(projectedSizePixel.x, projectedSizePixel.y)
-    );
+    currentBorderRadiusPixel * varyingEdgeToPixelScale * devicePixelRatio
+  );
+
   varyingBorderThresholds =
-    vec2(0., edgeDistance) + mix(0., -edgeDistance, currentBorderPlacement);
+    vec2(0., edgeDistance) - edgeDistance * currentBorderPlacement;
 
   // Shift the quad vertices outward to account for borders, which may expand
   // the bounding box of the sprite.

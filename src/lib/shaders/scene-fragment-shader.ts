@@ -79,6 +79,12 @@ varying vec2 varyingVertexCoordinates;
 varying vec2 varyingBorderThresholds;
 
 /**
+ * Scale value for converting edge distances to pixel distances is the fragment
+ * shader.
+ */
+varying float varyingEdgeToPixelScale;
+
+/**
  * Aspect ratio of the sprite's renderable area (XY) and their inverses (ZW).
  * One component of each pair will be 1. For the XY pair, the other component
  * be be greater than 1. and for the inverse pair it will be smaller.
@@ -375,10 +381,32 @@ void main () {
   float targetDistance = getDist(targetSides, varyingTargetShapeTexture);
   float signedDistance = mix(previousDistance, targetDistance, varyingT);
 
-  vec4 color =
-    signedDistance < varyingBorderThresholds.x ? vec4(0.) :
-    signedDistance < varyingBorderThresholds.y ? varyingBorderColor :
-    varyingFillColor;
+  // Create an antialiasing window around the determined signed distance with
+  // radius equal to 1 device pixel (diameter of 2 device pixels).
+  vec2 window = varyingEdgeToPixelScale * vec2(-1., 1.) + signedDistance;
+
+  // Width of the antialiasing window.
+  float width = window.y - window.x;
+
+  // Determine the contribution to the window of the border and fill.
+  vec2 contrib;
+
+  // Amount of space within the window that overlaps the border.
+  contrib.x =
+    min(varyingBorderThresholds.y, window.y) -
+    max(varyingBorderThresholds.x, window.x);
+
+  // Amount of space within the window that overlaps the fill color. May be
+  // negative, if no part of the window overlaps.
+  contrib.y = width - (varyingBorderThresholds.y - window.x);
+
+  // Normalize contributions to the antialiasing window's width and clamp to
+  // possible contribution range.
+  contrib /= width;
+  contrib = clamp(contrib, 0., 1.);
+
+  // Combine border and fill color contributions to create final color.
+  vec4 color = contrib.x * varyingBorderColor + contrib.y * varyingFillColor;
 
   if (color.a < .01) {
     discard;
