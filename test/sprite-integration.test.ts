@@ -140,12 +140,12 @@ describe('Sprite', () => {
       const img = await blobToImage(blob);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // For integration testing, we'll sample an area of the output that's 10%
+      // For integration testing, we'll sample an area of the output that's 5%
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
+      const sampleWidth = Math.ceil(copy.width * .05);
+      const sampleHeight = Math.ceil(copy.width * .05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Generate patches of solid green and magenta to compare to the rendered
@@ -156,8 +156,8 @@ describe('Sprite', () => {
       // Take a sample of the top left corner and compare it to the expected
       // solid green patch.
       const topLeftSample = ctx.getImageData(
-          0,
-          0,
+          5,
+          5,
           sampleWidth,
           sampleHeight,
       );
@@ -166,8 +166,8 @@ describe('Sprite', () => {
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
+          Math.floor(copy.width - sampleWidth - 5),
+          Math.floor(copy.height - sampleHeight - 5),
           sampleWidth,
           sampleHeight,
       );
@@ -341,12 +341,12 @@ describe('Sprite', () => {
       // the pixels of the final state to see if they match our expected
       // rendered pixels values.
 
-      // For integration testing, we'll sample an area of the output that's 10%
+      // For integration testing, we'll sample an area of the output that's 5%
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
+      const sampleWidth = Math.ceil(copy.width * .05);
+      const sampleHeight = Math.ceil(copy.width * .05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Define solid blue and yellow samples for comparison.
@@ -356,7 +356,7 @@ describe('Sprite', () => {
       // Take a sample from the middle top of the circle (blue border).
       const topCenterSample = ctx.getImageData(
           Math.floor(copy.width * .5 - sampleWidth * .5),
-          0,
+          1,
           sampleWidth,
           sampleHeight,
       );
@@ -364,7 +364,7 @@ describe('Sprite', () => {
 
       const bottomCenterSample = ctx.getImageData(
           Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height - sampleHeight),
+          Math.floor(copy.height - sampleHeight - 1),
           sampleWidth,
           sampleHeight,
       );
@@ -615,12 +615,12 @@ describe('Sprite', () => {
       const img = await blobToImage(blob);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // For integration testing, we'll sample an area of the output that's 10%
+      // For integration testing, we'll sample an area of the output that's 5%
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
+      const sampleWidth = Math.ceil(copy.width * .05);
+      const sampleHeight = Math.ceil(copy.width * .05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Generate patches of solid green and magenta to compare to the rendered
@@ -631,8 +631,8 @@ describe('Sprite', () => {
       // Take a sample of the top left corner and compare it to the expected
       // solid green patch.
       const topLeftSample = ctx.getImageData(
-          0,
-          0,
+          5,
+          5,
           sampleWidth,
           sampleHeight,
       );
@@ -641,8 +641,8 @@ describe('Sprite', () => {
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
+          Math.floor(copy.width - sampleWidth - 5),
+          Math.floor(copy.height - sampleHeight - 5),
           sampleWidth,
           sampleHeight,
       );

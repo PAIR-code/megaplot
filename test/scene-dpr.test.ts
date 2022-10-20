@@ -75,24 +75,21 @@ describe('Scene', () => {
         const img = await blobToImage(blob);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // For integration testing, we'll sample areas of the output that are
-        // 10% the width and height of the canvas size. This patch is a
+        // For integration testing, we'll sample areas of the output that are 5%
+        // the width and height of the canvas size. This patch is a
         // middle-ground between testing the whole image for pixel-perfect
         // rendering and testing a single pixel.
-        const sampleWidth = Math.ceil(copy.width * .1);
-        const sampleHeight = Math.ceil(copy.width * .1);
+        const sampleWidth = Math.ceil(copy.width * .05);
+        const sampleHeight = Math.ceil(copy.width * .05);
         const pixelCount = sampleWidth * sampleHeight;
 
-        // Generate patches of solid green and magenta to compare to the
-        // rendered pixels for correctness.
         const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-        const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
 
         // Take a sample of the top left corner and compare it to the expected
         // solid green patch.
         const topLeftSample = ctx.getImageData(
-            0,
-            0,
+            1,
+            1,
             sampleWidth,
             sampleHeight,
         );
@@ -101,13 +98,15 @@ describe('Scene', () => {
         // Take a sample of the bottom right corner and compare it to the
         // expected solid green patch.
         const bottomRightSample = ctx.getImageData(
-            Math.floor(copy.width - sampleWidth),
-            Math.floor(copy.height - sampleHeight),
+            Math.floor(copy.width - sampleWidth - 2),
+            Math.floor(copy.height - sampleHeight - 2),
             sampleWidth,
             sampleHeight,
         );
         expect(compareColorArrays(bottomRightSample.data, greenPatch))
             .toEqual(1);
+
+        const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
 
         // Lastly, sample a chunk of the middle of the image and compare it to
         // the solid magenta patch.
@@ -118,6 +117,8 @@ describe('Scene', () => {
             sampleHeight,
         );
         expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
+        /*/
+        //*/
 
         // Release REGL resources.
         scene[SceneInternalSymbol].regl.destroy();
