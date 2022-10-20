@@ -340,10 +340,8 @@ void main () {
   // of the shape. A point right on the edge of the shape will have a distance
   // of 0. In edge-distance space, a distance of 1 would be the dead center of a
   // circle.
-  float edgeDistance = currentBorderRadiusRelative + (
-    currentBorderRadiusPixel * varyingEdgeToPixelScale * devicePixelRatio
-  );
-
+  float edgeDistance = currentBorderRadiusRelative +
+    currentBorderRadiusPixel * varyingEdgeToPixelScale * devicePixelRatio;
   varyingBorderThresholds =
     vec2(0., edgeDistance) - edgeDistance * currentBorderPlacement;
 

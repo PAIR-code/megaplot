@@ -32,7 +32,6 @@
  */
 
 import {glsl} from './glsl-template-tag';
-import * as ShaderFunctions from './shader-functions';
 
 /**
  * Returns the code for the Scene's main rendering fragment shader program.
@@ -107,9 +106,6 @@ varying float varyingPreviousSides;
 varying float varyingTargetSides;
 varying vec4 varyingPreviousShapeTexture;
 varying vec4 varyingTargetShapeTexture;
-
-// Import utility shader functions).
-${ShaderFunctions.range()}
 
 const float PI = 3.1415926535897932384626433832795;
 
