@@ -42,7 +42,6 @@ const MAX_CAPACITY = MAX_COUNT * MAX_COUNT;
  * every 10px and thick blue lines every 100px. Useful for estimating aspects of
  * rendered sprites like size and border width.
  */
-document.body.style.backgroundColor = '#012';
 document.body.style.backgroundImage = `
   url('data:image/svg+xml;base64,${btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" height="100" width="100">
@@ -83,12 +82,16 @@ function main() {
     brush: false,
     clearBeforeUpdate: false,
     devicePixelRatio: window.devicePixelRatio || 1,
+    pixelated: true,
+    backgroundColor: '#001122',
     zoomX: true,
     zoomY: true,
     textBorder: '#ffffff',
     textFill: '#ff0000',
     textOpacity: 0.7,
   };
+
+  document.body.style.backgroundColor = settings.backgroundColor;
 
   // Locate the container element.
   const container = d3.select('body').node() as HTMLElement;
@@ -100,6 +103,8 @@ function main() {
     desiredSpriteCapacity: MAX_CAPACITY,
     devicePixelRatio: () => settings.devicePixelRatio,
   });
+
+  scene.canvas.style.imageRendering = settings.pixelated ? 'pixelated' : 'auto';
 
   const {workScheduler} = scene[SceneInternalSymbol];
 
@@ -266,6 +271,13 @@ function main() {
   });
   systemFolder.add(settings, 'zoomX');
   systemFolder.add(settings, 'zoomY');
+  systemFolder.add(settings, 'pixelated').onChange(() => {
+    scene.canvas.style.imageRendering =
+        settings.pixelated ? 'pixelated' : 'auto';
+  });
+  systemFolder.addColor(settings, 'backgroundColor').onChange(() => {
+    document.body.style.backgroundColor = settings.backgroundColor;
+  });
 
   const positionFolder = gui.addFolder('positioning');
   positionFolder.add(settings, 'paddingPx', -100, 100, 10).onChange(update);
