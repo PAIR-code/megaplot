@@ -98,8 +98,8 @@ describe('Scene', () => {
         // Take a sample of the bottom right corner and compare it to the
         // expected solid green patch.
         const bottomRightSample = ctx.getImageData(
-            Math.floor(copy.width - sampleWidth - 2),
-            Math.floor(copy.height - sampleHeight - 2),
+            Math.floor(copy.width - sampleWidth - 1),
+            Math.floor(copy.height - sampleHeight - 1),
             sampleWidth,
             sampleHeight,
         );
@@ -117,8 +117,6 @@ describe('Scene', () => {
             sampleHeight,
         );
         expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
-        /*/
-        //*/
 
         // Release REGL resources.
         scene[SceneInternalSymbol].regl.destroy();
