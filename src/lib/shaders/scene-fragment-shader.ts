@@ -419,10 +419,8 @@ void main () {
 
   // Mix RGB channels of border and fill according to their relative
   // contributions to the total.
-  float total = contrib.x + contrib.y;
-  vec3 color =
-    contrib.x / total * varyingBorderColor.rgb +
-    contrib.y / total * varyingFillColor.rgb;
+  vec2 rel = contrib / (contrib.x + contrib.y);
+  vec3 color = rel.x * varyingBorderColor.rgb + rel.y * varyingFillColor.rgb;
 
   gl_FragColor = vec4(color, alpha);
 }
