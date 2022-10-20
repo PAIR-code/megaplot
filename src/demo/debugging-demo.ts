@@ -42,36 +42,30 @@ const MAX_CAPACITY = MAX_COUNT * MAX_COUNT;
  * every 10px and thick blue lines every 100px. Useful for estimating aspects of
  * rendered sprites like size and border width.
  */
-document.body.style.background = `
+document.body.style.backgroundColor = '#012';
+document.body.style.backgroundImage = `
   url('data:image/svg+xml;base64,${btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" height="100" width="100">
-      <path fill="none" stroke="blue" stroke-opacity="1" stroke-width="1"
+      <path fill="none" stroke="#058" stroke-opacity="1" stroke-width="1"
         d="M 0,0.5 h 100 M 0.5,0 v 100" /></svg>`)}'),
   url('data:image/svg+xml;base64,${btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" height="10" width="10">
-      <path fill="none" stroke="blue" stroke-opacity="0.2" stroke-width="0.5"
+      <path fill="none" stroke="#058" stroke-opacity=".5" stroke-width=".5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
-
-/**
- * Border and fill color for text glyphs. Using D3 color objects to exercise
- * compatibility with D3.
- */
-const TEXT_BORDER = d3.color('black') as d3.RGBColor;
-const TEXT_FILL = d3.color('white') as d3.RGBColor;
 
 function main() {
   // Configuration option for dat.GUI settings.
   const settings = {
     total: 0,
-    count: 1,
+    count: 5,
     transitionTimeMs: 2000,
     paddingPx: 0,
     maxBatchTimeMs: 20,
-    borderRadiusRelative: 0.25,
-    borderRadiusPx: 0.25,
-    borderPlacement: 0,
+    borderRadiusRelative: 0.5,
+    borderRadiusPx: 0,
+    borderPlacement: 1,
     positionRelative: 0,
-    positionMultiplier: 1,
+    positionMultiplier: 1.5,
     sizeMultiplier: 1,
     sizeAddPx: 0,
     geometricZoom: 0,
@@ -91,6 +85,9 @@ function main() {
     devicePixelRatio: window.devicePixelRatio || 1,
     zoomX: true,
     zoomY: true,
+    textBorder: '#ffffff',
+    textFill: '#ff0000',
+    textOpacity: 0.7,
   };
 
   // Locate the container element.
@@ -150,6 +147,10 @@ function main() {
     const colorScale = d3.scaleLinear(colors).domain(
         d3.range(0, count * count, count * count / colors.length));
 
+    // Setup text border and fill colors.
+    const textBorderColor = d3.color(settings.textBorder) as d3.RGBColor;
+    const textFillColor = d3.color(settings.textFill) as d3.RGBColor;
+
     const placeSprite = (s: SpriteView, index: number) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
@@ -191,14 +192,15 @@ function main() {
       s.MinSizePixelWidth = settings.minSizePxWidth;
       s.MinSizePixelHeight = settings.minSizePxHeight;
 
-      s.Sides = settings.randomize ? Math.floor(Math.random() * 6) + 1 : 1;
+      s.Sides = settings.randomize ? Math.floor(Math.random() * 6) + 1 :
+                                     (i * count + j) % 6 + 1;
 
       s.FillColor = color;
 
       if (settings.showText) {
         const glyphIndex = settings.randomize ?
             Math.floor(Math.random() * glyphs.length) :
-            index % glyphs.length;
+            (index + 64) % glyphs.length;
         const glyph = glyphs[glyphIndex];
         const coords = glyphMapper.getGlyph(glyph);
 
@@ -209,8 +211,10 @@ function main() {
         s.Sides = 0;
         s.ShapeTexture = coords;
 
-        s.BorderColor = TEXT_BORDER;
-        s.FillColor = TEXT_FILL;
+        s.BorderColor = textBorderColor;
+        s.BorderColorOpacity = settings.textOpacity;
+        s.FillColor = textFillColor;
+        s.FillColorOpacity = settings.textOpacity;
       }
     };
 
@@ -246,37 +250,58 @@ function main() {
   });
   gui.add(settings, 'total', 0, MAX_COUNT * MAX_COUNT).listen();
   gui.add(settings, 'count', 1, MAX_COUNT, 1).onChange(update);
-  gui.add(settings, 'transitionTimeMs', 0, 5000, 1);
-  gui.add(settings, 'paddingPx', -100, 100, 10).onChange(update);
-  gui.add(settings, 'maxBatchTimeMs', 1, 1000, 1).onChange(() => {
+
+  const animationFolder = gui.addFolder('animation');
+  animationFolder.add(settings, 'transitionTimeMs', 0, 5000, 1);
+  animationFolder.add(settings, 'maxBatchTimeMs', 1, 1000, 1).onChange(() => {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
-  gui.add(settings, 'borderRadiusRelative', 0, 1, .05).onChange(update);
-  gui.add(settings, 'borderRadiusPx', 0, 100, 1).onChange(update);
-  gui.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
-  gui.add(settings, 'positionRelative', -3, 3, .1).onChange(update);
-  gui.add(settings, 'positionMultiplier', -3, 3, .1).onChange(update);
-  gui.add(settings, 'sizeMultiplier', 0.1, 3, .1).onChange(update);
-  gui.add(settings, 'sizeAddPx', 0, 100, 5).onChange(update);
-  gui.add(settings, 'geometricZoom', 0, 1, .01).onChange(update);
-  gui.add(settings, 'maxSizePxWidth', 0, 400, 10).onChange(update);
-  gui.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
-  gui.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
-  gui.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
-  gui.add(settings, 'exitOpacity', 0, 1, .25).onChange(update);
-  gui.add(settings, 'staggerAnimation');
-  gui.add(settings, 'flipZ').onChange(update);
-  gui.add(settings, 'randomize').onChange(update);
-  gui.add(settings, 'showText').onChange(update);
-  gui.add(settings, 'hitTestOnMove');
-  gui.add(settings, 'inclusive');
-  gui.add(settings, 'brush');
-  gui.add(settings, 'clearBeforeUpdate');
-  gui.add(settings, 'devicePixelRatio', 0.5, 3, .5).onChange(() => {
+  animationFolder.add(settings, 'staggerAnimation');
+  animationFolder.add(settings, 'exitOpacity', 0, 1, .25).onChange(update);
+  animationFolder.add(settings, 'clearBeforeUpdate');
+
+  const systemFolder = gui.addFolder('system');
+  systemFolder.add(settings, 'devicePixelRatio', 0.1, 2, .1).onChange(() => {
     scene.resize();
   });
-  gui.add(settings, 'zoomX');
-  gui.add(settings, 'zoomY');
+  systemFolder.add(settings, 'zoomX');
+  systemFolder.add(settings, 'zoomY');
+
+  const positionFolder = gui.addFolder('positioning');
+  positionFolder.add(settings, 'paddingPx', -100, 100, 10).onChange(update);
+  positionFolder.add(settings, 'positionRelative', -3, 3, .1).onChange(update);
+  positionFolder.add(settings, 'positionMultiplier', -3, 3, .1)
+      .onChange(update);
+  positionFolder.add(settings, 'flipZ').onChange(update);
+
+  const borderFolder = gui.addFolder('borders');
+  borderFolder.add(settings, 'borderRadiusRelative', 0, 1, .05)
+      .onChange(update);
+  borderFolder.add(settings, 'borderRadiusPx', 0, 100, 1).onChange(update);
+  borderFolder.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
+
+  const sizeFolder = gui.addFolder('size');
+  sizeFolder.add(settings, 'sizeMultiplier', 0.1, 3, .1).onChange(update);
+  sizeFolder.add(settings, 'sizeAddPx', 0, 100, 5).onChange(update);
+  sizeFolder.add(settings, 'geometricZoom', 0, 1, .01).onChange(update);
+  sizeFolder.add(settings, 'maxSizePxWidth', 0, 400, 10).onChange(update);
+  sizeFolder.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
+  sizeFolder.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
+  sizeFolder.add(settings, 'minSizePxHeight', 0, 400, 10).onChange(update);
+
+  const textFolder = gui.addFolder('text');
+  textFolder.addColor(settings, 'textBorder').onChange(update);
+  textFolder.addColor(settings, 'textFill').onChange(update);
+  textFolder.add(settings, 'textOpacity', 0.1, 1, 0.1).onChange(update);
+
+  const hitTestFolder = gui.addFolder('hit test');
+  hitTestFolder.add(settings, 'hitTestOnMove');
+  hitTestFolder.add(settings, 'inclusive');
+  hitTestFolder.add(settings, 'brush');
+
+  gui.add(settings, 'showText').onChange(update);
+  gui.add(settings, 'randomize').onChange(update);
+
   update();
   container.appendChild(gui.domElement);
 
