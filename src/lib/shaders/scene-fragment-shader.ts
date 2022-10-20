@@ -79,7 +79,7 @@ varying vec2 varyingVertexCoordinates;
 varying vec2 varyingBorderThresholds;
 
 /**
- * Scale value for converting edge distances to pixel distances is the fragment
+ * Scale value for converting edge distances to pixel distances in the fragment
  * shader.
  */
 varying float varyingEdgeToPixelScale;
