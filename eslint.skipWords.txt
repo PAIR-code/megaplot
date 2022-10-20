@@ -40,6 +40,7 @@ monospace
 mousemove
 minifiers
 ordinally
+pixelated
 readonly
 rebase
 rebasing
