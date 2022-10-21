@@ -394,18 +394,28 @@ void main () {
   // Determine the contribution to the window of the border and fill.
   vec2 contrib;
 
-  // Amount of space within the window that overlaps the border.
-  contrib.x =
-    min(varyingBorderThresholds.y, window.y) -
-    max(varyingBorderThresholds.x, window.x);
+  if (width > 0.) {
+    // Amount of space within the window that overlaps the border.
+    contrib.x =
+      min(varyingBorderThresholds.y, window.y) -
+      max(varyingBorderThresholds.x, window.x);
 
-  // Amount of space within the window that overlaps the fill color. May be
-  // negative, if no part of the window overlaps.
-  contrib.y = width - (varyingBorderThresholds.y - window.x);
+    // Amount of space within the window that overlaps the fill color. May be
+    // negative, if no part of the window overlaps.
+    contrib.y = width - (varyingBorderThresholds.y - window.x);
 
-  // Normalize contributions to the antialiasing window's width and clamp to
-  // possible contribution range.
-  contrib /= width;
+    // Normalize contributions to the antialiasing window's width and clamp to
+    // possible contribution range.
+    contrib /= width;
+  } else {
+    // If zero antialiasing, do a hard cutoff.
+    contrib.x = float(
+      varyingBorderThresholds.x <= signedDistance &&
+      signedDistance < varyingBorderThresholds.y
+    );
+    contrib.y = float(varyingBorderThresholds.y <= signedDistance);
+  }
+
   contrib = clamp(contrib, 0., 1.);
 
   // Mix alpha channels according to their absolute contributions.
