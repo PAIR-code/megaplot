@@ -1,5 +1,6 @@
 abcdefghijklmnopqrstuvwxyz
 accessor
+antialiasing
 bitwise
 broadcastable
 cancellable
