@@ -33,6 +33,7 @@ export const DEFAULT_GLYPHS =
  * Parameters to configure the Scene.
  */
 export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
+  antialiasingFactor: 0.5,
   container: document.body,
   defaultTransitionTimeMs: 250,
   desiredSpriteCapacity: 1e6,
@@ -46,6 +47,8 @@ export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
 /**
  * Settings to configure a Scene.
  *
+ * @param {number} antialiasingFactor Radius in device pixels around which to
+ *     average border and fill color for antialiasing.
  * @param {HTMLElement} container Element into which regl will insert a canvas.
  * @param {number} defaultTransitionTimeMs Default duration of transitions in
  *     milliseconds. Defaults to 250ms, but can be made longer or shorter to
@@ -68,6 +71,7 @@ export const DEFAULT_SCENE_SETTINGS: SceneSettings = Object.freeze({
  * @param {TimingFunctions} timingFunctions Timing functions for WorkScheduler.
  */
 export interface SceneSettings {
+  antialiasingFactor: number;
   container: HTMLElement;
   defaultTransitionTimeMs: number;
   desiredSpriteCapacity: number;

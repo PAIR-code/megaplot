@@ -60,6 +60,12 @@ uniform mat3 viewMatrix;
 uniform sampler2D sdfTexture;
 
 /**
+ * Antialiasing factor defines the window radius in device pixels to use to
+ * determine the contribution of border and fill colors for antialiasing.
+ */
+uniform float antialiasingFactor;
+
+/**
  * Varying time value, eased using cubic-in-out between the previous and target
  * timestamps for this Sprite.
  */
@@ -379,7 +385,8 @@ void main () {
 
   // Create an antialiasing window around the determined signed distance with
   // radius equal to 1 device pixel (diameter of 2 device pixels).
-  vec2 window = varyingEdgeToPixelScale * vec2(-1., 1.) + signedDistance;
+  vec2 window = signedDistance +
+    varyingEdgeToPixelScale * antialiasingFactor * vec2(-1., 1.);
 
   // Width of the antialiasing window.
   float width = window.y - window.x;

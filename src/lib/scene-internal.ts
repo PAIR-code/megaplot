@@ -453,6 +453,12 @@ export class SceneInternal implements Renderer {
   private isViewInitialized = false;
 
   /**
+   * Defines the window radius for performing antialiasing in the fragment
+   * shader.
+   */
+  antialiasingFactor: number;
+
+  /**
    * Keep track of the devicePixelRatio used during the last initView() or
    * resize() call since it may change.
    */
@@ -499,6 +505,7 @@ export class SceneInternal implements Renderer {
       this.getDevicePixelRatio = () => devicePixelRatio;
     }
 
+    this.antialiasingFactor = settings.antialiasingFactor;
     this.container = settings.container;
     this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
     this.orderZGranularity = settings.orderZGranularity;

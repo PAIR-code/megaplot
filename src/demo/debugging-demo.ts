@@ -26,6 +26,7 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import {Scene, SpriteView} from '../index';
+import {DEFAULT_SCENE_SETTINGS} from '../lib/default-scene-settings';
 import {InternalError} from '../lib/internal-error';
 import {SceneInternalSymbol} from '../lib/symbols';
 
@@ -81,6 +82,7 @@ function main() {
     inclusive: true,
     brush: false,
     clearBeforeUpdate: false,
+    antialiasingFactor: DEFAULT_SCENE_SETTINGS.antialiasingFactor,
     devicePixelRatio: window.devicePixelRatio || 1,
     pixelated: true,
     backgroundColor: '#001122',
@@ -98,6 +100,7 @@ function main() {
 
   // Create a Scene to be rendered in a fresh canvas fitted to container.
   const scene = new Scene({
+    antialiasingFactor: settings.antialiasingFactor,
     container,
     defaultTransitionTimeMs: 0,
     desiredSpriteCapacity: MAX_CAPACITY,
@@ -266,6 +269,10 @@ function main() {
   animationFolder.add(settings, 'clearBeforeUpdate');
 
   const systemFolder = gui.addFolder('system');
+  systemFolder.add(settings, 'antialiasingFactor', 0, 5, .01).onChange(() => {
+    scene[SceneInternalSymbol].antialiasingFactor = settings.antialiasingFactor;
+    scene[SceneInternalSymbol].queueDraw();
+  });
   systemFolder.add(settings, 'devicePixelRatio', 0.1, 2, .1).onChange(() => {
     scene.resize();
   });
