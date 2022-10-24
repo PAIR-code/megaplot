@@ -404,8 +404,7 @@ void main () {
     // negative, if no part of the window overlaps.
     contrib.y = width - (varyingBorderThresholds.y - window.x);
 
-    // Normalize contributions to the antialiasing window's width and clamp to
-    // possible contribution range.
+    // Normalize contributions to the antialiasing window's width.
     contrib /= width;
   } else {
     // If zero antialiasing, do a hard cutoff.
@@ -416,6 +415,7 @@ void main () {
     contrib.y = float(varyingBorderThresholds.y <= signedDistance);
   }
 
+  // Clamp contribution values to possible range.
   contrib = clamp(contrib, 0., 1.);
 
   // Mix alpha channels according to their absolute contributions.
