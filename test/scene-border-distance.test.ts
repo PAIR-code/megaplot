@@ -31,27 +31,31 @@ import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, 
 const article = createArticle();
 document.body.appendChild(article);
 
+const SAMPLE_WIDTH = 8;
+const SAMPLE_HEIGHT = 8;
+const SAMPLE_SIZE = SAMPLE_WIDTH * SAMPLE_HEIGHT;
+
 // Generate a blank patch and a solid cyan patch to compare to the rendered
 // pixels for correctness.
-const BLANK_PATCH = filledColorArray(100, [0, 0, 0, 0]);
-const CYAN_PATCH = filledColorArray(100, [0, 255, 255, 255]);
+const BLANK_PATCH = filledColorArray(SAMPLE_SIZE, [0, 0, 0, 0]);
+const CYAN_PATCH = filledColorArray(SAMPLE_SIZE, [0, 255, 255, 255]);
 
 // Grid of nine samples to test.
 const SAMPLES = [
   // Top row.
-  {position: [0, 0], expected: CYAN_PATCH},
-  {position: [25, 0], expected: CYAN_PATCH},
-  {position: [50, 0], expected: CYAN_PATCH},
+  {position: [1, 1], expected: CYAN_PATCH},
+  {position: [26, 1], expected: CYAN_PATCH},
+  {position: [51, 1], expected: CYAN_PATCH},
 
   // Middle row.
-  {position: [0, 25], expected: CYAN_PATCH},
-  {position: [25, 25], expected: BLANK_PATCH},
-  {position: [50, 25], expected: CYAN_PATCH},
+  {position: [1, 26], expected: CYAN_PATCH},
+  {position: [26, 26], expected: BLANK_PATCH},
+  {position: [51, 26], expected: CYAN_PATCH},
 
   // Bottom row.
-  {position: [0, 50], expected: CYAN_PATCH},
-  {position: [25, 50], expected: CYAN_PATCH},
-  {position: [50, 50], expected: CYAN_PATCH},
+  {position: [1, 51], expected: CYAN_PATCH},
+  {position: [26, 51], expected: CYAN_PATCH},
+  {position: [51, 51], expected: CYAN_PATCH},
 ];
 
 // Different scale values to apply, which should have no effect on rendering
@@ -132,7 +136,8 @@ describe('borders', () => {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         for (const {position: [x, y], expected} of SAMPLES) {
-          const sample = ctx.getImageData(x * dpr, y * dpr, 10, 10);
+          const sample =
+              ctx.getImageData(x * dpr, y * dpr, SAMPLE_WIDTH, SAMPLE_HEIGHT);
           expect(compareColorArrays(sample.data, expected)).toEqual(1);
         }
       }

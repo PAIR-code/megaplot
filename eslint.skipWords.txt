@@ -1,5 +1,6 @@
 abcdefghijklmnopqrstuvwxyz
 accessor
+antialiasing
 bitwise
 broadcastable
 cancellable
@@ -40,6 +41,7 @@ monospace
 mousemove
 minifiers
 ordinally
+pixelated
 readonly
 rebase
 rebasing

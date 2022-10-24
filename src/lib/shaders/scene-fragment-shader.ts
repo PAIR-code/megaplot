@@ -32,7 +32,6 @@
  */
 
 import {glsl} from './glsl-template-tag';
-import * as ShaderFunctions from './shader-functions';
 
 /**
  * Returns the code for the Scene's main rendering fragment shader program.
@@ -61,6 +60,12 @@ uniform mat3 viewMatrix;
 uniform sampler2D sdfTexture;
 
 /**
+ * Antialiasing factor defines the window radius in device pixels to use to
+ * determine the contribution of border and fill colors for antialiasing.
+ */
+uniform float antialiasingFactor;
+
+/**
  * Varying time value, eased using cubic-in-out between the previous and target
  * timestamps for this Sprite.
  */
@@ -77,6 +82,12 @@ varying vec2 varyingVertexCoordinates;
  * inside the shape (Y). Values between constitute the border.
  */
 varying vec2 varyingBorderThresholds;
+
+/**
+ * Scale value for converting edge distances to pixel distances in the fragment
+ * shader.
+ */
+varying float varyingEdgeToPixelScale;
 
 /**
  * Aspect ratio of the sprite's renderable area (XY) and their inverses (ZW).
@@ -101,9 +112,6 @@ varying float varyingPreviousSides;
 varying float varyingTargetSides;
 varying vec4 varyingPreviousShapeTexture;
 varying vec4 varyingTargetShapeTexture;
-
-// Import utility shader functions).
-${ShaderFunctions.range()}
 
 const float PI = 3.1415926535897932384626433832795;
 
@@ -375,17 +383,59 @@ void main () {
   float targetDistance = getDist(targetSides, varyingTargetShapeTexture);
   float signedDistance = mix(previousDistance, targetDistance, varyingT);
 
-  vec4 color =
-    signedDistance < varyingBorderThresholds.x ? vec4(0.) :
-    signedDistance < varyingBorderThresholds.y ? varyingBorderColor :
-    varyingFillColor;
+  // Create an antialiasing window around the determined signed distance with
+  // radius equal to 1 device pixel (diameter of 2 device pixels).
+  vec2 window = signedDistance +
+    varyingEdgeToPixelScale * antialiasingFactor * vec2(-1., 1.);
 
-  if (color.a < .01) {
+  // Width of the antialiasing window.
+  float width = window.y - window.x;
+
+  // Determine the contribution to the window of the border and fill.
+  vec2 contrib;
+
+  if (width > 0.) {
+    // Amount of space within the window that overlaps the border.
+    contrib.x =
+      min(varyingBorderThresholds.y, window.y) -
+      max(varyingBorderThresholds.x, window.x);
+
+    // Amount of space within the window that overlaps the fill color. May be
+    // negative, if no part of the window overlaps.
+    contrib.y = width - (varyingBorderThresholds.y - window.x);
+
+    // Normalize contributions to the antialiasing window's width.
+    contrib /= width;
+  } else {
+    // If zero antialiasing, do a hard cutoff.
+    contrib.x = float(
+      varyingBorderThresholds.x <= signedDistance &&
+      signedDistance < varyingBorderThresholds.y
+    );
+    contrib.y = float(varyingBorderThresholds.y <= signedDistance);
+  }
+
+  // Clamp contribution values to possible range.
+  contrib = clamp(contrib, 0., 1.);
+
+  // Mix alpha channels according to their absolute contributions.
+  float alpha =
+    contrib.x * varyingBorderColor.a +
+    contrib.y * varyingFillColor.a;
+
+  // Discard low-alpha pixels so that sprites that are out of their natural
+  // order (due to OrderZ) are visible underneath higher sprites.
+  if (alpha < .01) {
     discard;
     return;
   }
 
-  gl_FragColor = color;
+  // Mix RGB channels of border and fill according to their relative
+  // contributions to the total.
+  vec2 rel = contrib / (contrib.x + contrib.y);
+  vec3 color = rel.x * varyingBorderColor.rgb + rel.y * varyingFillColor.rgb;
+
+  gl_FragColor = vec4(color, alpha);
 }
 `;
 }

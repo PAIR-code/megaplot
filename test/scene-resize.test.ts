@@ -180,23 +180,24 @@ describe('Scene', () => {
       // Generate patches of solid green and magenta to compare to the rendered
       // pixels for correctness.
       const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
-      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
 
       // Take a sample of the top left corner and compare it to the expected
-      // solid green patch.
+      // solid green patch. Since antialiased pixels will have slightly
+      // different color values, we clip those from sampling.
       const topLeftSample = ctx.getImageData(
-          0,
-          0,
+          1,
+          1,
           sampleWidth,
           sampleHeight,
       );
       expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
 
+      const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          Math.floor(copy.height - sampleHeight),
+          Math.floor(copy.width - sampleWidth - 1),
+          Math.floor(copy.height - sampleHeight - 1),
           sampleWidth,
           sampleHeight,
       );

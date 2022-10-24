@@ -31,6 +31,7 @@ import {vertexShader} from '../shaders/scene-vertex-shader';
  * operate.
  */
 interface CoordinatorAPI {
+  antialiasingFactor: number;
   attributeMapper: AttributeMapper;
   canvas: HTMLCanvasElement;
   elapsedTimeMs: () => number;
@@ -111,6 +112,7 @@ export function setupDrawCommand(
 
     'uniforms': {
       'ts': () => coordinator.elapsedTimeMs(),
+      'antialiasingFactor': () => coordinator.antialiasingFactor,
       'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
       'instanceCount': () => coordinator.instanceCount,
       'orderZGranularity': () => coordinator.orderZGranularity,
