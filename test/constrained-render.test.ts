@@ -29,14 +29,28 @@ import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
 import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
 
+// Dimensions of sample of pixels for color value testing.
+const SAMPLE_WIDTH_PX = 8;
+const SAMPLE_HEIGHT_PX = 8;
+const SAMPLE_SIZE = SAMPLE_WIDTH_PX * SAMPLE_HEIGHT_PX;
+
+// Set constant fill and border colors.
+// NOTE: Opacity value is a floating point number in the range 0-1.
+const BORDER_COLOR = [0, 255, 0, 1];
+const FILL_COLOR = [255, 0, 255, 1];
+
+// Generate patches of solid colors compare to the rendered pixels for
+// correctness.
+const BORDER_COLOR_ARRAY = filledColorArray(SAMPLE_SIZE, BORDER_COLOR, true);
+const FILL_COLOR_ARRAY = filledColorArray(SAMPLE_SIZE, FILL_COLOR, true);
+
 /**
  * Tests produce visible artifacts for debugging.
  */
 const article = createArticle();
 document.body.appendChild(article);
 
-// TODO(jimbo): Remove 'x' when ready.
-xdescribe('constrained render', () => {
+describe('constrained render', () => {
   // Create a <section> for storing visible artifacts.
   const {section, content} = createSection('constrained render');
   article.appendChild(section);
@@ -55,15 +69,27 @@ xdescribe('constrained render', () => {
     timingFunctionsShim = new TimingFunctionsShim();
     timingFunctionsShim.totalElapsedTimeMs = 1000;
 
-    // TODO(jimbo): Set WorkScheduler's maxBatchTimeMs to 0, and steps between
-    // checks to 1.
-
     scene = new Scene({
       container,
       defaultTransitionTimeMs: 0,
       desiredSpriteCapacity: 100,
       timingFunctions: timingFunctionsShim,
     });
+
+    // Setting maxWorkTimeMs to 0 ensures that only one work task will be
+    // invoked each animation frame. When a task finishes, the WorkScheduler
+    // checks to see if there's any time remaining for more tasks to run, and
+    // always finds that there is none.
+    scene[SceneInternalSymbol].workScheduler.maxWorkTimeMs = 0;
+
+    // Some long-running tasks do not check remaining time on each iteration of
+    // their internal loops. This cuts down on the frequency and number of calls
+    // to Date.now(). For this test however, we want to constrain the amount of
+    // work that can occur each frame, and so we explicitly set the
+    // stepsBetweenRemainingTimeChecks to 1 so that the amount of remaining time
+    // is checked after each iteration of every loop.
+    scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks = 1;
+
     sprite = scene.createSprite();
   });
 
@@ -81,24 +107,31 @@ xdescribe('constrained render', () => {
       s.Sides = 2;  // TODO(jimbo): Change to 1 for circle and update expects.
       s.SizeWorld = 1;
       s.BorderRadiusRelative = .25;
-      s.BorderColor = [0, 255, 0, 1];
-      s.FillColor = [255, 0, 255, 1];
+      s.BorderColor = BORDER_COLOR;
+      s.FillColor = FILL_COLOR;
 
       // Mark that the enter callback has run.
       enterRunCount++;
     });
 
-    // The callback should not have been invoked immediately.
+    // The callback should NOT have been invoked immediately.
     expect(enterRunCount).toBe(0);
 
-    // This should start running the enter callbacks. While the enter callback
-    // will have been executed, the values it produced (s.PositionWorld, etc.)
-    // reside only in a Float32 array in JavaScript heap memory. Those values
-    // have not yet been transferred to the GPU.
+    // After one frame, the Scene's draw command will have been run, but no
+    // other work since the maxWorkTimeMs has been set to 0.
+    timingFunctionsShim.runAnimationFrameCallbacks();
+    expect(enterRunCount).toBe(0);
+
+    // After the next frame, the sprite's enter callback should have been run.
+    // This will update the Float32 array for the sprite.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(enterRunCount).toBe(1);
 
-    // After the next frame, the Float32 array values should have been flashed
+    // Next frame: draw again.
+    timingFunctionsShim.runAnimationFrameCallbacks();
+    expect(enterRunCount).toBe(1);
+
+    // Next frame, the Float32 array values should have been flashed
     // over to the WebGL texture. But the draw call that causes those values
     // to affect rendered screen pixels may not yet have been run.
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -123,47 +156,36 @@ xdescribe('constrained render', () => {
     const img = await blobToImage(blob);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    // For integration testing, we'll sample an area of the output that's 10%
-    // the width and height of the canvas size. This patch is a middle-ground
-    // between testing the whole image for pixel-perfect rendering and testing
-    // a single pixel.
-    const sampleWidth = Math.ceil(copy.width * .1);
-    const sampleHeight = Math.ceil(copy.width * .1);
-    const pixelCount = sampleWidth * sampleHeight;
-
-    // Generate patches of solid green and magenta to compare to the rendered
-    // pixels for correctness.
-    const solidGreen = filledColorArray(pixelCount, [0, 255, 0, 255]);
-    const solidMagenta = filledColorArray(pixelCount, [255, 0, 255, 255]);
-
     // Take a sample of the top left corner and compare it to the expected
     // solid green patch.
     const topLeftSample = ctx.getImageData(
-        0,
-        0,
-        sampleWidth,
-        sampleHeight,
+        1,  // Offset one to avoid the antialiased edge pixel.
+        1,
+        SAMPLE_WIDTH_PX,
+        SAMPLE_HEIGHT_PX,
     );
-    expect(compareColorArrays(topLeftSample.data, solidGreen)).toEqual(1);
+    expect(compareColorArrays(topLeftSample.data, BORDER_COLOR_ARRAY))
+        .toEqual(1);
 
     // Take a sample of the bottom right corner and compare it to the expected
     // solid green patch.
     const bottomRightSample = ctx.getImageData(
-        Math.floor(copy.width - sampleWidth),
-        Math.floor(copy.height - sampleHeight),
-        sampleWidth,
-        sampleHeight,
+        Math.floor(copy.width - SAMPLE_WIDTH_PX - 1),
+        Math.floor(copy.height - SAMPLE_HEIGHT_PX - 1),
+        SAMPLE_WIDTH_PX,
+        SAMPLE_HEIGHT_PX,
     );
-    expect(compareColorArrays(bottomRightSample.data, solidGreen)).toEqual(1);
+    expect(compareColorArrays(bottomRightSample.data, BORDER_COLOR_ARRAY))
+        .toEqual(1);
 
-    // Lastly, sample a chunk of the middle of the image and compare it to the
+    // Lastly, sample a chunk of the middle of the image and compare it to
     // solid magenta patch.
     const centerSample = ctx.getImageData(
-        Math.floor(copy.width * .5 - sampleWidth * .5),
-        Math.floor(copy.height * .5 - sampleHeight * .5),
-        sampleWidth,
-        sampleHeight,
+        Math.floor(copy.width * .5 - SAMPLE_WIDTH_PX * .5),
+        Math.floor(copy.height * .5 - SAMPLE_HEIGHT_PX * .5),
+        SAMPLE_WIDTH_PX,
+        SAMPLE_HEIGHT_PX,
     );
-    expect(compareColorArrays(centerSample.data, solidMagenta)).toEqual(1);
+    expect(compareColorArrays(centerSample.data, FILL_COLOR_ARRAY)).toEqual(1);
   });
 });
