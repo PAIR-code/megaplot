@@ -149,12 +149,12 @@ function main() {
 
   // Function to call when GUI options are changed.
   function update() {
+    scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks =
+        settings.stepsBetweenChecks;
+
     if (settings.clearBeforeUpdate) {
       selection.clear();
     }
-
-    // scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks =
-    // settings.stepsBetweenChecks;
 
     const count = settings.count;
     settings.total = count * count;
