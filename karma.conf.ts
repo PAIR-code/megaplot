@@ -27,7 +27,10 @@ module.exports = (config) => {
     frameworks: ['jasmine', 'webpack'],
 
     // List of files / patterns to load in the browser.
-    files: ['test/**/*.test.ts'],
+    files: [
+      // Set TEST_PATTERN env var to test a specific file.
+      process.env.TEST_PATTERN || 'test/**/*.test.ts',
+    ],
 
     // List of files / patterns to exclude.
     exclude: [],
