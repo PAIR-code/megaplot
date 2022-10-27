@@ -104,7 +104,7 @@ describe('constrained render', () => {
 
     // Give the Sprite an enter() callback to invoke.
     sprite.enter((s) => {
-      s.Sides = 2;  // TODO(jimbo): Change to 1 for circle and update expects.
+      s.Sides = 2;
       s.SizeWorld = 1;
       s.BorderRadiusRelative = .25;
       s.BorderColor = BORDER_COLOR;
@@ -165,7 +165,7 @@ describe('constrained render', () => {
         SAMPLE_HEIGHT_PX,
     );
     expect(compareColorArrays(topLeftSample.data, BORDER_COLOR_ARRAY))
-        .toEqual(1);
+        .toEqual(1, 'Top left sample should match border color');
 
     // Take a sample of the bottom right corner and compare it to the expected
     // solid green patch.
@@ -176,7 +176,7 @@ describe('constrained render', () => {
         SAMPLE_HEIGHT_PX,
     );
     expect(compareColorArrays(bottomRightSample.data, BORDER_COLOR_ARRAY))
-        .toEqual(1);
+        .toEqual(1, 'Bottom right sample should match border color');
 
     // Lastly, sample a chunk of the middle of the image and compare it to
     // solid magenta patch.
@@ -186,6 +186,71 @@ describe('constrained render', () => {
         SAMPLE_WIDTH_PX,
         SAMPLE_HEIGHT_PX,
     );
-    expect(compareColorArrays(centerSample.data, FILL_COLOR_ARRAY)).toEqual(1);
+    expect(compareColorArrays(centerSample.data, FILL_COLOR_ARRAY))
+        .toEqual(1, 'Center sample should match fill color');
+  });
+
+  // This is an integration test. It draws a single sprite, then removes it and
+  // confirms that the canvas is empty.
+  it('should remove a sprite', async () => {
+    // Give the Sprite an enter() callback to invoke.
+    sprite.enter((s) => {
+      s.Sides = 2;
+      s.SizeWorld = 1;
+      s.FillColor = FILL_COLOR;
+    });
+
+    // Because this is a constrained test, it takes five frames to render the
+    // sprite: draw, run callbacks, draw, run texture sync, draw.
+    timingFunctionsShim.runAnimationFrameCallbacks(5);
+
+    expect(scene[SceneInternalSymbol].sprites.length).toBe(1);
+
+    // Give the Sprite an exit() callback to invoke.
+    let exitRunCount = 0;
+    sprite.exit(() => {
+      exitRunCount++;
+    });
+
+    expect(exitRunCount).toBe(0);
+
+    // Draw.
+    timingFunctionsShim.runAnimationFrameCallbacks();
+    expect(exitRunCount).toBe(0);
+
+    // Run callbacks.
+    timingFunctionsShim.runAnimationFrameCallbacks();
+    expect(exitRunCount).toBe(1);
+
+    // Draw. Texture sync. Draw.
+    timingFunctionsShim.runAnimationFrameCallbacks(3);
+
+    // Confirm that the previously allocated sprite has been removed.
+    const {removedIndexRange} = scene[SceneInternalSymbol];
+    expect(removedIndexRange.lowBound).toBe(0);
+    expect(removedIndexRange.isDefined).toBe(true);
+    expect(removedIndexRange.highBound).toBe(0);
+
+    // Now, if we inspect the canvas, its pixels should be all empty.
+    const {canvas} = scene;
+    const [_, ctx, copyContainer] = copyCanvasAndContainer(canvas);
+    content.appendChild(copyContainer);
+
+    // Grab a snapshot of the Scene's rendered pixels and draw them to
+    // the canvas copy.
+    const blob = await scene[SceneInternalSymbol].snapshot();
+    const img = await blobToImage(blob);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // Sample the full image data.
+    const sample = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+    );
+    expect(compareColorArrays(
+               sample.data, new Uint8ClampedArray(sample.data.length)))
+        .toEqual(1, 'Canvas should be empty');
   });
 });
