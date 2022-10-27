@@ -27,22 +27,17 @@ import {Sprite} from '../src/lib/sprite';
 import {SceneInternalSymbol} from '../src/lib/symbols';
 import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+import {Sampler} from './sampler';
+import {createArticle, createSection} from './utils';
 
 // Dimensions of sample of pixels for color value testing.
 const SAMPLE_WIDTH_PX = 8;
 const SAMPLE_HEIGHT_PX = 8;
-const SAMPLE_SIZE = SAMPLE_WIDTH_PX * SAMPLE_HEIGHT_PX;
 
 // Set constant fill and border colors.
 // NOTE: Opacity value is a floating point number in the range 0-1.
 const BORDER_COLOR = [0, 255, 0, 1];
 const FILL_COLOR = [255, 0, 255, 1];
-
-// Generate patches of solid colors compare to the rendered pixels for
-// correctness.
-const BORDER_COLOR_ARRAY = filledColorArray(SAMPLE_SIZE, BORDER_COLOR, true);
-const FILL_COLOR_ARRAY = filledColorArray(SAMPLE_SIZE, FILL_COLOR, true);
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -64,6 +59,7 @@ describe('constrained render', () => {
   let timingFunctionsShim: TimingFunctionsShim;
   let scene: Scene;
   let sprite: Sprite;
+  let sampler: Sampler;
 
   beforeEach(() => {
     timingFunctionsShim = new TimingFunctionsShim();
@@ -75,6 +71,8 @@ describe('constrained render', () => {
       desiredSpriteCapacity: 100,
       timingFunctions: timingFunctionsShim,
     });
+
+    sampler = new Sampler(scene, content);
 
     // Setting maxWorkTimeMs to 0 ensures that only one work task will be
     // invoked each animation frame. When a task finishes, the WorkScheduler
@@ -143,51 +141,32 @@ describe('constrained render', () => {
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(enterRunCount).toBe(1);
 
-    // Now, if we inspect the canvas, its pixels should show that the sprite
-    // has been rendered. Start my making a copy of the canvas and for
-    // inspection.
-    const {canvas} = scene;
-    const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-    content.appendChild(copyContainer);
+    // Snapshot scene and copy the canvas for sampling.
+    await sampler.copySnapshot();
 
-    // Grab a snapshot of the Scene's rendered pixels and draw them to
-    // the canvas copy.
-    const blob = await scene[SceneInternalSymbol].snapshot();
-    const img = await blobToImage(blob);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    expect(sampler.compareSample({
+      x: 1,
+      y: 1,
+      width: SAMPLE_WIDTH_PX,
+      height: SAMPLE_HEIGHT_PX,
+      color: BORDER_COLOR,
+    })).toBe(1, 'Top left sample should match border color');
 
-    // Take a sample of the top left corner and compare it to the expected
-    // solid green patch.
-    const topLeftSample = ctx.getImageData(
-        1,  // Offset one to avoid the antialiased edge pixel.
-        1,
-        SAMPLE_WIDTH_PX,
-        SAMPLE_HEIGHT_PX,
-    );
-    expect(compareColorArrays(topLeftSample.data, BORDER_COLOR_ARRAY))
-        .toEqual(1, 'Top left sample should match border color');
+    expect(sampler.compareSample({
+      x: Math.floor(scene.canvas.width - SAMPLE_WIDTH_PX - 1),
+      y: Math.floor(scene.canvas.height - SAMPLE_HEIGHT_PX - 1),
+      width: SAMPLE_WIDTH_PX,
+      height: SAMPLE_HEIGHT_PX,
+      color: BORDER_COLOR,
+    })).toBe(1, 'Bottom right sample should match border color');
 
-    // Take a sample of the bottom right corner and compare it to the expected
-    // solid green patch.
-    const bottomRightSample = ctx.getImageData(
-        Math.floor(copy.width - SAMPLE_WIDTH_PX - 1),
-        Math.floor(copy.height - SAMPLE_HEIGHT_PX - 1),
-        SAMPLE_WIDTH_PX,
-        SAMPLE_HEIGHT_PX,
-    );
-    expect(compareColorArrays(bottomRightSample.data, BORDER_COLOR_ARRAY))
-        .toEqual(1, 'Bottom right sample should match border color');
-
-    // Lastly, sample a chunk of the middle of the image and compare it to
-    // solid magenta patch.
-    const centerSample = ctx.getImageData(
-        Math.floor(copy.width * .5 - SAMPLE_WIDTH_PX * .5),
-        Math.floor(copy.height * .5 - SAMPLE_HEIGHT_PX * .5),
-        SAMPLE_WIDTH_PX,
-        SAMPLE_HEIGHT_PX,
-    );
-    expect(compareColorArrays(centerSample.data, FILL_COLOR_ARRAY))
-        .toEqual(1, 'Center sample should match fill color');
+    expect(sampler.compareSample({
+      x: Math.floor(scene.canvas.width * .5 - SAMPLE_WIDTH_PX * .5),
+      y: Math.floor(scene.canvas.height * .5 - SAMPLE_HEIGHT_PX * .5),
+      width: SAMPLE_WIDTH_PX,
+      height: SAMPLE_HEIGHT_PX,
+      color: FILL_COLOR,
+    })).toBe(1, 'Center sample should match fill color');
   });
 
   // This is an integration test. It draws a single sprite, then removes it and
@@ -232,25 +211,13 @@ describe('constrained render', () => {
     expect(removedIndexRange.highBound).toBe(0);
 
     // Now, if we inspect the canvas, its pixels should be all empty.
-    const {canvas} = scene;
-    const [_, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-    content.appendChild(copyContainer);
-
-    // Grab a snapshot of the Scene's rendered pixels and draw them to
-    // the canvas copy.
-    const blob = await scene[SceneInternalSymbol].snapshot();
-    const img = await blobToImage(blob);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    // Sample the full image data.
-    const sample = ctx.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-    );
-    expect(compareColorArrays(
-               sample.data, new Uint8ClampedArray(sample.data.length)))
-        .toEqual(1, 'Canvas should be empty');
+    await sampler.copySnapshot();
+    expect(sampler.compareSample({
+      x: 0,
+      y: 0,
+      width: scene.canvas.width,
+      height: scene.canvas.height,
+      color: [0, 0, 0, 0],
+    })).toBe(1, 'Canvas should be empty');
   });
 });
