@@ -133,6 +133,13 @@ export class WorkScheduler {
   }
 
   /**
+   * Return the total number of queued tasks.
+   */
+  get queueLength(): number {
+    return this.presentWorkQueue.length + this.futureWorkQueue.length;
+  }
+
+  /**
    * Push a work task onto the work queue. The incoming object may be either a
    * full WorkTask object, or just a function. In either case, a full WorkTask
    * object with an id is returned.
