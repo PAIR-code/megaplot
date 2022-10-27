@@ -98,6 +98,9 @@ export function runRemoval(
       // we haven't run for too long without ceding the thread.
       if (index > lowIndex && step++ % stepsBetweenChecks === 0 &&
           remaining() <= 0) {
+        // Since we haven't actually dealt with the current index, decrement it
+        // before breaking out of the loop.
+        index--;
         break;
       }
 
@@ -124,7 +127,7 @@ export function runRemoval(
         continue;
       }
 
-      // The sprite has been marked for removal, its in the right
+      // The sprite has been marked for removal, it's in the right
       // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
       properties.spriteView[DataViewSymbol].fill(0);
