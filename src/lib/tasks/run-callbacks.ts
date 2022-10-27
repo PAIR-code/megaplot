@@ -109,13 +109,8 @@ export function runCallbacks(
     // Append the current time to the arrival time value.
     spriteView.TransitionTimeMs += currentTimeMs;
 
-    // Make sure that the draw Ts range includes the current transition time
-    // plus a buffer to account for time taken by work tasks. Without the
-    // buffer, it can happen that the last drawn frame does not include the
-    // final resting state of the Sprite, especially when the user-specified
-    // transition time is near or below one frame (about 17ms).
-    coordinator.toDrawTsRange.expandToInclude(
-        spriteView.TransitionTimeMs + coordinator.workScheduler.maxWorkTimeMs);
+    // Make sure that the draw Ts range includes the current transition time.
+    coordinator.toDrawTsRange.expandToInclude(spriteView.TransitionTimeMs);
 
     if (spriteView.TransitionTimeMs > currentTimeMs) {
       // If the callback set a future arrival time (Ts), then this sprite

@@ -41,6 +41,7 @@ interface CoordinatorAPI {
   needsRebaseIndexRange: NumericRange;
   needsTextureSyncIndexRange: NumericRange;
   queueAssignWaiting: () => void;
+  queueDraw: () => void;
   queueRebase: () => void;
   queueRemovalTask: () => void;
   queueRunCallbacks: () => void;
@@ -217,4 +218,7 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     height: rowHeight,
   };
   coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
+
+  // After texture sync, we should always guarantee a draw call.
+  coordinator.queueDraw();
 }
