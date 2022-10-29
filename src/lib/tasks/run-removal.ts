@@ -131,7 +131,7 @@ export function runRemoval(
   } finally {
     // Expand the toBeRemovedIndexRange and toBeRemovedTsRange to include
     // any sprites that were not visited due to time.
-    for (let i = index; i <= highIndex; i++) {
+    for (let i = index + 1; i <= highIndex; i++) {
       const sprite = coordinator.sprites[i];
       const properties = sprite[InternalPropertiesSymbol];
 
