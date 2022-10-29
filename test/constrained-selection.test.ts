@@ -63,21 +63,33 @@ document.body.appendChild(article);
 
 describe('constrained selection', () => {
   // Create a <section> for storing visible artifacts.
-  const {section, content} = createSection('constrained render');
+  const {section, content} = createSection('constrained selection');
   article.appendChild(section);
 
-  // Create a container <div> of fixed size for the Scene to render into.
-  const container = document.createElement('div');
-  container.style.width = '100px';
-  container.style.height = '100px';
-  content.appendChild(container);
-
+  let container: HTMLDivElement;
+  let heading: HTMLHeadingElement;
   let timingFunctionsShim: TimingFunctionsShim;
   let scene: Scene;
   let workScheduler: WorkScheduler;
   let sampler: Sampler;
 
   beforeEach(() => {
+    const subsection = document.createElement('div');
+    heading = document.createElement('h3');
+    subsection.appendChild(heading);
+    const subsectionContent = document.createElement('div');
+    subsectionContent.style.display = 'flex';
+    subsectionContent.style.flexDirection = 'row';
+    subsectionContent.style.flexWrap = 'wrap';
+    subsection.appendChild(subsectionContent);
+    content.appendChild(subsection);
+
+    // Create a container <div> of fixed size for the Scene to render into.
+    container = document.createElement('div');
+    container.style.width = '100px';
+    container.style.height = '100px';
+    subsectionContent.appendChild(container);
+
     timingFunctionsShim = new TimingFunctionsShim();
     timingFunctionsShim.totalElapsedTimeMs = 1000;
 
@@ -105,7 +117,7 @@ describe('constrained selection', () => {
     // is checked after each iteration of every loop.
     scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks = 1;
 
-    sampler = new Sampler(scene, content);
+    sampler = new Sampler(scene, subsectionContent);
   });
 
   afterEach(() => {
@@ -117,6 +129,8 @@ describe('constrained selection', () => {
   // colors. Finally, it binds an empty array and confirms that the sprites are
   // removed.
   it('should render and remove a single sprite in a selection', async () => {
+    heading.textContent = 'single sprite';
+
     // Run initial Draw task.
     expect(workScheduler.queueLength).toBe(1, 'Queued: Draw (initial)');
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -340,7 +354,9 @@ describe('constrained selection', () => {
 
   // This integration test draws a grid of four sprites using a Selection, then
   // confirms that they've all been removed after exit.
-  fit('should render and remove a grid of sprites in a selection', async () => {
+  it('should render and remove a grid of sprites in a selection', async () => {
+    heading.textContent = 'grid of sprites';
+
     // Draw (initial).
     timingFunctionsShim.runAnimationFrameCallbacks();
 
