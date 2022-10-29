@@ -24,9 +24,12 @@ import {SceneInternalSymbol} from '../src/lib/symbols';
 import {blobToImage, compareColorArrays, copyCanvasAndContainer, filledColorArray} from './utils';
 
 export class Sampler {
-  ctx?: CanvasRenderingContext2D;
+  /**
+   * Last created 2D canvas rendering context.
+   */
+  lastContext?: CanvasRenderingContext2D;
 
-  constructor(readonly scene: Scene, readonly content: HTMLDivElement) {}
+  constructor(readonly scene: Scene, readonly contentDiv: HTMLDivElement) {}
 
   /**
    * Snapshot the scene and draw it to a copy for sampling.
@@ -34,15 +37,15 @@ export class Sampler {
   async copySnapshot() {
     // Copy the scene's canvas and its container. Append to content div.
     const {canvas} = this.scene;
-    const [_, ctx, copyContainer] = copyCanvasAndContainer(canvas);
-    this.content.appendChild(copyContainer);
-    this.ctx = ctx;
+    const [_, context, copyContainer] = copyCanvasAndContainer(canvas);
+    this.contentDiv.appendChild(copyContainer);
+    this.lastContext = context;
 
     // Grab a snapshot of the Scene's rendered pixels and draw them to
     // the canvas copy.
     const blob = await this.scene[SceneInternalSymbol].snapshot();
     const img = await blobToImage(blob);
-    this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    this.lastContext.drawImage(img, 0, 0, canvas.width, canvas.height);
   }
 
   /**
@@ -56,13 +59,13 @@ export class Sampler {
     width?: number,
     height?: number, color: number[],
   }) {
-    if (!this.ctx) {
+    if (!this.lastContext) {
       throw new Error('Must copy snapshot before comparing samples');
     }
     const {x, y, color} = params;
     const width = params.width || 1;
     const height = params.height || 1;
-    const sample = this.ctx.getImageData(x, y, width, height);
+    const sample = this.lastContext.getImageData(x, y, width, height);
     const patch = filledColorArray(width * height, color, true);
     return compareColorArrays(sample.data, patch);
   }
