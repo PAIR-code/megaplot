@@ -1070,15 +1070,6 @@ export class SceneInternal implements Renderer {
 
     const properties = sprite[InternalPropertiesSymbol];
 
-    if (properties.index === this.instanceCount - 1) {
-      // TODO(jimbo): Walk back from the instanceCount to find highest index.
-      // In the case where the removed sprite happens to be the one at the end
-      // of the list, decrement the instance count to compensate. In any other
-      // case, the degenerate sprite will be left alone, having had zeros
-      // flashed to its swatch values.
-      this.instanceCount--;
-    }
-
     properties.lifecyclePhase = LifecyclePhase.Removed;
 
     if (properties.spriteView) {
@@ -1097,6 +1088,33 @@ export class SceneInternal implements Renderer {
     if (properties.index !== undefined) {
       this.removedIndexRange.expandToInclude(properties.index);
     }
+
+    // Set instanceCount to one more than the highest index of any renderable
+    // sprite.
+    const highestIndex = this.findHighestRenderableSpriteIndex();
+    this.instanceCount = highestIndex + 1;
+  }
+
+  /**
+   * Find the highest index of a renderable sprite in the sprites array and
+   * return it, or -1 if there are no renderable sprites.
+   */
+  private findHighestRenderableSpriteIndex(): number {
+    for (let index = this.instanceCount - 1; index >= 0; index--) {
+      const sprite = this.sprites[index];
+      if (!sprite) {
+        continue;
+      }
+      const properties = sprite[InternalPropertiesSymbol];
+      if (!properties) {
+        continue;
+      }
+      if (properties.lifecyclePhase !== LifecyclePhase.Removed) {
+        // Found one!
+        return index;
+      }
+    }
+    return -1;
   }
 
   /**

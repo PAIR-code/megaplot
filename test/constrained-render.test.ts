@@ -649,6 +649,14 @@ describe('constrained render', () => {
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.queueLength).toBe(1, 'Queued: Draw');
 
+    // In addition to flashing values to the data texture, the Texture sync
+    // operation calls the Scene's removeSprite() method to put removed sprite's
+    // swatches up for later use. One side effect of this is that the
+    // instanceCount should be shortened such that it matches the highest index
+    // of any sprite swatch still in use.
+    expect(scene[SceneInternalSymbol].instanceCount)
+        .toBe(0, 'Internal instanceCount should reflect removals');
+
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.queueLength).toBe(1, 'Queued: Draw');
