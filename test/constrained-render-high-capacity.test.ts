@@ -37,7 +37,7 @@ import {createArticle, createSection} from './utils';
 
 // Set constant fill color.
 // NOTE: Opacity value is a floating point number in the range 0-1.
-const FILL_COLOR = [255, 127, 0, 1];
+const FILL_COLOR = [255, 128, 0, 1];
 
 // For some tests, exiting sprites will change color.
 const EXIT_COLOR = [0, 0, 0, 1];
