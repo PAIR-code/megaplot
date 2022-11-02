@@ -53,18 +53,18 @@ document.body.style.backgroundImage = `
       <path fill="none" stroke="#058" stroke-opacity=".5" stroke-width=".5"
         d="M 0,0.5 h 10 M 0.5,0 v 10" /></svg>`)}')`;
 
-const BLACK = [0, 0, 0, 1];
-const GREEN = [0, 255, 0, 1];
+const EXIT_COLOR = [0, 0, 0, 1];
+const ENTER_COLOR = [0, 255, 0, 1];
 
 function main() {
   // Configuration option for dat.GUI settings.
   const settings = {
     total: 0,
-    count: 5,
-    transitionTimeMs: 2000,
+    count: 1,
+    transitionTimeMs: 1,
     paddingPx: 0,
-    stepsBetweenChecks: 1,  // 500,
-    maxBatchTimeMs: 0,      // 20,
+    stepsBetweenChecks: 500,
+    maxBatchTimeMs: 20,
     borderRadiusRelative: 0.25,
     borderRadiusPx: 0.25,
     borderPlacement: 0,
@@ -77,7 +77,7 @@ function main() {
     maxSizePxHeight: 0,
     minSizePxWidth: 0,
     minSizePxHeight: 0,
-    exitOpacity: 1,  // 0,
+    exitOpacity: 0,
     staggerAnimation: true,
     flipZ: false,
     randomize: false,
@@ -239,9 +239,9 @@ function main() {
           placeSprite(s, index);
 
           // Fade in from green.
-          s.BorderColor = GREEN;
+          s.BorderColor = ENTER_COLOR;
           s.BorderColorOpacity = settings.exitOpacity;
-          s.FillColor = GREEN;
+          s.FillColor = ENTER_COLOR;
           s.FillColorOpacity = settings.exitOpacity;
         })
         .onEnter(placeSprite)
@@ -250,9 +250,9 @@ function main() {
           s.TransitionTimeMs = settings.transitionTimeMs;
 
           // Fade to black.
-          s.BorderColor = BLACK;
+          s.BorderColor = EXIT_COLOR;
           s.BorderColorOpacity = settings.exitOpacity;
-          s.FillColor = BLACK;
+          s.FillColor = EXIT_COLOR;
           s.FillColorOpacity = settings.exitOpacity;
         });
 
