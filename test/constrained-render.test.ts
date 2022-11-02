@@ -68,18 +68,30 @@ describe('constrained render', () => {
   const {section, content} = createSection('constrained render');
   article.appendChild(section);
 
-  // Create a container <div> of fixed size for the Scene to render into.
-  const container = document.createElement('div');
-  container.style.width = '100px';
-  container.style.height = '100px';
-  content.appendChild(container);
-
+  let container: HTMLDivElement;
+  let heading: HTMLHeadingElement;
   let timingFunctionsShim: TimingFunctionsShim;
   let scene: Scene;
   let workScheduler: WorkScheduler;
   let sampler: Sampler;
 
   beforeEach(() => {
+    const subsection = document.createElement('div');
+    heading = document.createElement('h3');
+    subsection.appendChild(heading);
+    const subsectionContent = document.createElement('div');
+    subsectionContent.style.display = 'flex';
+    subsectionContent.style.flexDirection = 'row';
+    subsectionContent.style.flexWrap = 'wrap';
+    subsection.appendChild(subsectionContent);
+    content.appendChild(subsection);
+
+    // Create a container <div> of fixed size for the Scene to render into.
+    container = document.createElement('div');
+    container.style.width = '100px';
+    container.style.height = '100px';
+    subsectionContent.appendChild(container);
+
     timingFunctionsShim = new TimingFunctionsShim();
     timingFunctionsShim.totalElapsedTimeMs = 1000;
 
@@ -106,7 +118,7 @@ describe('constrained render', () => {
     // is checked after each iteration of every loop.
     scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks = 1;
 
-    sampler = new Sampler(scene, content);
+    sampler = new Sampler(scene, subsectionContent);
   });
 
   afterEach(() => {
@@ -220,8 +232,8 @@ describe('constrained render', () => {
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(exitRunCount).toBe(1);
 
-    // Draw. Texture sync. Draw.
-    timingFunctionsShim.runAnimationFrameCallbacks(3);
+    // Draw. Texture sync. Draw. Run removal. Draw. Texture sync. Draw.
+    timingFunctionsShim.runAnimationFrameCallbacks(7);
 
     // Confirm that the previously allocated sprite has been removed.
     const {removedIndexRange} = scene[SceneInternalSymbol];
