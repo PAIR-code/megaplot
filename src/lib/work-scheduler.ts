@@ -146,7 +146,9 @@ export class WorkScheduler {
     return [
       ...this.presentWorkQueue.taskList,
       ...this.futureWorkQueue.taskList,
-    ].map(({id}) => `${typeof id === 'symbol' ? id.description : id}`);
+    ].map(({id}) => {
+      return (typeof id === 'symbol' ? id.description : id) as string;
+    });
   }
 
   /**
