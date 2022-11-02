@@ -120,6 +120,7 @@ export function runRemoval(
       // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
       properties.spriteView[DataViewSymbol].fill(0);
+      properties.zeroed = true;
       properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
       coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index);
 
