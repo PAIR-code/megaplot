@@ -1071,6 +1071,7 @@ export class SceneInternal implements Renderer {
     const properties = sprite[InternalPropertiesSymbol];
 
     if (properties.index === this.instanceCount - 1) {
+      // TODO(jimbo): Walk back from the instanceCount to find highest index.
       // In the case where the removed sprite happens to be the one at the end
       // of the list, decrement the instance count to compensate. In any other
       // case, the degenerate sprite will be left alone, having had zeros
