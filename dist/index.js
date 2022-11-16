@@ -287,27 +287,25 @@
             attributeName: 'BorderPlacement',
             isInterpolable: true,
         },
+        /**
+         * Color of the border. R, G and B components range 0-255. Opacity range is
+         * 0-1. This makes the destructuring setter consistent with D3 color objects
+         * and rgba() CSS attribute values.
+         */
         {
             attributeName: 'BorderColor',
             isInterpolable: true,
             components: ['R', 'G', 'B', 'Opacity'],
         },
         /**
-         * Fill blend determines whether the fill should be entirely defined by
-         * the fill color (0), or entirely by the sampled atlas texture (1).
+         * Color of the interior of the shape. R, G and B components range 0-255.
+         * Opacity range is 0-1. This makes the destructuring setter consistent with
+         * D3 color objects and rgba() CSS attribute values.
          */
-        {
-            attributeName: 'FillBlend',
-            isInterpolable: true,
-        },
         {
             attributeName: 'FillColor',
             isInterpolable: true,
             components: ['R', 'G', 'B', 'Opacity'],
-        },
-        {
-            attributeName: 'FillTexture',
-            components: ['U', 'V', 'Width', 'Height'],
         },
     ];
 
@@ -687,231 +685,6 @@
      * limitations under the License.
      */
     /**
-     * List of types for creating vectorized versions of functions.
-     */
-    const GEN_TYPES = ['float', 'vec2', 'vec3', 'vec4'];
-    /**
-     * Range function. Inverse of GLSL built in mix() function.
-     */
-    function range() {
-        return glsl `
-float range(float x, float y, float a) {
-  return (a - x) / (y - x);
-}
-`;
-    }
-    /**
-     * Ease an input value t between 0 and 1 smoothly.
-     */
-    function cubicEaseInOut() {
-        return glsl `
-float cubicEaseInOut(float t) {
-  return t < 0.5 ? 4.0 * t * t * t :
-    4.0 * (t - 1.0) * (t - 1.0) * (t - 1.0) + 1.0;
-}
-`;
-    }
-    /**
-     * Given a starting value, velocity and an ending value, compute the
-     * instantaneous current value.
-     *
-     * These functions make use of the following macro variables which are presumed
-     * to already be defined and in scope:
-     *
-     * - targetTransitionTimeMs() - #define macro for animation arrival time.
-     * - previousTransitionTimeMs() - #define macro for animation start time.
-     *
-     * @param rangeT Name of GLSL variable containing the range'd time value. This
-     * should be a value between 0 and 1 to signal progress between the previous and
-     * target transition times.
-     * @param easeT Name of the GLSL vairable containing the result of cubic easing
-     * having been applied to the rangeT variable.
-     */
-    function computeCurrentValue(rangeT = 't', easeT = 'varyingT') {
-        return GEN_TYPES
-            .map(genType => glsl `
-${genType} computeCurrentValue(
-    ${genType} startingValue,
-    ${genType} startingVelocity,
-    ${genType} targetValue) {
-  ${genType} currentValue = mix(startingValue, targetValue, ${easeT});
-  ${genType} projectedValue = startingVelocity *
-    (targetTransitionTimeMs() - previousTransitionTimeMs());
-  return currentValue + projectedValue *
-    ${rangeT} * (1. - ${rangeT}) * (1. - ${rangeT}) * (1. - ${rangeT});
-}
-  `).join('\n');
-    }
-    /**
-     * For a given vertex coordinate, and other calculated values, compute the
-     * viewVertexPosition, the location in view space (screen pixels) where the
-     * sprite's vertex would appear.
-     */
-    function computeViewVertexPosition() {
-        return glsl `
-/**
- * @param positionWorld The position of the sprite in world coords.
- * @param size Size of the sprite in world coordinates.
- * @param positionRelative Offset position relative to vert coords.
- * @param positionPixel Offset position in screen pixels.
- * @param vertCoords Local coordinates for this vertex.
- * @param viewMatrix Matrix to project world coords into view space (pixels).
- */
-vec2 computeViewVertexPosition(
-    vec2 positionWorld,
-    vec2 size,
-    vec2 positionRelative,
-    vec2 positionPixel,
-    vec2 vertCoords,
-    mat3 viewMatrix
-) {
-  vec2 vertexPositionWorld =
-    positionWorld + size * (positionRelative + vertCoords);
-  vec2 viewVertexPosition =
-    (viewMatrix * vec3(vertexPositionWorld, 1.)).xy + positionPixel * 4.;
-  return viewVertexPosition;
-}
-`;
-    }
-    /**
-     * Compute the size of the sprite in world units, incorporating the effect of
-     * geometric zoom and capping to max and min pixel sizes if specified.
-     */
-    function computeSize() {
-        return glsl `
-/**
- *
- * @param sizeWorld Size of the sprite in world coordinates.
- * @param sizePixel Offset size of the sprite in pixels.
- * @param geometricZoom The geometric zoom size modifier.
- * @param viewMatrixScale XY scale (world coords to pixels), and ZW inverse.
- * @param maxSizePixel Maximum allowed size in pixels.
- * @param minSizePixel Minimum allowed size in pixels.
- */
-vec2 computeSize(
-  vec2 sizeWorld,
-  vec2 sizePixel,
-  vec2 geometricZoom,
-  vec4 viewMatrixScale,
-  vec2 maxSizePixel,
-  vec2 minSizePixel
-) {
-  // Combine scale with geometric zoom effect.
-  vec2 zoomScale = exp(log(viewMatrixScale.xy) * (1. - geometricZoom));
-
-  // Project the size in world coordinates to pixels to apply min/max.
-  vec2 projectedSizePixel = (sizeWorld * zoomScale + sizePixel * 4.);
-
-  // Inital computed size in world coordinates is based on projected pixel size.
-  vec2 computedSize = projectedSizePixel * viewMatrixScale.zw;
-
-  // TODO(jimbo): Add border width to size if positioned externally.
-
-  // Compute whether max and min size components are positive, in parallel.
-  // XY contains results for max, ZW contains results for min.
-  bvec4 isPositive = greaterThan(vec4(maxSizePixel, minSizePixel), vec4(0.));
-
-  // Apply maximums if set.
-  bvec2 gtMax = greaterThan(projectedSizePixel, maxSizePixel);
-  if (isPositive.x && gtMax.x) {
-    computedSize.x = maxSizePixel.x * viewMatrixScale.z;
-  }
-  if (isPositive.y && gtMax.y) {
-    computedSize.y = maxSizePixel.y * viewMatrixScale.w;
-  }
-
-  // Apply minimums if set.
-  bvec2 ltMin = lessThan(projectedSizePixel, minSizePixel);
-  if (isPositive.z && ltMin.x) {
-    computedSize.x = minSizePixel.x * viewMatrixScale.z;
-  }
-  if (isPositive.w && ltMin.y) {
-    computedSize.y = minSizePixel.y * viewMatrixScale.w;
-  }
-
-  return computedSize;
-}
-`;
-    }
-    /**
-     * In parallel, compute the current world and pixel component sizes.
-     */
-    function computeCurrentSizePixelAndWorld() {
-        return glsl `
-vec4 computeCurrentSizePixelAndWorld() {
-  return computeCurrentValue(
-    vec4(
-      previousSizePixel(),
-      previousSizeWorld()),
-    vec4(
-      previousSizePixelDelta(),
-      previousSizeWorldDelta()),
-    vec4(
-      targetSizePixel(),
-      targetSizeWorld())
-  );
-}
-`;
-    }
-    /**
-     * In parallel, compute the current max and min pixel component sizes.
-     */
-    function computeCurrentMaxAndMinSizePixel() {
-        return glsl `
-vec4 computeCurrentMaxAndMinSizePixel() {
-  return computeCurrentValue(
-    vec4(
-      previousMaxSizePixel(),
-      previousMinSizePixel()
-    ),
-    vec4(
-      previousMaxSizePixelDelta(),
-      previousMinSizePixelDelta()
-    ),
-    vec4(
-      targetMaxSizePixel(),
-      targetMinSizePixel()
-    )
-  ) * 4.;
-}
-`;
-    }
-    /**
-     * Given the size of the sprite, compute its aspect ratio and the inverse. One
-     * of the components will be 1., while the other component will be the multiple.
-     * For example, a sprite which is twice as wide as it is tall will yield the
-     * vector: vec4(2., 1., .5, 1.);
-     */
-    function computeAspectRatio() {
-        return glsl `
-/**
- * @param size The size of the sprite.
- * @return The aspect ratio (XY) and the inverse of the aspect ratio (ZW).
- */
-vec4 computeAspectRatio(vec2 size) {
-  vec2 ar = size / min(size.x, size.y);
-  return vec4(ar, 1. / ar);
-}
-`;
-    }
-
-    /**
-     * @license
-     * Copyright 2021 Google LLC
-     *
-     * Licensed under the Apache License, Version 2.0 (the "License");
-     * you may not use this file except in compliance with the License.
-     * You may obtain a copy of the License at
-     *
-     *     http://www.apache.org/licenses/LICENSE-2.0
-     *
-     * Unless required by applicable law or agreed to in writing, software
-     * distributed under the License is distributed on an "AS IS" BASIS,
-     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     * See the License for the specific language governing permissions and
-     * limitations under the License.
-     */
-    /**
      * Returns the code for the Scene's main rendering fragment shader program.
      */
     function fragmentShader$2() {
@@ -938,6 +711,12 @@ uniform mat3 viewMatrix;
 uniform sampler2D sdfTexture;
 
 /**
+ * Antialiasing factor defines the window radius in device pixels to use to
+ * determine the contribution of border and fill colors for antialiasing.
+ */
+uniform float antialiasingFactor;
+
+/**
  * Varying time value, eased using cubic-in-out between the previous and target
  * timestamps for this Sprite.
  */
@@ -954,6 +733,12 @@ varying vec2 varyingVertexCoordinates;
  * inside the shape (Y). Values between constitute the border.
  */
 varying vec2 varyingBorderThresholds;
+
+/**
+ * Scale value for converting edge distances to pixel distances in the fragment
+ * shader.
+ */
+varying float varyingEdgeToPixelScale;
 
 /**
  * Aspect ratio of the sprite's renderable area (XY) and their inverses (ZW).
@@ -978,9 +763,6 @@ varying float varyingPreviousSides;
 varying float varyingTargetSides;
 varying vec4 varyingPreviousShapeTexture;
 varying vec4 varyingTargetShapeTexture;
-
-// Import utility shader functions).
-${range()}
 
 const float PI = 3.1415926535897932384626433832795;
 
@@ -1252,17 +1034,283 @@ void main () {
   float targetDistance = getDist(targetSides, varyingTargetShapeTexture);
   float signedDistance = mix(previousDistance, targetDistance, varyingT);
 
-  vec4 color =
-    signedDistance < varyingBorderThresholds.x ? vec4(0.) :
-    signedDistance < varyingBorderThresholds.y ? varyingBorderColor :
-    varyingFillColor;
+  // Create an antialiasing window around the determined signed distance with
+  // radius equal to 1 device pixel (diameter of 2 device pixels).
+  vec2 window = signedDistance +
+    varyingEdgeToPixelScale * antialiasingFactor * vec2(-1., 1.);
 
-  if (color.a < .01) {
+  // Width of the antialiasing window.
+  float width = window.y - window.x;
+
+  // Determine the contribution to the window of the border and fill.
+  vec2 contrib;
+
+  if (width > 0.) {
+    // Amount of space within the window that overlaps the border.
+    contrib.x =
+      min(varyingBorderThresholds.y, window.y) -
+      max(varyingBorderThresholds.x, window.x);
+
+    // Amount of space within the window that overlaps the fill color. May be
+    // negative, if no part of the window overlaps.
+    contrib.y = width - (varyingBorderThresholds.y - window.x);
+
+    // Normalize contributions to the antialiasing window's width.
+    contrib /= width;
+  } else {
+    // If zero antialiasing, do a hard cutoff.
+    contrib.x = float(
+      varyingBorderThresholds.x <= signedDistance &&
+      signedDistance < varyingBorderThresholds.y
+    );
+    contrib.y = float(varyingBorderThresholds.y <= signedDistance);
+  }
+
+  // Clamp contribution values to possible range.
+  contrib = clamp(contrib, 0., 1.);
+
+  // Mix alpha channels according to their absolute contributions.
+  float alpha =
+    contrib.x * varyingBorderColor.a +
+    contrib.y * varyingFillColor.a;
+
+  // Discard low-alpha pixels so that sprites that are out of their natural
+  // order (due to OrderZ) are visible underneath higher sprites.
+  if (alpha < .01) {
     discard;
     return;
   }
 
-  gl_FragColor = color;
+  // Mix RGB channels of border and fill according to their relative
+  // contributions to the total.
+  vec2 rel = contrib / (contrib.x + contrib.y);
+  vec3 color = rel.x * varyingBorderColor.rgb + rel.y * varyingFillColor.rgb;
+
+  gl_FragColor = vec4(color, alpha);
+}
+`;
+    }
+
+    /**
+     * @license
+     * Copyright 2021 Google LLC
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     *     http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+    /**
+     * List of types for creating vectorized versions of functions.
+     */
+    const GEN_TYPES = ['float', 'vec2', 'vec3', 'vec4'];
+    /**
+     * Range function. Inverse of GLSL built in mix() function.
+     */
+    function range() {
+        return glsl `
+float range(float x, float y, float a) {
+  return (a - x) / (y - x);
+}
+`;
+    }
+    /**
+     * Ease an input value t between 0 and 1 smoothly.
+     */
+    function cubicEaseInOut() {
+        return glsl `
+float cubicEaseInOut(float t) {
+  return t < 0.5 ? 4.0 * t * t * t :
+    4.0 * (t - 1.0) * (t - 1.0) * (t - 1.0) + 1.0;
+}
+`;
+    }
+    /**
+     * Given a starting value, velocity and an ending value, compute the
+     * instantaneous current value.
+     *
+     * These functions make use of the following macro variables which are presumed
+     * to already be defined and in scope:
+     *
+     * - targetTransitionTimeMs() - #define macro for animation arrival time.
+     * - previousTransitionTimeMs() - #define macro for animation start time.
+     *
+     * @param rangeT Name of GLSL variable containing the range'd time value. This
+     * should be a value between 0 and 1 to signal progress between the previous and
+     * target transition times.
+     * @param easeT Name of the GLSL vairable containing the result of cubic easing
+     * having been applied to the rangeT variable.
+     */
+    function computeCurrentValue(rangeT = 't', easeT = 'varyingT') {
+        return GEN_TYPES
+            .map(genType => glsl `
+${genType} computeCurrentValue(
+    ${genType} startingValue,
+    ${genType} startingVelocity,
+    ${genType} targetValue) {
+  ${genType} currentValue = mix(startingValue, targetValue, ${easeT});
+  ${genType} projectedValue = startingVelocity *
+    (targetTransitionTimeMs() - previousTransitionTimeMs());
+  return currentValue + projectedValue *
+    ${rangeT} * (1. - ${rangeT}) * (1. - ${rangeT}) * (1. - ${rangeT});
+}
+  `).join('\n');
+    }
+    /**
+     * For a given vertex coordinate, and other calculated values, compute the
+     * viewVertexPosition, the location in view space (screen pixels) where the
+     * sprite's vertex would appear.
+     */
+    function computeViewVertexPosition() {
+        return glsl `
+/**
+ * @param positionWorld The position of the sprite in world coords.
+ * @param size Size of the sprite in world coordinates.
+ * @param positionRelative Offset position relative to vert coords.
+ * @param positionPixel Offset position in screen pixels.
+ * @param vertCoords Local coordinates for this vertex.
+ * @param viewMatrix Matrix to project world coords into view space (pixels).
+ */
+vec2 computeViewVertexPosition(
+    vec2 positionWorld,
+    vec2 size,
+    vec2 positionRelative,
+    vec2 positionPixel,
+    vec2 vertCoords,
+    mat3 viewMatrix
+) {
+  vec2 vertexPositionWorld =
+    positionWorld + size * (positionRelative + vertCoords);
+  vec2 viewVertexPosition =
+    (viewMatrix * vec3(vertexPositionWorld, 1.)).xy + positionPixel * 4.;
+  return viewVertexPosition;
+}
+`;
+    }
+    /**
+     * Compute the size of the sprite in world units, incorporating the effect of
+     * geometric zoom and capping to max and min pixel sizes if specified.
+     */
+    function computeSize() {
+        return glsl `
+/**
+ *
+ * @param sizeWorld Size of the sprite in world coordinates.
+ * @param sizePixel Offset size of the sprite in pixels.
+ * @param geometricZoom The geometric zoom size modifier.
+ * @param viewMatrixScale XY scale (world coords to pixels), and ZW inverse.
+ * @param maxSizePixel Maximum allowed size in pixels.
+ * @param minSizePixel Minimum allowed size in pixels.
+ */
+vec2 computeSize(
+  vec2 sizeWorld,
+  vec2 sizePixel,
+  vec2 geometricZoom,
+  vec4 viewMatrixScale,
+  vec2 maxSizePixel,
+  vec2 minSizePixel
+) {
+  // Combine scale with geometric zoom effect.
+  vec2 zoomScale = exp(log(viewMatrixScale.xy) * (1. - geometricZoom));
+
+  // Project the size in world coordinates to pixels to apply min/max.
+  vec2 projectedSizePixel = sizeWorld * zoomScale +
+    sizePixel * CLIP_SPACE_RANGE * devicePixelRatio;
+
+  // Inital computed size in world coordinates is based on projected pixel size.
+  vec2 computedSize = projectedSizePixel * viewMatrixScale.zw;
+
+  // Compute whether max and min size components are positive, in parallel.
+  // XY contains results for max, ZW contains results for min.
+  bvec4 isPositive = greaterThan(vec4(maxSizePixel, minSizePixel), vec4(0.));
+
+  // Apply maximums if set.
+  bvec2 gtMax = greaterThan(projectedSizePixel, maxSizePixel);
+  if (isPositive.x && gtMax.x) {
+    computedSize.x = maxSizePixel.x * viewMatrixScale.z;
+  }
+  if (isPositive.y && gtMax.y) {
+    computedSize.y = maxSizePixel.y * viewMatrixScale.w;
+  }
+
+  // Apply minimums if set.
+  bvec2 ltMin = lessThan(projectedSizePixel, minSizePixel);
+  if (isPositive.z && ltMin.x) {
+    computedSize.x = minSizePixel.x * viewMatrixScale.z;
+  }
+  if (isPositive.w && ltMin.y) {
+    computedSize.y = minSizePixel.y * viewMatrixScale.w;
+  }
+
+  return computedSize;
+}
+`;
+    }
+    /**
+     * In parallel, compute the current world and pixel component sizes.
+     */
+    function computeCurrentSizePixelAndWorld() {
+        return glsl `
+vec4 computeCurrentSizePixelAndWorld() {
+  return computeCurrentValue(
+    vec4(
+      previousSizePixel(),
+      previousSizeWorld()),
+    vec4(
+      previousSizePixelDelta(),
+      previousSizeWorldDelta()),
+    vec4(
+      targetSizePixel(),
+      targetSizeWorld())
+  );
+}
+`;
+    }
+    /**
+     * In parallel, compute the current max and min pixel component sizes.
+     */
+    function computeCurrentMaxAndMinSizePixel() {
+        return glsl `
+vec4 computeCurrentMaxAndMinSizePixel() {
+  return computeCurrentValue(
+    vec4(
+      previousMaxSizePixel(),
+      previousMinSizePixel()
+    ),
+    vec4(
+      previousMaxSizePixelDelta(),
+      previousMinSizePixelDelta()
+    ),
+    vec4(
+      targetMaxSizePixel(),
+      targetMinSizePixel()
+    )
+  ) * CLIP_SPACE_RANGE * devicePixelRatio;
+}
+`;
+    }
+    /**
+     * Given the size of the sprite, compute its aspect ratio and the inverse. One
+     * of the components will be 1., while the other component will be the multiple.
+     * For example, a sprite which is twice as wide as it is tall will yield the
+     * vector: vec4(2., 1., .5, 1.);
+     */
+    function computeAspectRatio() {
+        return glsl `
+/**
+ * @param size The size of the sprite.
+ * @return The aspect ratio (XY) and the inverse of the aspect ratio (ZW).
+ */
+vec4 computeAspectRatio(vec2 size) {
+  vec2 ar = size / min(size.x, size.y);
+  return vec4(ar, 1. / ar);
 }
 `;
     }
@@ -1390,6 +1438,12 @@ varying vec2 varyingVertexCoordinates;
  * inside the shape (Y). Values between constitute the border.
  */
 varying vec2 varyingBorderThresholds;
+
+/**
+ * Scale value for converting edge distances to pixel distances in the fragment
+ * shader.
+ */
+varying float varyingEdgeToPixelScale;
 
 /**
  * Aspect ratio of the sprite's renderable area (XY) and their inverses (ZW).
@@ -1550,27 +1604,26 @@ void main () {
   // multiplier for clip-space, which goes from -1 to 1 in all dimensions.
   vec2 projectedSizePixel = computedSize.xy * viewMatrixScale.xy;
 
+  varyingEdgeToPixelScale =
+    CLIP_SPACE_RANGE * EDGE_DISTANCE_DILATION /
+    min(projectedSizePixel.x, projectedSizePixel.y);
+
   // The fragment shader needs to know the threshold signed distances that
-  // indicate whether each pixel is inside the shape, in the boreder, or outside
+  // indicate whether each pixel is inside the shape, in the border, or outside
   // of the shape. A point right on the edge of the shape will have a distance
   // of 0. In edge-distance space, a distance of 1 would be the dead center of a
   // circle.
-  float edgeDistance = currentBorderRadiusRelative + (
-      currentBorderRadiusPixel *
-      CLIP_SPACE_RANGE *
-      EDGE_DISTANCE_DILATION *
-      devicePixelRatio /
-      min(projectedSizePixel.x, projectedSizePixel.y)
-    );
+  float edgeDistance = currentBorderRadiusRelative +
+    currentBorderRadiusPixel * varyingEdgeToPixelScale * devicePixelRatio;
   varyingBorderThresholds =
-    vec2(0., edgeDistance) + mix(0., -edgeDistance, currentBorderPlacement);
+    vec2(0., edgeDistance) - edgeDistance * currentBorderPlacement;
 
   // Shift the quad vertices outward to account for borders, which may expand
   // the bounding box of the sprite.
   varyingVertexCoordinates *= (1. - varyingBorderThresholds.x);
 
   // Compute the sprite's aspect ratio and the inverse.
-  varyingAspectRatio = computeAspectRatio(computedSize);
+  varyingAspectRatio = computeAspectRatio(projectedSizePixel);
 
   // Compute the current position component attributes.
   vec2 currentPositionPixel = computeCurrentValue(
@@ -1680,6 +1733,7 @@ void main () {
             },
             'uniforms': {
                 'ts': () => coordinator.elapsedTimeMs(),
+                'antialiasingFactor': () => coordinator.antialiasingFactor,
                 'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
                 'instanceCount': () => coordinator.instanceCount,
                 'orderZGranularity': () => coordinator.orderZGranularity,
@@ -2656,6 +2710,7 @@ void main () {
      * Parameters to configure the Scene.
      */
     const DEFAULT_SCENE_SETTINGS = Object.freeze({
+        antialiasingFactor: 0.5,
         container: document.body,
         defaultTransitionTimeMs: 250,
         desiredSpriteCapacity: 1e6,
@@ -2998,86 +3053,41 @@ void main () {
             }
             this[DataViewSymbol][29] = attributeValue;
         }
-        get FillBlend() {
-            return this[DataViewSymbol][30];
-        }
-        set FillBlend(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('FillBlend cannot be NaN');
-            }
-            this[DataViewSymbol][30] = attributeValue;
-        }
         get FillColorR() {
-            return this[DataViewSymbol][31];
+            return this[DataViewSymbol][30];
         }
         set FillColorR(attributeValue) {
             if (isNaN(attributeValue)) {
                 throw new RangeError('FillColorR cannot be NaN');
             }
-            this[DataViewSymbol][31] = attributeValue;
+            this[DataViewSymbol][30] = attributeValue;
         }
         get FillColorG() {
-            return this[DataViewSymbol][32];
+            return this[DataViewSymbol][31];
         }
         set FillColorG(attributeValue) {
             if (isNaN(attributeValue)) {
                 throw new RangeError('FillColorG cannot be NaN');
             }
-            this[DataViewSymbol][32] = attributeValue;
+            this[DataViewSymbol][31] = attributeValue;
         }
         get FillColorB() {
-            return this[DataViewSymbol][33];
+            return this[DataViewSymbol][32];
         }
         set FillColorB(attributeValue) {
             if (isNaN(attributeValue)) {
                 throw new RangeError('FillColorB cannot be NaN');
             }
-            this[DataViewSymbol][33] = attributeValue;
+            this[DataViewSymbol][32] = attributeValue;
         }
         get FillColorOpacity() {
-            return this[DataViewSymbol][34];
+            return this[DataViewSymbol][33];
         }
         set FillColorOpacity(attributeValue) {
             if (isNaN(attributeValue)) {
                 throw new RangeError('FillColorOpacity cannot be NaN');
             }
-            this[DataViewSymbol][34] = attributeValue;
-        }
-        get FillTextureU() {
-            return this[DataViewSymbol][35];
-        }
-        set FillTextureU(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureU cannot be NaN');
-            }
-            this[DataViewSymbol][35] = attributeValue;
-        }
-        get FillTextureV() {
-            return this[DataViewSymbol][36];
-        }
-        set FillTextureV(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureV cannot be NaN');
-            }
-            this[DataViewSymbol][36] = attributeValue;
-        }
-        get FillTextureWidth() {
-            return this[DataViewSymbol][37];
-        }
-        set FillTextureWidth(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureWidth cannot be NaN');
-            }
-            this[DataViewSymbol][37] = attributeValue;
-        }
-        get FillTextureHeight() {
-            return this[DataViewSymbol][38];
-        }
-        set FillTextureHeight(attributeValue) {
-            if (isNaN(attributeValue)) {
-                throw new RangeError('FillTextureHeight cannot be NaN');
-            }
-            this[DataViewSymbol][38] = attributeValue;
+            this[DataViewSymbol][33] = attributeValue;
         }
         set PositionWorld(value) {
             if (Array.isArray(value)) {
@@ -3495,55 +3505,6 @@ void main () {
             }
             throw new TypeError('FillColor setter argument must be an array or object');
         }
-        set FillTexture(value) {
-            if (Array.isArray(value)) {
-                let anyComponentSet = false;
-                if ('0' in value) {
-                    this.FillTextureU = value[0];
-                    anyComponentSet = true;
-                }
-                if ('1' in value) {
-                    this.FillTextureV = value[1];
-                    anyComponentSet = true;
-                }
-                if ('2' in value) {
-                    this.FillTextureWidth = value[2];
-                    anyComponentSet = true;
-                }
-                if ('3' in value) {
-                    this.FillTextureHeight = value[3];
-                    anyComponentSet = true;
-                }
-                if (!anyComponentSet) {
-                    throw new TypeError('No FillTexture component index values were found');
-                }
-                return;
-            }
-            if (typeof value === 'object') {
-                let anyComponentSet = false;
-                if ('u' in value) {
-                    this.FillTextureU = value['u'];
-                    anyComponentSet = true;
-                }
-                if ('v' in value) {
-                    this.FillTextureV = value['v'];
-                    anyComponentSet = true;
-                }
-                if ('width' in value) {
-                    this.FillTextureWidth = value['width'];
-                    anyComponentSet = true;
-                }
-                if ('height' in value) {
-                    this.FillTextureHeight = value['height'];
-                    anyComponentSet = true;
-                }
-                if (!anyComponentSet) {
-                    throw new TypeError('No FillTexture component key values were found');
-                }
-                return;
-            }
-            throw new TypeError('FillTexture setter argument must be an array or object');
-        }
     }
 
     /**
@@ -3854,24 +3815,20 @@ void main () {
             this.bindingTaskId = Symbol('bindingTask');
             this.clearingTaskId = Symbol('clearingTask');
         }
-        onBind(bindCallback) {
-            this.bindCallback = bindCallback;
+        onInit(onInitCallback) {
+            this.onInitCallback = onInitCallback;
             return this;
         }
-        onInit(initCallback) {
-            this.initCallback = initCallback;
+        onEnter(onEnterCallback) {
+            this.onEnterCallback = onEnterCallback;
             return this;
         }
-        onEnter(enterCallback) {
-            this.enterCallback = enterCallback;
+        onUpdate(onUpdateCallback) {
+            this.onUpdateCallback = onUpdateCallback;
             return this;
         }
-        onUpdate(updateCallback) {
-            this.updateCallback = updateCallback;
-            return this;
-        }
-        onExit(exitCallback) {
-            this.exitCallback = exitCallback;
+        onExit(onExitCallback) {
+            this.onExitCallback = onExitCallback;
             return this;
         }
         /**
@@ -3879,7 +3836,7 @@ void main () {
          * returns immediately, but queues an incremental task to be carried out by
          * the WorkScheduler.
          *
-         * Note that whereas the Selection API offers the user callbacks for onBind(),
+         * Note that whereas the Selection API offers the user callbacks for,
          * onInit(), onEnter(), onUpdate() and onExit(), the underlying Sprite API
          * offers only enter(), update() and exit(). To handle this mismatch, the
          * Sprite's update() callback must be used to invoke more than one of the
@@ -3889,14 +3846,6 @@ void main () {
          *  - Selection::onEnter() - Sprite::update()
          *  - Selection::onUpdate() - Sprite::update()
          *  - Selection::onExit() - Sprite::exit()
-         *  - Selection::onBind() - Sprite::enter(), ::update() and ::exit().
-         *
-         * The Selection's onBind() callback, if specified, will be invoked
-         * immediately prior to every other callback. So for an entering datum, the
-         * invocation schedule is as follows:
-         *
-         *  - Sprite::enter() calls Selection::onBind() then Selection::onInit()
-         *  - Sprite::update() calls Selection::onBind() then Selection::onEnter()
          *
          * The underlying Sprite implementation ensures that its enter() callback will
          * be invoked before its update() callback. If both have been specified, they
@@ -3934,6 +3883,8 @@ void main () {
             let step = 0;
             const dataLength = data.length;
             let lastEnterIndex = this.boundData.length;
+            // Capture callback functions immediately.
+            const { onInitCallback, onEnterCallback, onUpdateCallback, onExitCallback } = this;
             // Performs data binding for entering data while there's time remaining,
             // then returns whether there's more work to do.
             const enterTask = (remaining) => {
@@ -3944,36 +3895,33 @@ void main () {
                     const sprite = this.coordinator.createSprite();
                     this.boundData[index] = datum;
                     this.sprites[index] = sprite;
-                    const { initCallback, enterCallback, bindCallback } = this;
-                    if (initCallback || bindCallback) {
-                        // Schedule the Sprite's enter() callback to run. This will invoke
-                        // the bindCallback and/or the initCallback, in that order.
+                    // The underlying Sprite API offers three methods for changing Sprite
+                    // attributes: enter(), update() and exit(). Each method takes a
+                    // user-provided callback which will be invoked asynchronously.
+                    // Callbacks are guaranteed to be invoked in order. (See the API
+                    // documentation in sprite.d.ts for more detail).
+                    //
+                    // In the case of an entering datum, we want to guarantee that the
+                    // onInitCallback is invoked BEFORE the onEnterCallback. For this
+                    // reason, we use the Sprite's .enter() method to schedule the
+                    // onInitCallback since that has highest priority.
+                    if (onInitCallback) {
+                        // Use Sprite's enter() to invoke onInitCallback.
                         sprite.enter(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (initCallback) {
-                                initCallback(spriteView, datum);
-                            }
+                            onInitCallback(spriteView, datum);
                             // NOTE: Because init() applies to the first frame of an entering
                             // data point, it should never have a transition time.
                             spriteView.TransitionTimeMs = 0;
                         });
                     }
-                    if (enterCallback || bindCallback) {
-                        // Schedule the Sprite's update() callback to run. This will invoke
-                        // the bindCallback and/or the enterCallback, in that order.
+                    // Since we want to guarantee that the onInitCallback will is invoked
+                    // before the onEnterCallback, and because we already used the Sprite's
+                    // .enter() method to schedule the onInitCallback, here we use the
+                    // Sprite's .update() method to schedule the onEnterCallback.
+                    if (onEnterCallback) {
+                        // Use Sprite's update() to invoke onEnterCallback.
                         sprite.update(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (enterCallback) {
-                                enterCallback(spriteView, datum);
-                            }
+                            onEnterCallback(spriteView, datum);
                         });
                     }
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
@@ -3993,19 +3941,10 @@ void main () {
                     const datum = data[index];
                     const sprite = this.sprites[index];
                     this.boundData[index] = datum;
-                    const { updateCallback, bindCallback } = this;
-                    if (updateCallback || bindCallback) {
-                        // Schedule the Sprite's update() callback to run. This will invoke
-                        // the bindCallback and/or the updateCallback, in that order.
+                    if (onUpdateCallback) {
+                        // Use the Sprite's update() to invoke the onUpdateCallback.
                         sprite.update(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (updateCallback) {
-                                updateCallback(spriteView, datum);
-                            }
+                            onUpdateCallback(spriteView, datum);
                         });
                     }
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
@@ -4033,17 +3972,10 @@ void main () {
                         sprite.abandon();
                     }
                     else {
-                        const { exitCallback, bindCallback } = this;
-                        // Schedule the Sprite's exit() callback to run. This will invoke
-                        // the bindCallback and/or the exitCallback, in that order.
+                        // Use the Sprite's exit() to invoke the onExitCallback.
                         sprite.exit(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (exitCallback) {
-                                exitCallback(spriteView, datum);
+                            if (onExitCallback) {
+                                onExitCallback(spriteView, datum);
                             }
                         });
                     }
@@ -4063,9 +3995,9 @@ void main () {
                 return this.boundData.length <= dataLength;
             };
             // Define a binding task which will be invoked by the WorkScheduler to
-            // incrementally carry out the prevously defined tasks.
+            // incrementally carry out the previously defined tasks.
             this.bindingTask = {
-                // Setting id to this ensures that there will be only one bindingTask
+                // Setting the id ensures that there will be only one bindingTask
                 // associated with this object at a time. If the API user calls bind()
                 // again before the previous task finishes, whatever work it had been
                 // doing will be dropped for the new parameters.
@@ -4106,10 +4038,10 @@ void main () {
          */
         clear() {
             let step = 0;
-            // Get a reference to the currently specified exitCallback and bindCallback,
-            // if any. We do this now to ensure that later changes do not affect the way
-            // thate the previously bound sprites leave.
-            const { exitCallback, bindCallback } = this;
+            // Get a reference to the currently specified onExitCallback, if any. We do
+            // this now to ensure that later changes do not affect the way that the
+            // previously bound sprites leave.
+            const { onExitCallback } = this;
             // Performs exit data binding while there's time remaining, then returns
             // whether there's more work to do.
             const exitTask = (remaining) => {
@@ -4130,17 +4062,10 @@ void main () {
                     }
                     else {
                         // Schedule the Sprite's exit() callback to run. This will invoke
-                        // the bindCallback and/or the exitCallback, in that order. Even if
-                        // neither bindCallback nor exitCallback are specified, we still need
-                        // to call .exit() to mark the Sprite for removal.
+                        // the onExitCallback, if any.
                         sprite.exit(spriteView => {
-                            if (bindCallback) {
-                                // The bindCallback, if present is always invoked when binding
-                                // data, immediately before more specific callbacks if present.
-                                bindCallback(spriteView, datum);
-                            }
-                            if (exitCallback) {
-                                exitCallback(spriteView, datum);
+                            if (onExitCallback) {
+                                onExitCallback(spriteView, datum);
                             }
                         });
                     }
@@ -4158,10 +4083,8 @@ void main () {
             // Define a clearing task which will be invoked by the WorkScheduler to
             // incrementally clear all data.
             this.clearingTask = {
-                // Setting id to this ensures that there will be only one bindingTask
-                // associated with this object at a time. If the API user calls bind()
-                // again before the previous task finishes, whatever work it had been
-                // doing will be dropped for the new parameters.
+                // Setting the id ensures that there will be only one clearingTask
+                // associated with this object at a time.
                 id: this.clearingTaskId,
                 // Perform as much of the clearing work as time allows. When finished,
                 // remove the clearingTask member. This will unblock the bindingTask, if
@@ -5148,6 +5071,14 @@ void main () {
      */
     const DEFAULT_ALIGN_VALUE = 'center';
     const DEFAULT_VERTICAL_ALIGN_VALUE = 'middle';
+    /**
+     * Utility function called inside Sprite callbacks to set glyph shape.
+     */
+    function setGlyphAttributes(spriteView, glyph) {
+        spriteView.Sides = 0;
+        spriteView.ShapeTexture = glyph.coords;
+        spriteView.PositionRelative = glyph.position;
+    }
     class TextSelectionImpl {
         /**
          * Create a new selection in the associated Scene.
@@ -5178,10 +5109,6 @@ void main () {
             this.verticalAlignCallback = verticalAlignCallback;
             return this;
         }
-        onBind(bindCallback) {
-            this.bindCallback = bindCallback;
-            return this;
-        }
         onInit(initCallback) {
             this.initCallback = initCallback;
             return this;
@@ -5197,43 +5124,6 @@ void main () {
         onExit(exitCallback) {
             this.exitCallback = exitCallback;
             return this;
-        }
-        datumToGlyphs(datum) {
-            const text = (this.textCallback ? this.textCallback.call(datum, datum) :
-                `${datum}`)
-                .trim();
-            const align = (this.alignCallback && this.alignCallback(datum)) ||
-                DEFAULT_ALIGN_VALUE;
-            const verticalAlign = (this.verticalAlignCallback && this.verticalAlignCallback(datum)) ||
-                DEFAULT_VERTICAL_ALIGN_VALUE;
-            const glyphs = [];
-            for (let i = 0; i < text.length; i++) {
-                let x;
-                if (align === 'left') {
-                    x = (i + 1) * .5;
-                }
-                else if (align === 'right') {
-                    x = (i + 1 - text.length) * 0.5;
-                }
-                else {
-                    x = (i + .75 - text.length * 0.5) * 0.5;
-                }
-                let y;
-                if (verticalAlign === 'top') {
-                    y = -0.5;
-                }
-                else if (verticalAlign === 'bottom') {
-                    y = 0.5;
-                }
-                else {
-                    y = 0;
-                }
-                const coords = this.glyphMapper.getGlyph(text.charAt(i));
-                if (coords) {
-                    glyphs.push({ datum, coords, position: { x, y } });
-                }
-            }
-            return glyphs;
         }
         bind(data, keyFn) {
             // TODO(jimbo): Implement keyFn for non-index binding.
@@ -5254,6 +5144,78 @@ void main () {
             let step = 0;
             const dataLength = data.length;
             let lastEnterIndex = this.boundData.length;
+            // Capture properties immediately.
+            const { textCallback, alignCallback, verticalAlignCallback } = this;
+            // Utility function to convert a datum into a sequence of glyphs for
+            // binding.
+            const datumToGlyphs = (datum) => {
+                const text = (textCallback ? textCallback(datum) : `${datum}`)
+                    .trim();
+                const align = (alignCallback && alignCallback(datum)) || DEFAULT_ALIGN_VALUE;
+                const verticalAlign = (verticalAlignCallback && verticalAlignCallback(datum)) ||
+                    DEFAULT_VERTICAL_ALIGN_VALUE;
+                const glyphs = [];
+                for (let i = 0; i < text.length; i++) {
+                    let x;
+                    if (align === 'left') {
+                        x = (i + 1) * .5;
+                    }
+                    else if (align === 'right') {
+                        x = (i + 1 - text.length) * 0.5;
+                    }
+                    else {
+                        x = (i + .75 - text.length * 0.5) * 0.5;
+                    }
+                    let y;
+                    if (verticalAlign === 'top') {
+                        y = -0.5;
+                    }
+                    else if (verticalAlign === 'bottom') {
+                        y = 0.5;
+                    }
+                    else {
+                        y = 0;
+                    }
+                    const coords = this.glyphMapper.getGlyph(text.charAt(i));
+                    if (coords) {
+                        glyphs.push({ datum, coords, position: { x, y } });
+                    }
+                }
+                return glyphs;
+            };
+            // Capture callback functions immediately.
+            const { initCallback, enterCallback, updateCallback, exitCallback } = this;
+            // Given a selection, set all of its callbacks based on the captured
+            // callback functions. Needs to be invoked for entering, updating and
+            // exiting data since the callbacks may have changed since the previous
+            // bind() invocation.
+            const setCallbacks = (selection) => {
+                selection
+                    .onInit((spriteView, glyph) => {
+                    setGlyphAttributes(spriteView, glyph);
+                    if (initCallback) {
+                        initCallback(spriteView, glyph.datum);
+                    }
+                })
+                    .onEnter((spriteView, glyph) => {
+                    setGlyphAttributes(spriteView, glyph);
+                    if (enterCallback) {
+                        enterCallback(spriteView, glyph.datum);
+                    }
+                })
+                    .onUpdate((spriteView, glyph) => {
+                    setGlyphAttributes(spriteView, glyph);
+                    if (updateCallback) {
+                        updateCallback(spriteView, glyph.datum);
+                    }
+                })
+                    .onExit((spriteView, glyph) => {
+                    setGlyphAttributes(spriteView, glyph);
+                    if (exitCallback) {
+                        exitCallback(spriteView, glyph.datum);
+                    }
+                });
+            };
             // Performs enter data binding while there's time remaining, then returns
             // whether there's more work to do.
             const enterTask = (remaining) => {
@@ -5264,35 +5226,8 @@ void main () {
                     const selection = this.renderer.createSelection();
                     this.boundData.push(datum);
                     this.selections.push(selection);
-                    selection.onInit((spriteView, glyph) => {
-                        if (this.initCallback) {
-                            this.initCallback(spriteView, glyph.datum);
-                        }
-                    });
-                    selection.onEnter((spriteView, glyph) => {
-                        if (this.enterCallback) {
-                            this.enterCallback(spriteView, glyph.datum);
-                        }
-                    });
-                    selection.onUpdate((spriteView, glyph) => {
-                        if (this.updateCallback) {
-                            this.updateCallback(spriteView, glyph.datum);
-                        }
-                    });
-                    selection.onExit((spriteView, glyph) => {
-                        if (this.exitCallback) {
-                            this.exitCallback(spriteView, glyph.datum);
-                        }
-                    });
-                    selection.onBind((spriteView, glyph) => {
-                        spriteView.Sides = 0;
-                        spriteView.ShapeTexture = glyph.coords;
-                        spriteView.PositionRelative = glyph.position;
-                        if (this.bindCallback) {
-                            this.bindCallback(spriteView, glyph.datum);
-                        }
-                    });
-                    selection.bind(this.datumToGlyphs(datum));
+                    setCallbacks(selection);
+                    selection.bind(datumToGlyphs(datum));
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
                         break;
                     }
@@ -5310,9 +5245,10 @@ void main () {
                     const datum = data[index];
                     const selection = this.selections[index];
                     this.boundData[index] = datum;
-                    selection.bind(this.datumToGlyphs(datum));
+                    setCallbacks(selection);
+                    selection.bind(datumToGlyphs(datum));
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
-                        return false;
+                        break;
                     }
                 }
                 return lastUpdateIndex >= updateLength;
@@ -5325,6 +5261,7 @@ void main () {
                     step++;
                     const selection = this.selections[index];
                     index++;
+                    setCallbacks(selection);
                     selection.bind([]);
                     if (step % this.stepsBetweenChecks === 0 && remaining() <= 0) {
                         break;
@@ -6017,6 +5954,15 @@ void main () {
              * Track whether scale and offset have been initialized.
              */
             this.isViewInitialized = false;
+            /**
+             * This constant controls how many steps in a loop should pass before asking
+             * the WorkScheduler how much time is remaining by invoking the remaining()
+             * callback function. This lets us replace a function call with a less
+             * expensive modulo check in the affected loops.
+             *
+             * Exposed here for testing/debugging purposes.
+             */
+            this.stepsBetweenRemainingTimeChecks = STEPS_BETWEEN_REMAINING_TIME_CHECKS;
             // Set up settings based on incoming parameters.
             const settings = Object.assign({}, DEFAULT_SCENE_SETTINGS, params);
             const { timingFunctions } = settings;
@@ -6044,6 +5990,7 @@ void main () {
                 }
                 this.getDevicePixelRatio = () => devicePixelRatio;
             }
+            this.antialiasingFactor = settings.antialiasingFactor;
             this.container = settings.container;
             this.defaultTransitionTimeMs = settings.defaultTransitionTimeMs;
             this.orderZGranularity = settings.orderZGranularity;
@@ -6238,6 +6185,10 @@ void main () {
             }
             const { width, height } = this.canvas.getBoundingClientRect();
             if (!width || !height) {
+                console.warn('Delaying Scene initialization: canvas has zero size');
+                if (!this.canvas.isConnected) {
+                    console.debug('Canvas is not connected to the DOM');
+                }
                 return;
             }
             this.lastDevicePixelRatio = this.getDevicePixelRatio();
@@ -6257,7 +6208,6 @@ void main () {
          * or offset is changed, this method is invoked.
          */
         handleViewChange() {
-            this.isViewInitialized = true;
             this.queueDraw();
         }
         /**
@@ -6337,7 +6287,12 @@ void main () {
             // Initialize view if it hasn't been already.
             this.initView();
             const currentTimeMs = this.elapsedTimeMs();
-            this.drawCommand();
+            if (this.isViewInitialized) {
+                this.drawCommand();
+            }
+            else {
+                console.warn('Skipping draw: view is not initialized');
+            }
             if (this.toDrawTsRange.isDefined) {
                 this.toDrawTsRange.truncateToWithin(currentTimeMs, Infinity);
                 this.queueDraw(false);
@@ -6556,7 +6511,7 @@ void main () {
          */
         queueAssignWaiting() {
             const runMethod = (remaining) => {
-                runAssignWaiting(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+                runAssignWaiting(this, remaining, this.stepsBetweenRemainingTimeChecks);
             };
             this.queueTask(this.runAssignWaitingTaskId, runMethod);
         }
@@ -6565,7 +6520,7 @@ void main () {
          */
         queueRunCallbacks() {
             const runMethod = (remaining) => {
-                runCallbacks(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+                runCallbacks(this, remaining, this.stepsBetweenRemainingTimeChecks);
             };
             this.queueTask(this.runCallbacksTaskId, runMethod);
         }
@@ -6578,7 +6533,7 @@ void main () {
          */
         queueRemovalTask() {
             const runMethod = (remaining) => {
-                runRemoval(this, remaining, STEPS_BETWEEN_REMAINING_TIME_CHECKS);
+                runRemoval(this, remaining, this.stepsBetweenRemainingTimeChecks);
             };
             this.queueTask(this.runRemovalTaskId, runMethod);
         }
@@ -6588,10 +6543,10 @@ void main () {
             });
         }
         createSelection() {
-            return new SelectionImpl(STEPS_BETWEEN_REMAINING_TIME_CHECKS, this);
+            return new SelectionImpl(this.stepsBetweenRemainingTimeChecks, this);
         }
         createTextSelection() {
-            return new TextSelectionImpl(STEPS_BETWEEN_REMAINING_TIME_CHECKS, this, this.workScheduler, this.glyphMapper);
+            return new TextSelectionImpl(this.stepsBetweenRemainingTimeChecks, this, this.workScheduler, this.glyphMapper);
         }
     }
 
