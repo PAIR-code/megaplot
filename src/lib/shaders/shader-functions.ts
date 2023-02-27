@@ -157,7 +157,8 @@ vec2 computeSize(
   vec2 minSizePixel
 ) {
   // Combine scale with geometric zoom effect.
-  vec2 zoomScale = exp(log(viewMatrixScale.xy) * (1. - geometricZoom));
+  vec2 zoomScale = exp(log(viewMatrixScale.xy) * (1. - geometricZoom))
+    * pow(vec2(CLIP_SPACE_RANGE * devicePixelRatio), geometricZoom);
 
   // Project the size in world coordinates to pixels to apply min/max.
   vec2 projectedSizePixel = sizeWorld * zoomScale +
