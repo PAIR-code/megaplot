@@ -92,8 +92,14 @@ export function runRemoval(
     // Track number of steps to reduce calls to the remaining() callback.
     let step = 1;
 
-    for (; index <= highIndex; index++) {
-      const sprite = coordinator.sprites[index];
+    while (index <= highIndex) {
+      // Note the current index, used in this turn of the loop.
+      const currentIndex = index;
+
+      // Increment the index counter for the next turn, or the finally block.
+      index++;
+
+      const sprite = coordinator.sprites[currentIndex];
       const properties = sprite[InternalPropertiesSymbol];
 
       // Skip any sprites that are not both in the Rest phase and have had
@@ -110,13 +116,13 @@ export function runRemoval(
       // If the sprite's time has not yet finished, then add it back to the
       // index range. We'll reschedule another run after the loop.
       if (properties.spriteView.TransitionTimeMs > currentTimeMs) {
-        coordinator.toBeRemovedIndexRange.expandToInclude(index);
+        coordinator.toBeRemovedIndexRange.expandToInclude(currentIndex);
         coordinator.toBeRemovedTsRange.expandToInclude(
             properties.spriteView.TransitionTimeMs);
         continue;
       }
 
-      // The sprite has been marked for removal, it's in the right
+      // The sprite has been marked for removal, it is in the right
       // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
       properties.spriteView[DataViewSymbol].fill(0);
@@ -132,7 +138,7 @@ export function runRemoval(
   } finally {
     // Expand the toBeRemovedIndexRange and toBeRemovedTsRange to include
     // any sprites that were not visited due to time.
-    for (let i = index + 1; i <= highIndex; i++) {
+    for (let i = index; i <= highIndex; i++) {
       const sprite = coordinator.sprites[i];
       const properties = sprite[InternalPropertiesSymbol];
 
@@ -143,7 +149,7 @@ export function runRemoval(
         continue;
       }
 
-      if (!properties.spriteView) {
+      if (properties.spriteView === undefined) {
         // Indicates a bug in Megaplot. A Sprite in the Rest lifecycle
         // phase ought to have been allocated a swatch and thus a
         // SpriteView for interacting with it.
