@@ -109,13 +109,27 @@ export async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
 /**
  * Given a target length, and the Uint 8 RGBA channels for a pixel, create a
  * block of pixel values for testing sampled swatches of canvas data.
+ *
+ * @param pixelCount The number of pixels to produce.
+ * @param fillColor Array of four color channel values.
+ * @param convertOpacity Whether the fourth channel needs opacity-to-alpha
+ * conversion (multiply by 256).
  */
 export function filledColorArray(
     pixelCount: number,
-    fillColor: [number, number, number, number]): Uint8ClampedArray {
+    fillColor: number[],
+    convertOpacity = false,
+    ): Uint8ClampedArray {
+  if (fillColor.length !== 4) {
+    throw RangeError('fillColor must be an array with RGB and Opacity values.');
+  }
   const array = new Uint8ClampedArray(pixelCount * 4);
-  for (let i = 0; i < array.length; i++) {
-    array[i] = fillColor[i % fillColor.length];
+  const conversionFactor = convertOpacity ? 256 : 1;
+  for (let i = 0; i < array.length; i += 4) {
+    array[i] = fillColor[0];
+    array[i + 1] = fillColor[1];
+    array[i + 2] = fillColor[2];
+    array[i + 3] = fillColor[3] * conversionFactor;
   }
   return array;
 }

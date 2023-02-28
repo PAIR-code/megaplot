@@ -41,6 +41,7 @@ interface CoordinatorAPI {
   needsRebaseIndexRange: NumericRange;
   needsTextureSyncIndexRange: NumericRange;
   queueAssignWaiting: () => void;
+  queueDraw: () => void;
   queueRebase: () => void;
   queueRemovalTask: () => void;
   queueRunCallbacks: () => void;
@@ -179,9 +180,10 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     // The sprite was slated for removal. How to proceed depends on
     // whether it has more time left before its target arrival time.
 
-    if (properties.spriteView.TransitionTimeMs <= currentTimeMs) {
-      // The sprite was slated for removal, and its time has expired.
-      // Return its swatch for future reuse.
+    if (properties.zeroed &&
+        properties.spriteView.TransitionTimeMs <= currentTimeMs) {
+      // The sprite was slated for removal, has had its values reset to zero,
+      // and its time has expired. Return its swatch for future reuse.
       coordinator.removeSprite(sprite);
       continue;
     }
@@ -217,4 +219,7 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     height: rowHeight,
   };
   coordinator.targetValuesTexture.subimage(subimageData, 0, lowRow);
+
+  // After texture sync, we should always guarantee a draw call.
+  coordinator.queueDraw();
 }

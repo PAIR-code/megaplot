@@ -85,23 +85,21 @@ export function runRemoval(
   coordinator.toBeRemovedIndexRange.clear();
   coordinator.toBeRemovedTsRange.clear();
 
-  // Keep track of the last index visited. This is outside of the try block so
-  // that we have access to it in the finally block afterwards.
+  // Define index outside of loop so we can access it in the finally clause.
   let index = lowIndex;
 
   try {
     // Track number of steps to reduce calls to the remaining() callback.
     let step = 1;
 
-    for (; index <= highIndex; index++) {
-      // Check to make sure we have made at least one step of progress and that
-      // we haven't run for too long without ceding the thread.
-      if (index > lowIndex && step++ % stepsBetweenChecks === 0 &&
-          remaining() <= 0) {
-        break;
-      }
+    while (index <= highIndex) {
+      // Note the current index, used in this turn of the loop.
+      const currentIndex = index;
 
-      const sprite = coordinator.sprites[index];
+      // Increment the index counter for the next turn, or the finally block.
+      index++;
+
+      const sprite = coordinator.sprites[currentIndex];
       const properties = sprite[InternalPropertiesSymbol];
 
       // Skip any sprites that are not both in the Rest phase and have had
@@ -118,48 +116,54 @@ export function runRemoval(
       // If the sprite's time has not yet finished, then add it back to the
       // index range. We'll reschedule another run after the loop.
       if (properties.spriteView.TransitionTimeMs > currentTimeMs) {
-        coordinator.toBeRemovedIndexRange.expandToInclude(index);
+        coordinator.toBeRemovedIndexRange.expandToInclude(currentIndex);
         coordinator.toBeRemovedTsRange.expandToInclude(
             properties.spriteView.TransitionTimeMs);
         continue;
       }
 
-      // The sprite has been marked for removal, its in the right
+      // The sprite has been marked for removal, it is in the right
       // LifecyclePhase, and its time has expired. Flash zeros to the sprite's
       // data view and schedule it for a texture sync.
       properties.spriteView[DataViewSymbol].fill(0);
+      properties.zeroed = true;
       properties.lifecyclePhase = LifecyclePhase.NeedsTextureSync;
       coordinator.needsTextureSyncIndexRange.expandToInclude(properties.index);
+
+      // Break if we've run too long.
+      if (step++ % stepsBetweenChecks === 0 && remaining() <= 0) {
+        break;
+      }
     }
   } finally {
-    if (coordinator.needsTextureSyncIndexRange.isDefined) {
-      coordinator.queueTextureSync();
+    // Expand the toBeRemovedIndexRange and toBeRemovedTsRange to include
+    // any sprites that were not visited due to time.
+    for (let i = index; i <= highIndex; i++) {
+      const sprite = coordinator.sprites[i];
+      const properties = sprite[InternalPropertiesSymbol];
+
+      // Ignore any sprites that are not both in the Rest phase and have had
+      // their 'toBeRemoved' property set (had an exit callback).
+      if (!properties.toBeRemoved ||
+          properties.lifecyclePhase !== LifecyclePhase.Rest) {
+        continue;
+      }
+
+      if (properties.spriteView === undefined) {
+        // Indicates a bug in Megaplot. A Sprite in the Rest lifecycle
+        // phase ought to have been allocated a swatch and thus a
+        // SpriteView for interacting with it.
+        // eslint-disable-next-line no-unsafe-finally
+        throw new InternalError('Sprite lacks a SpriteView');
+      }
+
+      coordinator.toBeRemovedIndexRange.expandToInclude(i);
+      coordinator.toBeRemovedTsRange.expandToInclude(
+          properties.spriteView.TransitionTimeMs);
     }
 
-    if (index < highIndex) {
-      // Since we didn't finish the whole loop due to time, expand the index
-      // range to include all the indices which were previously marked, but
-      // which we didn't visit.
-      coordinator.toBeRemovedIndexRange.expandToInclude(index + 1);
-      coordinator.toBeRemovedIndexRange.expandToInclude(highIndex);
-
-      // Expand the Ts range to include the timestamps of the remaining sprites.
-      for (let i = index + 1; i <= highIndex; i++) {
-        const sprite = coordinator.sprites[i];
-        const properties = sprite[InternalPropertiesSymbol];
-        if (properties.toBeRemoved === true &&
-            properties.lifecyclePhase === LifecyclePhase.Rest) {
-          if (!properties.spriteView) {
-            // Indicates a bug in Megaplot. A Sprite in the Rest lifecycle phase
-            // ought to have been allocated a swatch and thus a SpriteView for
-            // interacting with it.
-            // eslint-disable-next-line no-unsafe-finally
-            throw new InternalError('Sprite lacks a SpriteView');
-          }
-          coordinator.toBeRemovedTsRange.expandToInclude(
-              properties.spriteView.TransitionTimeMs);
-        }
-      }
+    if (coordinator.needsTextureSyncIndexRange.isDefined) {
+      coordinator.queueTextureSync();
     }
 
     if (coordinator.toBeRemovedIndexRange.isDefined) {

@@ -75,6 +75,16 @@ export class SpriteImplProperties {
   toBeRemoved?: boolean;
 
   /**
+   * When a sprite is being removed, its attributes are all set to zero so that
+   * these zeros can be flashed to the data texture. This makes it invisible to
+   * render (degenerate) while waiting for another sprite to use its swatch.
+   * This flag is set after zeros have been flashed during the runRemoval task
+   * to signal that after the next texture sync its index can be given to the
+   * next waiting sprite.
+   */
+  zeroed?: boolean;
+
+  /**
    * Whether the API user has requested this Sprite to be abandoned.
    */
   isAbandoned?: boolean;
