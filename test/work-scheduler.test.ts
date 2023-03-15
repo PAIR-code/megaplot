@@ -22,9 +22,9 @@
  * frames do not run in a backgrounded browser.
  */
 
-import {DEFAULT_TIMING_FUNCTIONS} from '../src/lib/default-timing-functions';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
-import {RemainingTimeFn, WorkScheduler} from '../src/lib/work-scheduler';
+import { DEFAULT_TIMING_FUNCTIONS } from '../src/lib/default-timing-functions';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
+import { RemainingTimeFn, WorkScheduler } from '../src/lib/work-scheduler';
 
 describe('WorkScheduler', () => {
   it('should exist', () => {
@@ -34,8 +34,8 @@ describe('WorkScheduler', () => {
   it('should allow setting a custom timing functions object', () => {
     const timingFunctionsShim = new TimingFunctionsShim();
     const workScheduler = new WorkScheduler({
-      timingFunctions: timingFunctionsShim as {} as
-          typeof DEFAULT_TIMING_FUNCTIONS
+      timingFunctions:
+        timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
     });
 
     expect(typeof workScheduler).toBe('object');
@@ -71,8 +71,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -101,11 +101,8 @@ describe('WorkScheduler', () => {
 
       it('should stop requesting frames when tasks are done', () => {
         const timingFunctionsShim = new TimingFunctionsShim();
-        const {
-          requestAnimationFrame,
-          cancelAnimationFrame,
-          now,
-        } = timingFunctionsShim;
+        const { requestAnimationFrame, cancelAnimationFrame, now } =
+          timingFunctionsShim;
 
         // Wrap requestAnimationFrame with a counter to keep track of the number
         // of frames that have been requested.
@@ -166,8 +163,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -178,7 +175,7 @@ describe('WorkScheduler', () => {
           expect(remaining).toBeInstanceOf(Function);
 
           // Since no time has elapsed, all time should be remaining.
-          expect(remaining()).toBe(10);  // maxWorkTimeMs.
+          expect(remaining()).toBe(10); // maxWorkTimeMs.
 
           // Synthesize time passing.
           timingFunctionsShim.totalElapsedTimeMs += 20;
@@ -186,7 +183,7 @@ describe('WorkScheduler', () => {
           // Now time remaining should be negative since we've used it all.
           expect(remaining()).toBe(-10);
 
-          ++counter
+          ++counter;
         };
 
         workScheduler.scheduleTask(incrementCounter);
@@ -203,8 +200,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -247,8 +244,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -301,7 +298,7 @@ describe('WorkScheduler', () => {
         // NOTE: Native animation frames only run when the browser window is
         // visible. As a result, this test may be flaky if the captured browser
         // thinks that it is not visible.
-        const workScheduler = new WorkScheduler({maxWorkTimeMs: 10});
+        const workScheduler = new WorkScheduler({ maxWorkTimeMs: 10 });
 
         let counter = 0;
         const incrementCounter = () => ++counter;
@@ -314,12 +311,12 @@ describe('WorkScheduler', () => {
         expect(counter).toBe(0);
 
         // Advance by one frame. Callback should have been invoked.
-        await new Promise(resolve => window.requestAnimationFrame(resolve));
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
         expect(counter).toBe(1);
 
         // Since the incrementer has finished, additional passing animation
         // frames should not cause the incrementer to run.
-        await new Promise(resolve => window.requestAnimationFrame(resolve));
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
         expect(counter).toBe(1);
       });
 
@@ -329,8 +326,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -365,8 +362,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -417,8 +414,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 
@@ -450,8 +447,8 @@ describe('WorkScheduler', () => {
         timingFunctionsShim.totalElapsedTimeMs = 1000;
 
         const workScheduler = new WorkScheduler({
-          timingFunctions: timingFunctionsShim as {} as
-              typeof DEFAULT_TIMING_FUNCTIONS,
+          timingFunctions:
+            timingFunctionsShim as {} as typeof DEFAULT_TIMING_FUNCTIONS,
           maxWorkTimeMs: 10,
         });
 

@@ -98,20 +98,23 @@ export interface WorkTaskWithId extends Readonly<WorkTask> {
  * Given a WorkTask or Function, determine if it meets the minimum necessary
  * criteria for being used as a WorkTask.
  */
-export function isWorkTaskOrFunction(workTaskOrFunction: WorkTask|
-                                     WorkTaskCallbackFn): boolean {
+export function isWorkTaskOrFunction(
+  workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+): boolean {
   return !!(
-      workTaskOrFunction &&
-      (workTaskOrFunction instanceof Function ||
-       workTaskOrFunction.callback instanceof Function));
+    workTaskOrFunction &&
+    (workTaskOrFunction instanceof Function ||
+      workTaskOrFunction.callback instanceof Function)
+  );
 }
 
 /**
  * Given a WorkTask or Function, determine what its id would be as a
  * WorkTaskWithId.
  */
-export function getWorkTaskId(workTaskOrFunction: WorkTask|
-                              WorkTaskCallbackFn): WorkTaskId {
+export function getWorkTaskId(
+  workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+): WorkTaskId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
     throw new Error('Provided object was not a work task or function');
   }
@@ -140,8 +143,9 @@ export function getWorkTaskId(workTaskOrFunction: WorkTask|
  * If the input parameter is neither a WorkTask object, nor a Function, then an
  * error will be thrown.
  */
-export function ensureOrCreateWorkTask(workTaskOrFunction: WorkTask|
-                                       WorkTaskCallbackFn): WorkTaskWithId {
+export function ensureOrCreateWorkTask(
+  workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+): WorkTaskWithId {
   if (!isWorkTaskOrFunction(workTaskOrFunction)) {
     throw new Error('Provided object was not a work task or function');
   }

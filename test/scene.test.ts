@@ -18,11 +18,11 @@
  * @fileoverview Tests for the Scene.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {createArticle, createSection} from './utils';
+import { createArticle, createSection } from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -35,8 +35,9 @@ describe('Scene', () => {
     expect(Scene).toBeInstanceOf(Function);
   });
 
-  const {section, content: sectionContent} =
-      createSection('Scene::constructor()');
+  const { section, content: sectionContent } = createSection(
+    'Scene::constructor()'
+  );
   article.appendChild(section);
 
   const container = document.createElement('div');
@@ -67,7 +68,7 @@ describe('Scene', () => {
     it('should create a canvas', () => {
       const devicePixelRatio = window.devicePixelRatio || 1;
       const canvas = container.querySelector('canvas')!;
-      expect(canvas).toBeInstanceOf(HTMLCanvasElement)
+      expect(canvas).toBeInstanceOf(HTMLCanvasElement);
       expect(canvas.width).toBe(100 * devicePixelRatio);
       expect(canvas.height).toBe(100 * devicePixelRatio);
     });
@@ -134,8 +135,9 @@ describe('Scene', () => {
 
 describe('Scene', () => {
   describe('initialization', () => {
-    const {section, content: sectionContent} =
-        createSection('Scene initialization');
+    const { section, content: sectionContent } = createSection(
+      'Scene initialization'
+    );
     article.appendChild(section);
 
     it('should delay initalizing view until canvas has non-zero size', () => {
@@ -176,7 +178,8 @@ describe('Scene', () => {
   });
 
   describe('resize()', () => {
-    const {section, content: sectionContent} = createSection('Scene::resize()');
+    const { section, content: sectionContent } =
+      createSection('Scene::resize()');
     article.appendChild(section);
 
     describe('horizontal', () => {
@@ -330,7 +333,7 @@ describe('Scene', () => {
       // Resize preserving old canvas point (100,100), which was previously the
       // bottom-right corner when the canvas was 100x100 square. This equates to
       // world coordinates (1,-1).
-      scene.resize({x: 100, y: 100});
+      scene.resize({ x: 100, y: 100 });
 
       // Canvas should fill container.
       expect(canvas.width).toEqual(200 * devicePixelRatio);
@@ -350,7 +353,7 @@ describe('Scene', () => {
       // Resize preserving old canvas point (200,100), which was previously the
       // bottom-right corner when the canvas was 200x100 stretched. As with the
       // previous resize, this equates to world coordinates (1,-1).
-      scene.resize({x: 200, y: 100});
+      scene.resize({ x: 200, y: 100 });
 
       // Canvas should fill container.
       expect(canvas.width).toEqual(100 * devicePixelRatio);

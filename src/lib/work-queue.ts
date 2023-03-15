@@ -19,8 +19,15 @@
  * manage ordered lists of work tasks.
  */
 
-import {InternalError} from './internal-error';
-import {ensureOrCreateWorkTask, getWorkTaskId, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
+import { InternalError } from './internal-error';
+import {
+  ensureOrCreateWorkTask,
+  getWorkTaskId,
+  WorkTask,
+  WorkTaskCallbackFn,
+  WorkTaskId,
+  WorkTaskWithId,
+} from './work-task';
 
 /**
  * A WorkQueue consists of an array of work tasks with Ids, and a set for
@@ -58,14 +65,14 @@ export class WorkQueue {
    * Return whether a WorkTask has already been enqueued that matches the
    * provided input.
    */
-  hasTask(workTaskOrFunction: WorkTask|WorkTaskCallbackFn): boolean {
+  hasTask(workTaskOrFunction: WorkTask | WorkTaskCallbackFn): boolean {
     return this.hasTaskId(getWorkTaskId(workTaskOrFunction));
   }
 
   /**
    * Get the task that has the provided id.
    */
-  getTaskById(id: WorkTaskId): WorkTaskWithId|undefined {
+  getTaskById(id: WorkTaskId): WorkTaskWithId | undefined {
     if (!this.hasTaskId(id)) {
       return undefined;
     }
@@ -84,7 +91,7 @@ export class WorkQueue {
    * Given a WorkTask or a simple callback function, push it onto the end of the
    * internal taskList unless it's already present.
    */
-  enqueueTask(workTaskOrFunction: WorkTask|WorkTaskCallbackFn) {
+  enqueueTask(workTaskOrFunction: WorkTask | WorkTaskCallbackFn) {
     // Short-circuit if this task is already queued.
     if (this.hasTask(workTaskOrFunction)) {
       return;
@@ -111,7 +118,7 @@ export class WorkQueue {
    * Given the id if of a WorkTask, if a matching WorkTask has been enqueued,
    * remove it and return it. Otherwise return undefined.
    */
-  removeTaskById(id: WorkTaskId): WorkTaskWithId|undefined {
+  removeTaskById(id: WorkTaskId): WorkTaskWithId | undefined {
     // Short-circuit if the task is not present in the WorkQueue's idSet.
     if (!this.hasTaskId(id)) {
       return undefined;
@@ -133,8 +140,9 @@ export class WorkQueue {
    * Given a WorkTask or function, if a matching WorkTask has been enqueued,
    * remove it and return it. Otherwise return undefined.
    */
-  removeTask(workTaskOrFunction: WorkTask|WorkTaskCallbackFn): WorkTaskWithId
-      |undefined {
+  removeTask(
+    workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+  ): WorkTaskWithId | undefined {
     return this.removeTaskById(getWorkTaskId(workTaskOrFunction));
   }
 

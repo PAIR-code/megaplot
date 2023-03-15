@@ -20,14 +20,14 @@
  * invokes them.
  */
 
-import {InternalError} from '../internal-error';
-import {LifecyclePhase} from '../lifecycle-phase';
-import {NumericRange} from '../numeric-range';
-import {SpriteViewCallback} from '../sprite';
-import {SpriteImpl} from '../sprite-impl';
-import {SpriteImplProperties} from '../sprite-impl-properties';
-import {DataViewSymbol, InternalPropertiesSymbol} from '../symbols';
-import {RemainingTimeFn, WorkScheduler} from '../work-scheduler';
+import { InternalError } from '../internal-error';
+import { LifecyclePhase } from '../lifecycle-phase';
+import { NumericRange } from '../numeric-range';
+import { SpriteViewCallback } from '../sprite';
+import { SpriteImpl } from '../sprite-impl';
+import { SpriteImplProperties } from '../sprite-impl-properties';
+import { DataViewSymbol, InternalPropertiesSymbol } from '../symbols';
+import { RemainingTimeFn, WorkScheduler } from '../work-scheduler';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -63,25 +63,25 @@ interface CoordinatorAPI {
  * the remaining time function.
  */
 export function runCallbacks(
-    coordinator: CoordinatorAPI,
-    remaining: RemainingTimeFn,
-    stepsBetweenChecks: number,
-    ): void {
+  coordinator: CoordinatorAPI,
+  remaining: RemainingTimeFn,
+  stepsBetweenChecks: number
+): void {
   if (!coordinator.callbacksIndexRange.isDefined) {
     // This indicates a timing error in the code.
     throw new InternalError('Running callbacks requires a range of indices');
   }
 
   // Make note of the exit index range for looping purposes.
-  const {lowBound, highBound} = coordinator.callbacksIndexRange;
+  const { lowBound, highBound } = coordinator.callbacksIndexRange;
 
   // Clear the range. It will be expanded as needed.
   coordinator.callbacksIndexRange.clear();
 
   // Keep track of the last Sprite visited and its properties. This way we can
   // recover from a user's callback error.
-  let sprite: SpriteImpl|undefined;
-  let properties: SpriteImplProperties|undefined;
+  let sprite: SpriteImpl | undefined;
+  let properties: SpriteImplProperties | undefined;
 
   // Keep track of whether we've encountered any sprites that will need a
   // rebase before texture sync.
@@ -101,7 +101,7 @@ export function runCallbacks(
       throw new InternalError('Attempted to re-run afterCallback steps');
     }
 
-    const {spriteView, index} = properties;
+    const { spriteView, index } = properties;
     if (!spriteView || index === undefined) {
       throw new InternalError('Sprite missing required properties');
     }
@@ -155,8 +155,11 @@ export function runCallbacks(
       // execution thread. Always make sure we've gone at least one time
       // around the loop. This check is at the top of the loop so that it's
       // invoked every time without fail to prevent runaway execution.
-      if (index > lowBound && step++ % stepsBetweenChecks === 0 &&
-          remaining() <= 0) {
+      if (
+        index > lowBound &&
+        step++ % stepsBetweenChecks === 0 &&
+        remaining() <= 0
+      ) {
         break;
       }
 
@@ -175,7 +178,8 @@ export function runCallbacks(
 
       if (!properties.spriteView) {
         throw new InternalError(
-            'Sprite in HasCallback lifecycle phase missing SpriteView');
+          'Sprite in HasCallback lifecycle phase missing SpriteView'
+        );
       }
 
       // Pick earliest callback to run (enter, then update, then exit).
@@ -195,7 +199,8 @@ export function runCallbacks(
         // callbacks. This should not be possible under normal operations
         // and indicates a bug in the phase transition logic.
         throw new InternalError(
-            'Sprite in HasCallback state missing callbacks');
+          'Sprite in HasCallback state missing callbacks'
+        );
       }
 
       // Poke the defaultTransitionTimeMs into the spriteView arrival time.
@@ -204,7 +209,7 @@ export function runCallbacks(
       // the callback, the value will have the elapsed time added to it so
       // that the transition completion time is in the future.
       properties.spriteView.TransitionTimeMs =
-          coordinator.defaultTransitionTimeMs;
+        coordinator.defaultTransitionTimeMs;
 
       // Reset the step counter to force a time check at the top of the next
       // iteration through the loop.
@@ -221,14 +226,15 @@ export function runCallbacks(
     // The most likely place for an error to have occurred is the user's
     // callback function. So here we should ensure that the after callback
     // steps are invoked.
-    if (properties &&
-        properties.lifecyclePhase === LifecyclePhase.HasCallback) {
+    if (
+      properties &&
+      properties.lifecyclePhase === LifecyclePhase.HasCallback
+    ) {
       afterCallback();
     }
 
     // Rethrowing here will not prevent the finally block below from running.
     throw err;
-
   } finally {
     if (anyNeedsRebase) {
       coordinator.queueRebase();

@@ -19,5 +19,5 @@
  */
 
 export interface TransformEvent extends Event {
-  transform: {x: number; y: number; k: number;};
+  transform: { x: number; y: number; k: number };
 }

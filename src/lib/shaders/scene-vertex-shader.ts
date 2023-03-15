@@ -47,9 +47,9 @@
  *    Projection matrix -> Clip space
  */
 
-import {AttributeMapper} from '../attribute-mapper';
+import { AttributeMapper } from '../attribute-mapper';
 
-import {glsl} from './glsl-template-tag';
+import { glsl } from './glsl-template-tag';
 import * as ShaderFunctions from './shader-functions';
 
 /**
@@ -202,21 +202,26 @@ vec4 targetTexelValues[${attributeMapper.texelsPerSwatch}];
  * Read data texel values into the previous and target arrays.
  */
 void readTexels() {
-    ${
-      attributeMapper.generateTexelReaderGLSL(
-          'previousTexelValues', 'previousValuesTexture', 'instanceSwatchUv')}
-    ${
-      attributeMapper.generateTexelReaderGLSL(
-          'targetTexelValues', 'targetValuesTexture', 'instanceSwatchUv')}
+    ${attributeMapper.generateTexelReaderGLSL(
+      'previousTexelValues',
+      'previousValuesTexture',
+      'instanceSwatchUv'
+    )}
+    ${attributeMapper.generateTexelReaderGLSL(
+      'targetTexelValues',
+      'targetValuesTexture',
+      'instanceSwatchUv'
+    )}
 }
 
 // Dynamically generate #DEFINE statements to access texel attributes by name.
 // These look like method invocations elsewhere in the code. For example, the
 // define "targetTransitionTimeMs()" extracts the float value
 // targetTexelValues[0].r.
-${
-      attributeMapper.generateAttributeDefinesGLSL(
-          'previous', 'previousTexelValues')}
+${attributeMapper.generateAttributeDefinesGLSL(
+  'previous',
+  'previousTexelValues'
+)}
 ${attributeMapper.generateAttributeDefinesGLSL('target', 'targetTexelValues')}
 
 /**

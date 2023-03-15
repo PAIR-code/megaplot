@@ -20,7 +20,7 @@
  * perform data binding.
  */
 
-import {SpriteView} from './generated/sprite-view';
+import { SpriteView } from './generated/sprite-view';
 
 export type SpriteViewCallback = (spriteView: SpriteView) => void;
 

@@ -23,7 +23,9 @@
  * which that it.
  */
 export function glsl(
-    strings: TemplateStringsArray, ...args: Array<string|number>) {
+  strings: TemplateStringsArray,
+  ...args: Array<string | number>
+) {
   const interleaved: string[] = [];
   for (let i = 0; i < args.length; i++) {
     interleaved.push(strings[i], `${args[i]}`);

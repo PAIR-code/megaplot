@@ -19,12 +19,20 @@
  * specified for sprites and varying the device pixel ratio.
  */
 
-import {SpriteView} from '../src/lib/generated/sprite-view';
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { SpriteView } from '../src/lib/generated/sprite-view';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray, makeGreenMagentaSquare} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  createArticle,
+  createSection,
+  filledColorArray,
+  makeGreenMagentaSquare,
+} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -41,20 +49,21 @@ describe('Scene', () => {
     // That is, a square with SizeWorld=1 will fill the scene.
     const varyingParameters = [
       // When GeometricZoom is 0, the default square fills the scene at size=1.
-      {sizeWorld: 1, geometricZoom: 0},
+      { sizeWorld: 1, geometricZoom: 0 },
 
       // When GeometricZoom is 0.5, then we're half way between the default
       // 1:100 scale and the full 1:1 scale. In log terms, that's 1:10.
-      {sizeWorld: 10, geometricZoom: 0.5},
+      { sizeWorld: 10, geometricZoom: 0.5 },
 
       // When GeometricZoom is all the way to 1.0, then world units to logical
       // pixels is 1:1. It takes 100 world units to span the width of the scene.
-      {sizeWorld: 100, geometricZoom: 1},
+      { sizeWorld: 100, geometricZoom: 1 },
     ];
 
-    for (const {sizeWorld, geometricZoom} of varyingParameters) {
-      const {section, content: sectionContent} =
-          createSection(`GeometricZoom=${geometricZoom}`);
+    for (const { sizeWorld, geometricZoom } of varyingParameters) {
+      const { section, content: sectionContent } = createSection(
+        `GeometricZoom=${geometricZoom}`
+      );
       article.appendChild(section);
 
       for (const dpr of devicePixelRatioParameters) {
@@ -90,7 +99,7 @@ describe('Scene', () => {
           // Now, if we inspect the canvas, its pixels should show that the
           // sprite has been rendered. Start my making a copy of the canvas and
           // for inspection.
-          const {canvas} = scene;
+          const { canvas } = scene;
           const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
           sectionContent.appendChild(copyContainer);
 
@@ -104,8 +113,8 @@ describe('Scene', () => {
           // 5% the width and height of the canvas size. This patch is a
           // middle-ground between testing the whole image for pixel-perfect
           // rendering and testing a single pixel.
-          const sampleWidth = Math.ceil(copy.width * .05);
-          const sampleHeight = Math.ceil(copy.width * .05);
+          const sampleWidth = Math.ceil(copy.width * 0.05);
+          const sampleHeight = Math.ceil(copy.width * 0.05);
           const pixelCount = sampleWidth * sampleHeight;
 
           const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
@@ -113,36 +122,38 @@ describe('Scene', () => {
           // Take a sample of the top left corner and compare it to the expected
           // solid green patch.
           const topLeftSample = ctx.getImageData(
-              1,
-              1,
-              sampleWidth,
-              sampleHeight,
+            1,
+            1,
+            sampleWidth,
+            sampleHeight
           );
           expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
 
           // Take a sample of the bottom right corner and compare it to the
           // expected solid green patch.
           const bottomRightSample = ctx.getImageData(
-              Math.floor(copy.width - sampleWidth - 1),
-              Math.floor(copy.height - sampleHeight - 1),
-              sampleWidth,
-              sampleHeight,
+            Math.floor(copy.width - sampleWidth - 1),
+            Math.floor(copy.height - sampleHeight - 1),
+            sampleWidth,
+            sampleHeight
           );
-          expect(compareColorArrays(bottomRightSample.data, greenPatch))
-              .toEqual(1);
+          expect(
+            compareColorArrays(bottomRightSample.data, greenPatch)
+          ).toEqual(1);
 
           const magentaPatch = filledColorArray(pixelCount, [255, 0, 255, 255]);
 
           // Lastly, sample a chunk of the middle of the image and compare it to
           // the solid magenta patch.
           const centerSample = ctx.getImageData(
-              Math.floor(copy.width * .5 - sampleWidth * .5),
-              Math.floor(copy.height * .5 - sampleHeight * .5),
-              sampleWidth,
-              sampleHeight,
+            Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+            Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+            sampleWidth,
+            sampleHeight
           );
-          expect(compareColorArrays(centerSample.data, magentaPatch))
-              .toEqual(1);
+          expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(
+            1
+          );
 
           // Release REGL resources.
           scene[SceneInternalSymbol].regl.destroy();

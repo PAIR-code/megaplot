@@ -19,11 +19,11 @@
  * SceneImpl.
  */
 
-import {InternalError} from './internal-error';
-import {LifecyclePhase} from './lifecycle-phase';
-import {Sprite, SpriteViewCallback} from './sprite';
-import {SpriteImplProperties} from './sprite-impl-properties';
-import {InternalPropertiesSymbol} from './symbols';
+import { InternalError } from './internal-error';
+import { LifecyclePhase } from './lifecycle-phase';
+import { Sprite, SpriteViewCallback } from './sprite';
+import { SpriteImplProperties } from './sprite-impl-properties';
+import { InternalPropertiesSymbol } from './symbols';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts. Here
@@ -34,7 +34,7 @@ interface CoordinatorAPI {
 }
 
 export class SpriteImpl {
-  public[InternalPropertiesSymbol]: SpriteImplProperties;
+  public [InternalPropertiesSymbol]: SpriteImplProperties;
 
   /**
    * Create a new Sprite in the associated Scene.
@@ -141,8 +141,10 @@ export class SpriteImpl {
    */
   get isActive(): boolean {
     const lifecyclePhase = this[InternalPropertiesSymbol].lifecyclePhase;
-    return lifecyclePhase !== LifecyclePhase.Created &&
-        lifecyclePhase !== LifecyclePhase.Removed;
+    return (
+      lifecyclePhase !== LifecyclePhase.Created &&
+      lifecyclePhase !== LifecyclePhase.Removed
+    );
   }
 
   get isAbandoned(): boolean {
@@ -150,7 +152,8 @@ export class SpriteImpl {
   }
 
   get isRemoved(): boolean {
-    return this[InternalPropertiesSymbol].lifecyclePhase ===
-        LifecyclePhase.Removed;
+    return (
+      this[InternalPropertiesSymbol].lifecyclePhase === LifecyclePhase.Removed
+    );
   }
 }

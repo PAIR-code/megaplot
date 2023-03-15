@@ -18,8 +18,8 @@
  * @fileoverview Types relating to Selections.
  */
 
-import {SpriteView} from './generated/sprite-view';
-import {HitTestParameters} from './hit-test-types';
+import { SpriteView } from './generated/sprite-view';
+import { HitTestParameters } from './hit-test-types';
 
 /**
  * The enter, update and exit methods of Selections take callbacks of
@@ -30,8 +30,8 @@ export type SelectionCallback<T> = (spriteView: SpriteView, datum: T) => void;
 /**
  * Parameters to pass to a Selection hit test.
  */
-export interface SelectionHitTestParameters extends
-    Omit<HitTestParameters, 'sprites'> {
+export interface SelectionHitTestParameters
+  extends Omit<HitTestParameters, 'sprites'> {
   /**
    * Whether to sort results so that the topmost Sprites are last. Default=true.
    */

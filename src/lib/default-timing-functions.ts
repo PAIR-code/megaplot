@@ -46,7 +46,7 @@ export interface TimingFunctions {
  */
 export const DEFAULT_TIMING_FUNCTIONS: TimingFunctions = Object.freeze({
   requestAnimationFrame: (callbackFn: FrameRequestCallback) =>
-      window.requestAnimationFrame(callbackFn),
+    window.requestAnimationFrame(callbackFn),
 
   cancelAnimationFrame: (handle: number) => {
     window.cancelAnimationFrame(handle);

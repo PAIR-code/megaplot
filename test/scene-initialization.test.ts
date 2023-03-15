@@ -18,11 +18,19 @@
  * @fileoverview Integration tests for Scene initialization.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray, makeGreenMagentaSquare} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  createArticle,
+  createSection,
+  filledColorArray,
+  makeGreenMagentaSquare,
+} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -32,8 +40,9 @@ document.body.appendChild(article);
 
 describe('Scene', () => {
   describe('initialization', () => {
-    const {section, content: sectionContent} =
-        createSection('Scene initialization');
+    const { section, content: sectionContent } = createSection(
+      'Scene initialization'
+    );
     article.appendChild(section);
 
     it('should render when canvas attached post-construction', async () => {
@@ -64,7 +73,7 @@ describe('Scene', () => {
       // Now, if we inspect the canvas, its pixels should show that the
       // sprite has been rendered. Start by making a copy of the canvas and
       // for inspection.
-      const {canvas} = scene;
+      const { canvas } = scene;
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
       sectionContent.appendChild(copyContainer);
 
@@ -78,29 +87,24 @@ describe('Scene', () => {
       // 10% the width and height of the canvas size. This patch is a
       // middle-ground between testing the whole image for pixel-perfect
       // rendering and testing a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
+      const sampleWidth = Math.ceil(copy.width * 0.1);
+      const sampleHeight = Math.ceil(copy.width * 0.1);
       const pixelCount = sampleWidth * sampleHeight;
 
       const greenPatch = filledColorArray(pixelCount, [0, 255, 0, 255]);
 
       // Take a sample of the top left corner and compare it to the expected
       // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          1,
-          1,
-          sampleWidth,
-          sampleHeight,
-      );
+      const topLeftSample = ctx.getImageData(1, 1, sampleWidth, sampleHeight);
       expect(compareColorArrays(topLeftSample.data, greenPatch)).toEqual(1);
 
       // Take a sample of the bottom right corner and compare it to the
       // expected solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth - 1),
-          Math.floor(copy.height - sampleHeight - 1),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width - sampleWidth - 1),
+        Math.floor(copy.height - sampleHeight - 1),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(bottomRightSample.data, greenPatch)).toEqual(1);
 
@@ -109,10 +113,10 @@ describe('Scene', () => {
       // Lastly, sample a chunk of the middle of the image and compare it to
       // the solid magenta patch.
       const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(centerSample.data, magentaPatch)).toEqual(1);
 

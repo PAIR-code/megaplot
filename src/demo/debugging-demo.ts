@@ -25,12 +25,12 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {Scene, SpriteView} from '../index';
-import {DEFAULT_SCENE_SETTINGS} from '../lib/default-scene-settings';
-import {InternalError} from '../lib/internal-error';
-import {SceneInternalSymbol} from '../lib/symbols';
+import { Scene, SpriteView } from '../index';
+import { DEFAULT_SCENE_SETTINGS } from '../lib/default-scene-settings';
+import { InternalError } from '../lib/internal-error';
+import { SceneInternalSymbol } from '../lib/symbols';
 
-import {TransformEvent} from './transform-event';
+import { TransformEvent } from './transform-event';
 
 require('./styles.css');
 
@@ -113,7 +113,7 @@ function main() {
 
   scene.canvas.style.imageRendering = settings.pixelated ? 'pixelated' : 'auto';
 
-  const {workScheduler} = scene[SceneInternalSymbol];
+  const { workScheduler } = scene[SceneInternalSymbol];
   workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
 
   // Add frame rate stats panel.
@@ -142,15 +142,16 @@ function main() {
 
   const selection = scene.createSelection<number>();
 
-  const indices: number[] =
-      (new Array(MAX_COUNT * MAX_COUNT)).fill(0).map((_, i) => i);
+  const indices: number[] = new Array(MAX_COUNT * MAX_COUNT)
+    .fill(0)
+    .map((_, i) => i);
 
   let hoveredIndices = new Set<number>();
 
   // Function to call when GUI options are changed.
   function update() {
     scene[SceneInternalSymbol].stepsBetweenRemainingTimeChecks =
-        settings.stepsBetweenChecks;
+      settings.stepsBetweenChecks;
 
     if (settings.clearBeforeUpdate) {
       selection.clear();
@@ -160,8 +161,9 @@ function main() {
     settings.total = count * count;
 
     // Setup a rainbow color scale.
-    const colorScale = d3.scaleLinear(colors).domain(
-        d3.range(0, count * count, count * count / colors.length));
+    const colorScale = d3
+      .scaleLinear(colors)
+      .domain(d3.range(0, count * count, (count * count) / colors.length));
 
     // Setup text border and fill colors.
     const textBorderColor = d3.color(settings.textBorder) as d3.RGBColor;
@@ -186,11 +188,11 @@ function main() {
       s.BorderPlacement = settings.borderPlacement;
 
       s.PositionWorldX =
-          settings.positionMultiplier * (1 / count * i + 1 / count / 2 - 0.5);
+        settings.positionMultiplier * ((1 / count) * i + 1 / count / 2 - 0.5);
       s.PositionWorldY =
-          settings.positionMultiplier * (1 / count * j + 1 / count / 2 - 0.5);
-      s.PositionPixelX = Math.floor(3 * i / count) * settings.paddingPx;
-      s.PositionPixelY = -Math.floor(3 * j / count) * settings.paddingPx;
+        settings.positionMultiplier * ((1 / count) * j + 1 / count / 2 - 0.5);
+      s.PositionPixelX = Math.floor((3 * i) / count) * settings.paddingPx;
+      s.PositionPixelY = -Math.floor((3 * j) / count) * settings.paddingPx;
       s.PositionRelativeX = settings.positionRelative;
 
       s.OrderZ = 0;
@@ -200,7 +202,7 @@ function main() {
 
       s.GeometricZoom = settings.geometricZoom;
 
-      s.SizeWorld = 1 / count * settings.sizeMultiplier;
+      s.SizeWorld = (1 / count) * settings.sizeMultiplier;
       s.SizePixel = settings.sizeAddPx;
 
       s.MaxSizePixelWidth = settings.maxSizePxWidth;
@@ -208,15 +210,16 @@ function main() {
       s.MinSizePixelWidth = settings.minSizePxWidth;
       s.MinSizePixelHeight = settings.minSizePxHeight;
 
-      s.Sides = settings.randomize ? Math.floor(Math.random() * 6) + 1 :
-                                     (i * count + j) % 6 + 1;
+      s.Sides = settings.randomize
+        ? Math.floor(Math.random() * 6) + 1
+        : ((i * count + j) % 6) + 1;
 
       s.FillColor = color;
 
       if (settings.showText) {
-        const glyphIndex = settings.randomize ?
-            Math.floor(Math.random() * glyphs.length) :
-            (index + 64) % glyphs.length;
+        const glyphIndex = settings.randomize
+          ? Math.floor(Math.random() * glyphs.length)
+          : (index + 64) % glyphs.length;
         const glyph = glyphs[glyphIndex];
         const coords = glyphMapper.getGlyph(glyph);
 
@@ -235,32 +238,32 @@ function main() {
     };
 
     selection
-        .onInit((s, index) => {
-          placeSprite(s, index);
+      .onInit((s, index) => {
+        placeSprite(s, index);
 
-          // Fade in from green.
-          s.BorderColor = ENTER_COLOR;
-          s.BorderColorOpacity = settings.exitOpacity;
-          s.FillColor = ENTER_COLOR;
-          s.FillColorOpacity = settings.exitOpacity;
-        })
-        .onEnter(placeSprite)
-        .onUpdate(placeSprite)
-        .onExit((s) => {
-          s.TransitionTimeMs = settings.transitionTimeMs;
+        // Fade in from green.
+        s.BorderColor = ENTER_COLOR;
+        s.BorderColorOpacity = settings.exitOpacity;
+        s.FillColor = ENTER_COLOR;
+        s.FillColorOpacity = settings.exitOpacity;
+      })
+      .onEnter(placeSprite)
+      .onUpdate(placeSprite)
+      .onExit((s) => {
+        s.TransitionTimeMs = settings.transitionTimeMs;
 
-          // Fade to black.
-          s.BorderColor = EXIT_COLOR;
-          s.BorderColorOpacity = settings.exitOpacity;
-          s.FillColor = EXIT_COLOR;
-          s.FillColorOpacity = settings.exitOpacity;
-        });
+        // Fade to black.
+        s.BorderColor = EXIT_COLOR;
+        s.BorderColorOpacity = settings.exitOpacity;
+        s.FillColor = EXIT_COLOR;
+        s.FillColorOpacity = settings.exitOpacity;
+      });
 
     selection.bind(indices.slice(0, count * count));
   }
 
   // Setup dat.GUI for controlling params.
-  const gui = new dat.GUI({autoPlace: false});
+  const gui = new dat.GUI({ autoPlace: false });
   Object.assign(gui.domElement.style, {
     position: 'absolute',
     right: 0,
@@ -275,23 +278,24 @@ function main() {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
   animationFolder.add(settings, 'staggerAnimation');
-  animationFolder.add(settings, 'exitOpacity', 0, 1, .25).onChange(update);
+  animationFolder.add(settings, 'exitOpacity', 0, 1, 0.25).onChange(update);
   animationFolder.add(settings, 'clearBeforeUpdate');
 
   const systemFolder = gui.addFolder('system');
-  systemFolder.add(settings, 'antialiasingFactor', 0, 5, .01).onChange(() => {
+  systemFolder.add(settings, 'antialiasingFactor', 0, 5, 0.01).onChange(() => {
     scene[SceneInternalSymbol].antialiasingFactor = settings.antialiasingFactor;
     scene[SceneInternalSymbol].queueDraw();
   });
   systemFolder.add(settings, 'stepsBetweenChecks', 1, 1000, 1);
-  systemFolder.add(settings, 'devicePixelRatio', 0.1, 2, .1).onChange(() => {
+  systemFolder.add(settings, 'devicePixelRatio', 0.1, 2, 0.1).onChange(() => {
     scene.resize();
   });
   systemFolder.add(settings, 'zoomX');
   systemFolder.add(settings, 'zoomY');
   systemFolder.add(settings, 'pixelated').onChange(() => {
-    scene.canvas.style.imageRendering =
-        settings.pixelated ? 'pixelated' : 'auto';
+    scene.canvas.style.imageRendering = settings.pixelated
+      ? 'pixelated'
+      : 'auto';
   });
   systemFolder.addColor(settings, 'backgroundColor').onChange(() => {
     document.body.style.backgroundColor = settings.backgroundColor;
@@ -299,21 +303,23 @@ function main() {
 
   const positionFolder = gui.addFolder('positioning');
   positionFolder.add(settings, 'paddingPx', -100, 100, 10).onChange(update);
-  positionFolder.add(settings, 'positionRelative', -3, 3, .1).onChange(update);
-  positionFolder.add(settings, 'positionMultiplier', -3, 3, .1)
-      .onChange(update);
+  positionFolder.add(settings, 'positionRelative', -3, 3, 0.1).onChange(update);
+  positionFolder
+    .add(settings, 'positionMultiplier', -3, 3, 0.1)
+    .onChange(update);
   positionFolder.add(settings, 'flipZ').onChange(update);
 
   const borderFolder = gui.addFolder('borders');
-  borderFolder.add(settings, 'borderRadiusRelative', 0, 1, .05)
-      .onChange(update);
+  borderFolder
+    .add(settings, 'borderRadiusRelative', 0, 1, 0.05)
+    .onChange(update);
   borderFolder.add(settings, 'borderRadiusPx', 0, 100, 1).onChange(update);
-  borderFolder.add(settings, 'borderPlacement', 0, 1, .1).onChange(update);
+  borderFolder.add(settings, 'borderPlacement', 0, 1, 0.1).onChange(update);
 
   const sizeFolder = gui.addFolder('size');
-  sizeFolder.add(settings, 'sizeMultiplier', 0.1, 3, .1).onChange(update);
+  sizeFolder.add(settings, 'sizeMultiplier', 0.1, 3, 0.1).onChange(update);
   sizeFolder.add(settings, 'sizeAddPx', 0, 100, 5).onChange(update);
-  sizeFolder.add(settings, 'geometricZoom', 0, 1, .01).onChange(update);
+  sizeFolder.add(settings, 'geometricZoom', 0, 1, 0.01).onChange(update);
   sizeFolder.add(settings, 'maxSizePxWidth', 0, 400, 10).onChange(update);
   sizeFolder.add(settings, 'maxSizePxHeight', 0, 400, 10).onChange(update);
   sizeFolder.add(settings, 'minSizePxWidth', 0, 400, 10).onChange(update);
@@ -336,25 +342,28 @@ function main() {
   container.appendChild(gui.domElement);
 
   // Setup zoom behavior.
-  const zoom = d3.zoom<HTMLCanvasElement, unknown>()
-                   .scaleExtent([1, 200000])
-                   .on('zoom', (event: TransformEvent) => {
-                     const {x, y, k} = event.transform;
-                     if (settings.zoomX) {
-                       scene.scale.x = k;
-                       scene.offset.x = x;
-                     }
-                     if (settings.zoomY) {
-                       scene.scale.y = k;
-                       scene.offset.y = y;
-                     }
-                   });
+  const zoom = d3
+    .zoom<HTMLCanvasElement, unknown>()
+    .scaleExtent([1, 200000])
+    .on('zoom', (event: TransformEvent) => {
+      const { x, y, k } = event.transform;
+      if (settings.zoomX) {
+        scene.scale.x = k;
+        scene.offset.x = x;
+      }
+      if (settings.zoomY) {
+        scene.scale.y = k;
+        scene.offset.y = y;
+      }
+    });
   d3.select(scene.canvas)
-      .call(zoom)
-      .call(
-          zoom.transform.bind(zoom),
-          d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
-              .scale(scene.scale.x));
+    .call(zoom)
+    .call(
+      zoom.transform.bind(zoom),
+      d3.zoomIdentity
+        .translate(scene.offset.x, scene.offset.y)
+        .scale(scene.scale.x)
+    );
 
   // Setup hover behavior.
   d3.select(scene.canvas).on('mousemove', (event: MouseEvent) => {

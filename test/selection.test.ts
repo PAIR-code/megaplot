@@ -18,11 +18,11 @@
  * @fileoverview Tests for the Selections created by Scene.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {createArticle, createSection} from './utils';
+import { createArticle, createSection } from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -34,18 +34,17 @@ document.body.appendChild(article);
  * Dummy data interface for testing.
  */
 interface TestDatum {
-  id?: string;  // Optional id to make tests easier to follow.
+  id?: string; // Optional id to make tests easier to follow.
 }
 
 describe('Selection', () => {
-  const {section, content} = createSection('Selection');
+  const { section, content } = createSection('Selection');
   article.appendChild(section);
 
   const container = document.createElement('div');
   container.style.width = '100px';
   container.style.height = '100px';
   content.appendChild(container);
-
 
   describe('init', () => {
     let timingFunctionsShim: TimingFunctionsShim;
@@ -110,23 +109,23 @@ describe('Selection', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
-      const invocationLog: Array<{action: string, datum: TestDatum}> = [];
+      const invocationLog: Array<{ action: string; datum: TestDatum }> = [];
 
       selection.onInit((_, datum) => {
-        invocationLog.push({action: 'init', datum});
+        invocationLog.push({ action: 'init', datum });
       });
 
       selection.onEnter((_, datum) => {
-        invocationLog.push({action: 'enter', datum});
+        invocationLog.push({ action: 'enter', datum });
       });
 
       // Initialize data set with two objects.
       const data: TestDatum[] = [{}, {}];
-      const expectedLog: (typeof invocationLog) = [
-        {action: 'init', datum: data[0]},
-        {action: 'init', datum: data[1]},
-        {action: 'enter', datum: data[0]},
-        {action: 'enter', datum: data[1]},
+      const expectedLog: typeof invocationLog = [
+        { action: 'init', datum: data[0] },
+        { action: 'init', datum: data[1] },
+        { action: 'enter', datum: data[0] },
+        { action: 'enter', datum: data[1] },
       ];
 
       // Bind the data to the selection.
@@ -221,23 +220,23 @@ describe('Selection', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
-      const invocationLog: Array<{action: string, datum: TestDatum}> = [];
+      const invocationLog: Array<{ action: string; datum: TestDatum }> = [];
 
       selection.onEnter((_, datum) => {
-        invocationLog.push({action: 'enter', datum});
+        invocationLog.push({ action: 'enter', datum });
       });
 
       selection.onUpdate((_, datum) => {
-        invocationLog.push({action: 'update', datum});
+        invocationLog.push({ action: 'update', datum });
       });
 
       // Initialize data set with two objects.
       const data: TestDatum[] = [{}, {}];
-      const expectedLog: (typeof invocationLog) = [
-        {action: 'enter', datum: data[0]},
-        {action: 'enter', datum: data[1]},
-        {action: 'update', datum: data[0]},
-        {action: 'update', datum: data[1]},
+      const expectedLog: typeof invocationLog = [
+        { action: 'enter', datum: data[0] },
+        { action: 'enter', datum: data[1] },
+        { action: 'update', datum: data[0] },
+        { action: 'update', datum: data[1] },
       ];
 
       // Bind the data to the selection.
@@ -347,23 +346,23 @@ describe('Selection', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Log invocations of callbacks to test for order later.
-      const invocationLog: Array<{action: string, datum: TestDatum}> = [];
+      const invocationLog: Array<{ action: string; datum: TestDatum }> = [];
 
       selection.onUpdate((_, datum) => {
-        invocationLog.push({action: 'update', datum});
+        invocationLog.push({ action: 'update', datum });
       });
 
       selection.onExit((_, datum) => {
-        invocationLog.push({action: 'exit', datum});
+        invocationLog.push({ action: 'exit', datum });
       });
 
       // Initialize data set with two objects.
       const data: TestDatum[] = [{}, {}];
-      const expectedLog: (typeof invocationLog) = [
-        {action: 'update', datum: data[0]},
-        {action: 'update', datum: data[1]},
-        {action: 'exit', datum: data[0]},
-        {action: 'exit', datum: data[1]},
+      const expectedLog: typeof invocationLog = [
+        { action: 'update', datum: data[0] },
+        { action: 'update', datum: data[1] },
+        { action: 'exit', datum: data[0] },
+        { action: 'exit', datum: data[1] },
       ];
 
       // Bind the data to the selection.
@@ -432,7 +431,7 @@ describe('Selection', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
-      const counter = {init: 0, enter: 0, exit: 0};
+      const counter = { init: 0, enter: 0, exit: 0 };
       selection.onInit(() => counter.init++);
       selection.onEnter(() => counter.enter++);
       selection.onExit(() => counter.exit++);
@@ -441,153 +440,153 @@ describe('Selection', () => {
       selection.bind([{}]);
 
       // Nothing should happen immediately.
-      expect(counter).toEqual({init: 0, enter: 0, exit: 0});
+      expect(counter).toEqual({ init: 0, enter: 0, exit: 0 });
 
       // After one frame, the binding code has run, setting up the Sprite's
       // enter() and update() callbacks, but neither will have been invoked.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 0, enter: 0, exit: 0});
+      expect(counter).toEqual({ init: 0, enter: 0, exit: 0 });
 
       // After the next frame, the Sprite's enter() callback has run, which
       // includes running the Selection's onInit() callback.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 0, exit: 0 });
 
       // After the next frame, the Sprite's values have been flashed over to
       // texture memory, and the Sprite's update() callback is scheduled, but
       // has not yet been invoked.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 0, exit: 0 });
 
       // After the next frame, the Sprite's update() callback has been invoked,
       // which in turn invokes the Selection's onEnter() callback.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 0 });
 
       // After another frame, the Sprite's values are again flashed over to
       // texture memory, but nothing else should have occurred, so the
       // invocation counts should still be the same.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 0 });
 
       // Sanity check! Here we're asserting that after another frame, there was
       // nothing scheduled. If something had been scheduled then one or more of
       // the following assertions would fail.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 0 });
 
       // Now we invoke clear().
       selection.clear();
 
       // As before, nothing should happen immediately. Run counts should all
       // remain unchanged.
-      expect(counter).toEqual({init: 1, enter: 1, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 0 });
 
       // After one frame, the clearing task code has run, setting up the
       // Sprite's exit() callback, but not having called it yet.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 0 });
 
       // After the next frame, the Sprite's exit() callback has been invoked,
       // which in turn invokes the Selection's onExit() for the first time.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 1 });
 
       // Sanity check! Still no additional changes after yet more frames.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 1 });
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, exit: 1 });
     });
 
     it('should finish before a subsequent bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
-      const counter = {init: 0, enter: 0, update: 0, exit: 0};
+      const counter = { init: 0, enter: 0, update: 0, exit: 0 };
       selection.onInit(() => counter.init++);
       selection.onEnter(() => counter.enter++);
       selection.onUpdate(() => counter.update++);
       selection.onExit(() => counter.exit++);
 
       // Bind the selection to an array of one datum.
-      selection.bind([{id: 'apple'}]);
+      selection.bind([{ id: 'apple' }]);
 
       // After six frames, the bind should have entirely finished, calling both
       // the onInit() and onEnter() callbacks.
       timingFunctionsShim.runAnimationFrameCallbacks(6);
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // Now we invoke clear().
       selection.clear();
 
       // Nothing should happen immediately. Run counts should remain unchanged.
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // Now we invoke bind() before advancing any frames. If the clear() fails
       // to finish before this bind, then we'll see increments to
       // counter.update. If everything goes according to plan, we'll never see
       // any increments to update because the data will all have been cleared
       // before this bind occurs.
-      selection.bind([{id: 'blueberry'}]);
+      selection.bind([{ id: 'blueberry' }]);
 
       // Nothing should happen immediately. Run counts should remain unchanged.
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // After one frame, the clearing task code has run, setting up the
       // Sprite's exit() callback, but not having called it yet.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // After the next frame, the Sprite's exit() callback has been invoked,
       // which in turn invokes the Selection's onExit() for the first time.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 1 });
 
       // Next up in the WorkScheduler queue is the Sprite::enter() call which
       // will invoke the onInit() callback for the second bind() invocation (the
       // blueberry).
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 2, enter: 1, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 2, enter: 1, update: 0, exit: 1 });
 
       // After a frame, values are flashed to textures, and the Sprite::update()
       // is scheduled.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 2, enter: 1, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 2, enter: 1, update: 0, exit: 1 });
 
       // After a frame, Sprite::update() runs, which in turn calls the Selection
       // onEnter() callback.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 2, enter: 2, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 2, enter: 2, update: 0, exit: 1 });
 
       // Sanity check! After more frames, no more callbacks have been invoked.
       timingFunctionsShim.runAnimationFrameCallbacks(2);
-      expect(counter).toEqual({init: 2, enter: 2, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 2, enter: 2, update: 0, exit: 1 });
     });
 
     it('should circumvent a scheduled bind', () => {
       const selection = scene.createSelection<TestDatum>();
 
       // Keep track of how many times the various callbacks are invoked.
-      const counter = {init: 0, enter: 0, update: 0, exit: 0};
+      const counter = { init: 0, enter: 0, update: 0, exit: 0 };
       selection.onInit(() => counter.init++);
       selection.onEnter(() => counter.enter++);
       selection.onUpdate(() => counter.update++);
       selection.onExit(() => counter.exit++);
 
       // Bind the selection to an array of one datum.
-      selection.bind([{id: 'apple'}]);
+      selection.bind([{ id: 'apple' }]);
 
       // After six frames, the bind should have entirely finished, calling both
       // the onInit() and onEnter() callbacks.
       timingFunctionsShim.runAnimationFrameCallbacks(6);
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // Bind the selection again
-      selection.bind([{id: 'blueberry'}]);
+      selection.bind([{ id: 'blueberry' }]);
 
       // Nothing should happen immediately. Run counts should remain unchanged.
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // Now we invoke clear(). If this fails to perform as advertized, then the
       // second bind (blueberry) will end up causing updates. As it is, the
@@ -595,23 +594,23 @@ describe('Selection', () => {
       selection.clear();
 
       // Nothing should happen immediately. Run counts should remain unchanged.
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // After one frame, the clearing task code has run, setting up the
       // Sprite's exit() callback, but not having called it yet.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 0});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 0 });
 
       // After the next frame, the Sprite's exit() callback has been invoked,
       // which in turn invokes the Selection's onExit() for the first time.
       timingFunctionsShim.runAnimationFrameCallbacks();
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 1 });
 
       // Since the clear() should have completely removed the second bind()'s
       // scheduled task, even after many more frames, no more callbacks should
       // be invoked.
       timingFunctionsShim.runAnimationFrameCallbacks(4);
-      expect(counter).toEqual({init: 1, enter: 1, update: 0, exit: 1});
+      expect(counter).toEqual({ init: 1, enter: 1, update: 0, exit: 1 });
     });
   });
 });

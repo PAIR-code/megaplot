@@ -20,9 +20,9 @@
  * computed in parallel.
  */
 
-import {AttributeMapper} from '../attribute-mapper';
+import { AttributeMapper } from '../attribute-mapper';
 
-import {glsl} from './glsl-template-tag';
+import { glsl } from './glsl-template-tag';
 import * as ShaderFunctions from './shader-functions';
 
 /**
@@ -45,9 +45,10 @@ varying vec2 varyingRebaseUv;
 vec4 previousTexelValues[${attributeMapper.texelsPerSwatch}];
 vec4 targetTexelValues[${attributeMapper.texelsPerSwatch}];
 
-${
-      attributeMapper.generateAttributeDefinesGLSL(
-          'previous', 'previousTexelValues')}
+${attributeMapper.generateAttributeDefinesGLSL(
+  'previous',
+  'previousTexelValues'
+)}
 ${attributeMapper.generateAttributeDefinesGLSL('target', 'targetTexelValues')}
 
 // Import utility shader functions.
@@ -109,20 +110,26 @@ float computeThresholdValue(
 }
 
 void readInputTexels() {
-${
-      attributeMapper.generateTexelReaderGLSL(
-          'previousTexelValues', 'previousValuesTexture', 'varyingRebaseUv')}
-${
-      attributeMapper.generateTexelReaderGLSL(
-          'targetTexelValues', 'targetValuesTexture', 'varyingRebaseUv')}
+${attributeMapper.generateTexelReaderGLSL(
+  'previousTexelValues',
+  'previousValuesTexture',
+  'varyingRebaseUv'
+)}
+${attributeMapper.generateTexelReaderGLSL(
+  'targetTexelValues',
+  'targetValuesTexture',
+  'varyingRebaseUv'
+)}
 }
 
 void setOutputTexel() {
   float rebaseTs = ts;
-  ${
-      attributeMapper.generateRebaseFragmentGLSL(
-          'previousTexelValues', 'targetTexelValues', 'varyingTexelIndex',
-          'rebaseTs')}
+  ${attributeMapper.generateRebaseFragmentGLSL(
+    'previousTexelValues',
+    'targetTexelValues',
+    'varyingTexelIndex',
+    'rebaseTs'
+  )}
 }
 
 void main () {

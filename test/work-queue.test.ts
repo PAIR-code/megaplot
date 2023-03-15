@@ -18,8 +18,8 @@
  * @fileoverview Tests for the WorkQueue.
  */
 
-import {WorkQueue} from '../src/lib/work-queue';
-import {WorkTask} from '../src/lib/work-task';
+import { WorkQueue } from '../src/lib/work-queue';
+import { WorkTask } from '../src/lib/work-task';
 
 describe('WorkQueue', () => {
   it('should exist', () => {
@@ -98,10 +98,9 @@ describe('WorkQueue', () => {
     it('should find a task once it is enqueued.', () => {
       const workQueue = new WorkQueue();
 
-
       expect(workQueue.hasTaskId('TASK_ID')).toBe(false);
 
-      workQueue.enqueueTask({callback: () => {}, id: 'TASK_ID'});
+      workQueue.enqueueTask({ callback: () => {}, id: 'TASK_ID' });
 
       expect(workQueue.hasTaskId('TASK_ID')).toBe(true);
     });

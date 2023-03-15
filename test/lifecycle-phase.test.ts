@@ -18,7 +18,10 @@
  * @fileoverview Tests for LifecyclePhase related functionality.
  */
 
-import {checkLifecyclePhaseTransition, LifecyclePhase} from '../src/lib/lifecycle-phase';
+import {
+  checkLifecyclePhaseTransition,
+  LifecyclePhase,
+} from '../src/lib/lifecycle-phase';
 
 describe('LifecyclePhase', () => {
   it('should exist.', () => {

@@ -18,6 +18,7 @@
     "generate": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node util/generate-code.ts",
     "http": "http-server --port 8081",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --config eslint.config.js src/",
+    "prettier": "prettier 'src/**/*.ts' 'test/**/*.ts' 'util/**/*.ts' --write",
     "start": "npm run debugging-demo",
     "test": "karma start karma.conf.ts",
     "text-demo": "webpack serve --open --entry ./src/demo/text-demo.ts"
@@ -60,6 +61,7 @@
     "karma-jasmine": "5.1.0",
     "karma-webpack": "5.0.0",
     "npm-check-updates": "16.7.12",
+    "prettier": "2.8.4",
     "rollup": "3.19.1",
     "rollup-plugin-visualizer": "5.9.0",
     "stats.js": "0.17.0",

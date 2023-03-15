@@ -19,9 +19,9 @@
  */
 import REGL from 'regl';
 
-import {AttributeMapper} from '../attribute-mapper';
-import {HitTestParameters} from '../hit-test-types';
-import {fragmentShader, vertexShader} from '../shaders/hit-test-shaders';
+import { AttributeMapper } from '../attribute-mapper';
+import { HitTestParameters } from '../hit-test-types';
+import { fragmentShader, vertexShader } from '../shaders/hit-test-shaders';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -57,16 +57,16 @@ export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
   // Function constructor, and therefore need to remain unchanged by JavaScript
   // minifiers/uglifiers.
   const drawConfig: REGL.DrawConfig = {
-    'frag': fragmentShader(),
+    frag: fragmentShader(),
 
-    'vert': vertexShader(
-        coordinator.hitTestAttributeMapper,
-        coordinator.attributeMapper,
-        ),
+    vert: vertexShader(
+      coordinator.hitTestAttributeMapper,
+      coordinator.attributeMapper
+    ),
 
-    'attributes': {
+    attributes: {
       // Corners and UV coords of the rectangle, same for each sprite.
-      'vertexCoordinates': [
+      vertexCoordinates: [
         [-0.5, -0.5],
         [0.5, -0.5],
         [-0.5, 0.5],
@@ -75,47 +75,48 @@ export function setupHitTestCommand(coordinator: CoordinatorAPI): () => void {
 
       // Swatch UV coordinates for retrieving previous and target texture
       // values.
-      'inputUv': {
-        'buffer': () => coordinator.instanceHitTestInputUvBuffer,
-        'divisor': 1,
+      inputUv: {
+        buffer: () => coordinator.instanceHitTestInputUvBuffer,
+        divisor: 1,
       },
 
       // Index and active flag for each Sprite.
-      'indexActive': {
-        'buffer': () => coordinator.instanceHitTestInputIndexActiveBuffer,
-        'divisor': 1,
+      indexActive: {
+        buffer: () => coordinator.instanceHitTestInputIndexActiveBuffer,
+        divisor: 1,
       },
 
       // Output UVs for where to write the result.
-      'outputUv': {
-        'buffer': coordinator.instanceHitTestOutputUvBuffer,
-        'divisor': 1,
+      outputUv: {
+        buffer: coordinator.instanceHitTestOutputUvBuffer,
+        divisor: 1,
       },
     },
 
-    'uniforms': {
-      'ts': () => coordinator.elapsedTimeMs(),
-      'capacity': () => coordinator.hitTestAttributeMapper.totalSwatches,
-      'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
-      'hitTestCoordinates': () => ([
+    uniforms: {
+      ts: () => coordinator.elapsedTimeMs(),
+      capacity: () => coordinator.hitTestAttributeMapper.totalSwatches,
+      devicePixelRatio: () => coordinator.getDevicePixelRatio(),
+      hitTestCoordinates: () => [
         coordinator.hitTestParameters.x,
         coordinator.hitTestParameters.y,
         coordinator.hitTestParameters.width || 0,
         coordinator.hitTestParameters.height || 0,
-      ]),
-      'inclusive': () => coordinator.hitTestParameters === undefined ||
-          !!coordinator.hitTestParameters.inclusive,
-      'viewMatrix': () => coordinator.getViewMatrix(),
-      'viewMatrixScale': () => coordinator.getViewMatrixScale(),
-      'targetValuesTexture': coordinator.targetValuesTexture,
-      'previousValuesTexture': coordinator.previousValuesTexture,
+      ],
+      inclusive: () =>
+        coordinator.hitTestParameters === undefined ||
+        !!coordinator.hitTestParameters.inclusive,
+      viewMatrix: () => coordinator.getViewMatrix(),
+      viewMatrixScale: () => coordinator.getViewMatrixScale(),
+      targetValuesTexture: coordinator.targetValuesTexture,
+      previousValuesTexture: coordinator.previousValuesTexture,
     },
 
-    'primitive': 'triangle strip',
-    'count': 4,                                   // Only four vertices.
-    'instances': () => coordinator.hitTestCount,  // Many sprite instances.
+    primitive: 'triangle strip',
+    count: 4, // Only four vertices.
+    instances: () => coordinator.hitTestCount, // Many sprite instances.
 
-    'framebuffer': () => coordinator.hitTestOutputValuesFramebuffer,
+    framebuffer: () => coordinator.hitTestOutputValuesFramebuffer,
   };
 
   const drawCommand = coordinator.regl(drawConfig);

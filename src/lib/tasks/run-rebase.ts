@@ -19,11 +19,11 @@
  */
 import REGL from 'regl';
 
-import {InternalError} from '../internal-error';
-import {LifecyclePhase} from '../lifecycle-phase';
-import {NumericRange} from '../numeric-range';
-import {SpriteImpl} from '../sprite-impl';
-import {InternalPropertiesSymbol} from '../symbols';
+import { InternalError } from '../internal-error';
+import { LifecyclePhase } from '../lifecycle-phase';
+import { NumericRange } from '../numeric-range';
+import { SpriteImpl } from '../sprite-impl';
+import { InternalPropertiesSymbol } from '../symbols';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -59,7 +59,7 @@ export function runRebase(coordinator: CoordinatorAPI): void {
   // For each queued sprite to rebase, copy its UV values into the
   // instanceRebaseUvValues array.
   coordinator.rebaseCount = 0;
-  const {lowBound, highBound} = coordinator.needsRebaseIndexRange;
+  const { lowBound, highBound } = coordinator.needsRebaseIndexRange;
   for (let index = lowBound; index <= highBound; index++) {
     const sprite = coordinator.sprites[index];
     const properties = sprite[InternalPropertiesSymbol];
@@ -75,9 +75,9 @@ export function runRebase(coordinator: CoordinatorAPI): void {
 
     // Put instance swatch UV values to the rebase UV values array.
     coordinator.instanceRebaseUvValues[coordinator.rebaseCount * 2] =
-        coordinator.instanceSwatchUvValues[index * 2];
+      coordinator.instanceSwatchUvValues[index * 2];
     coordinator.instanceRebaseUvValues[coordinator.rebaseCount * 2 + 1] =
-        coordinator.instanceSwatchUvValues[index * 2 + 1];
+      coordinator.instanceSwatchUvValues[index * 2 + 1];
     coordinator.rebaseCount++;
   }
 
@@ -93,16 +93,17 @@ export function runRebase(coordinator: CoordinatorAPI): void {
 
   // Bind the rebase UV values to the buffer.
   coordinator.instanceRebaseUvBuffer(
-      coordinator.instanceRebaseUvValues.subarray(
-          0, coordinator.rebaseCount * 2));
+    coordinator.instanceRebaseUvValues.subarray(0, coordinator.rebaseCount * 2)
+  );
 
   // Render using the rebase shader. This should leave intact any swatches
   // for sprites that are not being rebased.
   coordinator.rebaseCommand();
 
   // Flash values back to 'input' previous texture.
-  coordinator.previousValuesFramebuffer.use(
-      () => coordinator.previousValuesTexture({copy: true}));
+  coordinator.previousValuesFramebuffer.use(() =>
+    coordinator.previousValuesTexture({ copy: true })
+  );
 
   // Reset the rebase queue length since the queue has been cleared.
   coordinator.needsRebaseIndexRange.clear();

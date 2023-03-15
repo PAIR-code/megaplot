@@ -18,12 +18,12 @@
  * @fileoverview Defines the runAssignWaiting() task of SceneInternal.
  */
 
-import {InternalError} from '../internal-error';
-import {LifecyclePhase} from '../lifecycle-phase';
-import {NumericRange} from '../numeric-range';
-import {SpriteImpl} from '../sprite-impl';
-import {InternalPropertiesSymbol} from '../symbols';
-import {RemainingTimeFn} from '../work-scheduler';
+import { InternalError } from '../internal-error';
+import { LifecyclePhase } from '../lifecycle-phase';
+import { NumericRange } from '../numeric-range';
+import { SpriteImpl } from '../sprite-impl';
+import { InternalPropertiesSymbol } from '../symbols';
+import { RemainingTimeFn } from '../work-scheduler';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -57,15 +57,11 @@ interface CoordinatorAPI {
  * (laggy user experience).
  */
 export function runAssignWaiting(
-    coordinator: CoordinatorAPI,
-    remaining: RemainingTimeFn,
-    stepsBetweenChecks: number,
-    ): void {
-  const {
-    removedIndexRange,
-    sprites,
-    waitingSprites,
-  } = coordinator;
+  coordinator: CoordinatorAPI,
+  remaining: RemainingTimeFn,
+  stepsBetweenChecks: number
+): void {
+  const { removedIndexRange, sprites, waitingSprites } = coordinator;
 
   if (!removedIndexRange.isDefined) {
     // This indicates an error condition in which there was an assign task
@@ -99,11 +95,16 @@ export function runAssignWaiting(
   // set. If so then we'll need to queue a run callbacks task.
   let anyHasCallback = false;
 
-  while (waitingIndex < waitingSprites.length &&
-         removedIndex <= removedIndexRange.highBound) {
+  while (
+    waitingIndex < waitingSprites.length &&
+    removedIndex <= removedIndexRange.highBound
+  ) {
     // If we've made any progress and we're out of time, break.
-    if (waitingIndex > 0 && step++ % stepsBetweenChecks === 0 &&
-        remaining() <= 0) {
+    if (
+      waitingIndex > 0 &&
+      step++ % stepsBetweenChecks === 0 &&
+      remaining() <= 0
+    ) {
       break;
     }
 
@@ -112,8 +113,10 @@ export function runAssignWaiting(
     // run out of sprites to check. It's possible that all of the previously
     // waiting sprites have since been abandoned, and so we should allow for
     // that possibility.
-    while (waitingIndex < waitingSprites.length &&
-           waitingSprites[waitingIndex][InternalPropertiesSymbol].isAbandoned) {
+    while (
+      waitingIndex < waitingSprites.length &&
+      waitingSprites[waitingIndex][InternalPropertiesSymbol].isAbandoned
+    ) {
       waitingIndex++;
     }
     if (waitingIndex >= waitingSprites.length) {
@@ -126,8 +129,10 @@ export function runAssignWaiting(
     // The removedIndexRange contains all of the sprites slated for removal, but
     // very probably also includes sprites which are not removed, so here we
     // iterate until we find one that has been removed.
-    while (removedIndex <= removedIndexRange.highBound &&
-           !sprites[removedIndex].isRemoved) {
+    while (
+      removedIndex <= removedIndexRange.highBound &&
+      !sprites[removedIndex].isRemoved
+    ) {
       removedIndex++;
     }
     if (removedIndex > removedIndexRange.highBound) {
@@ -138,7 +143,8 @@ export function runAssignWaiting(
       // the range, when we get to the end, it should definitely be a removed
       // sprite whose index and swatch we can reuse.
       throw new InternalError(
-          'Removed index range ended on a non-removed sprite');
+        'Removed index range ended on a non-removed sprite'
+      );
     }
 
     // Now that we've found both a non-abandoned waiting sprite, and a removed
@@ -183,7 +189,9 @@ export function runAssignWaiting(
     removedIndexRange.clear();
   } else {
     removedIndexRange.truncateToWithin(
-        removedIndex, removedIndexRange.highBound);
+      removedIndex,
+      removedIndexRange.highBound
+    );
   }
 
   if (anyHasCallback) {

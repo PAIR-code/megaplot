@@ -18,7 +18,7 @@
  * @fileoverview Utility functions used by tests.
  */
 
-import {SpriteView} from '../src/lib/generated/sprite-view';
+import { SpriteView } from '../src/lib/generated/sprite-view';
 
 const GREEN = [0, 255, 0, 1];
 const MAGENTA = [255, 0, 255, 1];
@@ -68,7 +68,7 @@ export function createSection(title: string) {
   content.className = 'content';
   section.appendChild(content);
 
-  return {section, content};
+  return { section, content };
 }
 
 /**
@@ -76,8 +76,9 @@ export function createSection(title: string) {
  * The copy will have the same size and styled size. Return the copy and its 2d
  * context.
  */
-export function copyCanvasAndContainer(canvas: HTMLCanvasElement):
-    [HTMLCanvasElement, CanvasRenderingContext2D, HTMLElement] {
+export function copyCanvasAndContainer(
+  canvas: HTMLCanvasElement
+): [HTMLCanvasElement, CanvasRenderingContext2D, HTMLElement] {
   const parent = canvas.parentElement!;
   const div = document.createElement('div');
   div.style.width = parent.style.width;
@@ -116,10 +117,10 @@ export async function blobToImage(blob: Blob): Promise<HTMLImageElement> {
  * conversion (multiply by 256).
  */
 export function filledColorArray(
-    pixelCount: number,
-    fillColor: number[],
-    convertOpacity = false,
-    ): Uint8ClampedArray {
+  pixelCount: number,
+  fillColor: number[],
+  convertOpacity = false
+): Uint8ClampedArray {
   if (fillColor.length !== 4) {
     throw RangeError('fillColor must be an array with RGB and Opacity values.');
   }
@@ -138,12 +139,17 @@ export function filledColorArray(
  * Compare two color arrays and return the proportion of matching pixels.
  */
 export function compareColorArrays(
-    actual: Uint8ClampedArray, expected: Uint8ClampedArray): number {
+  actual: Uint8ClampedArray,
+  expected: Uint8ClampedArray
+): number {
   let matches = 0;
   for (let i = 0; i < expected.length; i += 4) {
-    if (expected[i] === actual[i] && expected[i + 1] === actual[i + 1] &&
-        expected[i + 2] === actual[i + 2] &&
-        expected[i + 3] === actual[i + 3]) {
+    if (
+      expected[i] === actual[i] &&
+      expected[i + 1] === actual[i + 1] &&
+      expected[i + 2] === actual[i + 2] &&
+      expected[i + 3] === actual[i + 3]
+    ) {
       matches++;
     }
   }
@@ -165,7 +171,7 @@ export function makeGreenMagentaSquare(s: SpriteView) {
   // of the shape.
   s.BorderPlacement = 0;
   s.BorderRadiusPixel = 0;
-  s.BorderRadiusRelative = .25;
+  s.BorderRadiusRelative = 0.25;
 
   s.BorderColor = GREEN;
   s.FillColor = MAGENTA;

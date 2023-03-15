@@ -18,12 +18,12 @@
  * @fileoverview Main entry point for the Megaplot library.
  */
 
-import {SpriteView} from './lib/generated/sprite-view';
-import {HitTestParameters} from './lib/hit-test-types';
-import {Scene} from './lib/scene';
-import {Selection, SelectionCallback} from './lib/selection-types';
-import {Sprite} from './lib/sprite';
-import {TextSelection} from './lib/text-selection-types';
+import { SpriteView } from './lib/generated/sprite-view';
+import { HitTestParameters } from './lib/hit-test-types';
+import { Scene } from './lib/scene';
+import { Selection, SelectionCallback } from './lib/selection-types';
+import { Sprite } from './lib/sprite';
+import { TextSelection } from './lib/text-selection-types';
 
 export {
   HitTestParameters,

@@ -20,12 +20,19 @@
  * and include verifying that output pixel colors match expected values.
  */
 
-import {Scene} from '../src/lib/scene';
-import {Sprite} from '../src/lib/sprite';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { Sprite } from '../src/lib/sprite';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  createArticle,
+  createSection,
+  filledColorArray,
+} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -36,7 +43,7 @@ document.body.appendChild(article);
 describe('Sprite', () => {
   describe('enter()', () => {
     // Create a <section> for storing visible artifacts.
-    const {section, content} = createSection('Sprite::enter()');
+    const { section, content } = createSection('Sprite::enter()');
     article.appendChild(section);
 
     // Create a container <div> of fixed size for the Scene to render into.
@@ -87,7 +94,7 @@ describe('Sprite', () => {
         // of the shape.
         s.BorderPlacement = 0;
         s.BorderRadiusPixel = 0;
-        s.BorderRadiusRelative = .25;
+        s.BorderRadiusRelative = 0.25;
 
         // Border is opaque green.
         s.BorderColorR = 0;
@@ -130,7 +137,7 @@ describe('Sprite', () => {
       // Now, if we inspect the canvas, its pixels should show that the sprite
       // has been rendered. Start my making a copy of the canvas and for
       // inspection.
-      const {canvas} = scene;
+      const { canvas } = scene;
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
       content.appendChild(copyContainer);
 
@@ -144,8 +151,8 @@ describe('Sprite', () => {
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .05);
-      const sampleHeight = Math.ceil(copy.width * .05);
+      const sampleWidth = Math.ceil(copy.width * 0.05);
+      const sampleHeight = Math.ceil(copy.width * 0.05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Generate patches of solid green and magenta to compare to the rendered
@@ -155,31 +162,26 @@ describe('Sprite', () => {
 
       // Take a sample of the top left corner and compare it to the expected
       // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          5,
-          5,
-          sampleWidth,
-          sampleHeight,
-      );
+      const topLeftSample = ctx.getImageData(5, 5, sampleWidth, sampleHeight);
       expect(compareColorArrays(topLeftSample.data, solidGreen)).toEqual(1);
 
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth - 5),
-          Math.floor(copy.height - sampleHeight - 5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width - sampleWidth - 5),
+        Math.floor(copy.height - sampleHeight - 5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(bottomRightSample.data, solidGreen)).toEqual(1);
 
       // Lastly, sample a chunk of the middle of the image and compare it to the
       // solid magenta patch.
       const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(centerSample.data, solidMagenta)).toEqual(1);
     });
@@ -187,7 +189,7 @@ describe('Sprite', () => {
 
   describe('update()', () => {
     // Create a visible document section for inspection.
-    const {section, content} = createSection('Sprite::update()');
+    const { section, content } = createSection('Sprite::update()');
     article.appendChild(section);
 
     // Create a container div in which the Scene will place its canvas.
@@ -231,7 +233,7 @@ describe('Sprite', () => {
         // of the shape.
         s.BorderPlacement = 0;
         s.BorderRadiusPixel = 0;
-        s.BorderRadiusRelative = .25;
+        s.BorderRadiusRelative = 0.25;
 
         // Border is opaque, green.
         s.BorderColorR = 0;
@@ -309,7 +311,7 @@ describe('Sprite', () => {
       expect(updateRunCount).toBe(1);
 
       // Now we're going to capture the output of the Scene frame-by-frame.
-      const {canvas} = scene;
+      const { canvas } = scene;
 
       // Keep track of the last created canvas.
       let copy: HTMLCanvasElement = undefined!;
@@ -318,7 +320,7 @@ describe('Sprite', () => {
       for (let frame = 0; frame < FRAME_COUNT; frame++) {
         // Advance the timing shim clock.
         timingFunctionsShim.totalElapsedTimeMs +=
-            TRANSITION_DURATION_MS / FRAME_COUNT;
+          TRANSITION_DURATION_MS / FRAME_COUNT;
 
         // Draw.
         timingFunctionsShim.runAnimationFrameCallbacks();
@@ -345,8 +347,8 @@ describe('Sprite', () => {
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .05);
-      const sampleHeight = Math.ceil(copy.width * .05);
+      const sampleWidth = Math.ceil(copy.width * 0.05);
+      const sampleHeight = Math.ceil(copy.width * 0.05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Define solid blue and yellow samples for comparison.
@@ -355,26 +357,26 @@ describe('Sprite', () => {
 
       // Take a sample from the middle top of the circle (blue border).
       const topCenterSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          1,
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        1,
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(topCenterSample.data, solidBlue)).toEqual(1);
 
       const bottomCenterSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height - sampleHeight - 1),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height - sampleHeight - 1),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(bottomCenterSample.data, solidBlue)).toEqual(1);
 
       const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(centerSample.data, solidYellow)).toEqual(1);
     });
@@ -382,7 +384,7 @@ describe('Sprite', () => {
 
   describe('enter(), update()', () => {
     // Create a section for visually inspecting output.
-    const {section, content} = createSection('Sprite::enter(), update()');
+    const { section, content } = createSection('Sprite::enter(), update()');
     article.appendChild(section);
 
     // Create a fixed-size container div for the Scene's canvas.
@@ -421,63 +423,63 @@ describe('Sprite', () => {
       let updateRunCount = 0;
 
       sprite
-          .enter((s) => {
-            // Position of the sprite should be centered at world origin.
-            s.PositionWorldX = 0;
-            s.PositionWorldY = 0;
+        .enter((s) => {
+          // Position of the sprite should be centered at world origin.
+          s.PositionWorldX = 0;
+          s.PositionWorldY = 0;
 
-            // Sprite size should fill the canvas.
-            s.SizeWorldWidth = .8;
-            s.SizeWorldHeight = .8;
+          // Sprite size should fill the canvas.
+          s.SizeWorldWidth = 0.8;
+          s.SizeWorldHeight = 0.8;
 
-            // Shape should be a square to start.
-            s.Sides = 2;
+          // Shape should be a square to start.
+          s.Sides = 2;
 
-            // Border should be 1/4 of a world unit, half the radius of the
-            // of the shape.
-            s.BorderPlacement = 1;
-            s.BorderRadiusPixel = 0;
-            s.BorderRadiusRelative = .25;
+          // Border should be 1/4 of a world unit, half the radius of the
+          // of the shape.
+          s.BorderPlacement = 1;
+          s.BorderRadiusPixel = 0;
+          s.BorderRadiusRelative = 0.25;
 
-            // Border is solid green.
-            s.BorderColorR = 0;
-            s.BorderColorG = 255;
-            s.BorderColorB = 0;
-            s.BorderColorOpacity = 1;
+          // Border is solid green.
+          s.BorderColorR = 0;
+          s.BorderColorG = 255;
+          s.BorderColorB = 0;
+          s.BorderColorOpacity = 1;
 
-            // Interior fill is solid magenta.
-            s.FillColorR = 255;
-            s.FillColorG = 0;
-            s.FillColorB = 255;
-            s.FillColorOpacity = 1;
+          // Interior fill is solid magenta.
+          s.FillColorR = 255;
+          s.FillColorG = 0;
+          s.FillColorB = 255;
+          s.FillColorOpacity = 1;
 
-            // Mark that the enter callback has been run.
-            enterRunCount++;
-          })
-          .update((s) => {
-            // The transition should take 1 second (1000ms).
-            s.TransitionTimeMs = TRANSITION_DURATION_MS;
+          // Mark that the enter callback has been run.
+          enterRunCount++;
+        })
+        .update((s) => {
+          // The transition should take 1 second (1000ms).
+          s.TransitionTimeMs = TRANSITION_DURATION_MS;
 
-            // Shape should morph to circle.
-            s.Sides = 1;
+          // Shape should morph to circle.
+          s.Sides = 1;
 
-            // Border is opaque blue.
-            s.BorderColorR = 0;
-            s.BorderColorG = 0;
-            s.BorderColorB = 255;
-            s.BorderColorOpacity = 1;
+          // Border is opaque blue.
+          s.BorderColorR = 0;
+          s.BorderColorG = 0;
+          s.BorderColorB = 255;
+          s.BorderColorOpacity = 1;
 
-            // Interior fill is opaque yellow.
-            s.FillColorR = 255;
-            s.FillColorG = 255;
-            s.FillColorB = 0;
-            s.FillColorOpacity = 1;
+          // Interior fill is opaque yellow.
+          s.FillColorR = 255;
+          s.FillColorG = 255;
+          s.FillColorB = 0;
+          s.FillColorOpacity = 1;
 
-            // Mark that the update callback has been run.
-            updateRunCount++;
-          });
+          // Mark that the update callback has been run.
+          updateRunCount++;
+        });
 
-      const {canvas} = scene;
+      const { canvas } = scene;
 
       // Convenience method for recording a snapshot.
       async function recordSnapshot() {
@@ -494,31 +496,31 @@ describe('Sprite', () => {
       // Neither enter nor update allbacks should be run immediately.
       expect(enterRunCount).toBe(0);
       expect(updateRunCount).toBe(0);
-      await recordSnapshot();  // Empty canvas.
+      await recordSnapshot(); // Empty canvas.
 
       // Run the enter callback.
       timingFunctionsShim.runAnimationFrameCallbacks();
       expect(enterRunCount).toBe(1);
       expect(updateRunCount).toBe(0);
-      await recordSnapshot();  // Empty canvas.
+      await recordSnapshot(); // Empty canvas.
 
       // Flash enter values to WebGL texture.
       timingFunctionsShim.runAnimationFrameCallbacks();
       expect(enterRunCount).toBe(1);
       expect(updateRunCount).toBe(0);
-      await recordSnapshot();  // Green/Magenta square.
+      await recordSnapshot(); // Green/Magenta square.
 
       // Run the update callback.
       timingFunctionsShim.runAnimationFrameCallbacks();
       expect(enterRunCount).toBe(1);
       expect(updateRunCount).toBe(1);
-      await recordSnapshot();  // Green/Magenta square.
+      await recordSnapshot(); // Green/Magenta square.
 
       // Flash update values to WebGL texture.
       timingFunctionsShim.runAnimationFrameCallbacks();
       expect(enterRunCount).toBe(1);
       expect(updateRunCount).toBe(1);
-      await recordSnapshot();  // Green/Magenta square.
+      await recordSnapshot(); // Green/Magenta square.
 
       // Now that the enter() and update() callbacks have both been called, and
       // the resulting values have been flashed to the WebGL texture, advance
@@ -526,7 +528,7 @@ describe('Sprite', () => {
       for (let frame = 0; frame < FRAME_COUNT; frame++) {
         // Advance the timing shim clock.
         timingFunctionsShim.totalElapsedTimeMs +=
-            TRANSITION_DURATION_MS / FRAME_COUNT;
+          TRANSITION_DURATION_MS / FRAME_COUNT;
         timingFunctionsShim.runAnimationFrameCallbacks();
         await recordSnapshot();
       }
@@ -535,7 +537,7 @@ describe('Sprite', () => {
 
   describe('stacking', () => {
     // Create a <section> for storing visible artifacts.
-    const {section, content} = createSection('Sprite stacking');
+    const { section, content } = createSection('Sprite stacking');
     article.appendChild(section);
 
     it('should render later sprites over earlier sprites', async () => {
@@ -605,7 +607,7 @@ describe('Sprite', () => {
       // Now, if we inspect the canvas, its pixels should show that the sprite
       // has been rendered. Start my making a copy of the canvas and for
       // inspection.
-      const {canvas} = scene;
+      const { canvas } = scene;
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
       content.appendChild(copyContainer);
 
@@ -619,8 +621,8 @@ describe('Sprite', () => {
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .05);
-      const sampleHeight = Math.ceil(copy.width * .05);
+      const sampleWidth = Math.ceil(copy.width * 0.05);
+      const sampleHeight = Math.ceil(copy.width * 0.05);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Generate patches of solid green and magenta to compare to the rendered
@@ -630,32 +632,28 @@ describe('Sprite', () => {
 
       // Take a sample of the top left corner and compare it to the expected
       // solid green patch.
-      const topLeftSample = ctx.getImageData(
-          5,
-          5,
-          sampleWidth,
-          sampleHeight,
-      );
+      const topLeftSample = ctx.getImageData(5, 5, sampleWidth, sampleHeight);
       expect(compareColorArrays(topLeftSample.data, solidOrange)).toEqual(1);
 
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth - 5),
-          Math.floor(copy.height - sampleHeight - 5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width - sampleWidth - 5),
+        Math.floor(copy.height - sampleHeight - 5),
+        sampleWidth,
+        sampleHeight
       );
-      expect(compareColorArrays(bottomRightSample.data, solidPurple))
-          .toEqual(1);
+      expect(compareColorArrays(bottomRightSample.data, solidPurple)).toEqual(
+        1
+      );
 
       // Lastly, sample a chunk of the middle of the image and compare it to the
       // solid magenta patch.
       const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(centerSample.data, solidOrange)).toEqual(1);
 
@@ -736,7 +734,7 @@ describe('Sprite', () => {
       // Now, if we inspect the canvas, its pixels should show that the sprite
       // has been rendered. Start my making a copy of the canvas and for
       // inspection.
-      const {canvas} = scene;
+      const { canvas } = scene;
       const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
       content.appendChild(copyContainer);
 
@@ -750,8 +748,8 @@ describe('Sprite', () => {
       // the width and height of the canvas size. This patch is a middle-ground
       // between testing the whole image for pixel-perfect rendering and testing
       // a single pixel.
-      const sampleWidth = Math.ceil(copy.width * .1);
-      const sampleHeight = Math.ceil(copy.width * .1);
+      const sampleWidth = Math.ceil(copy.width * 0.1);
+      const sampleHeight = Math.ceil(copy.width * 0.1);
       const pixelCount = sampleWidth * sampleHeight;
 
       // Generate patches of solid green and magenta to compare to the rendered
@@ -762,30 +760,30 @@ describe('Sprite', () => {
       // Take a sample of the top right corner and compare it to the expected
       // solid green patch.
       const topRightSample = ctx.getImageData(
-          Math.floor(copy.width - sampleWidth),
-          0,
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width - sampleWidth),
+        0,
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(topRightSample.data, solidPurple)).toEqual(1);
 
       // Take a sample of the bottom right corner and compare it to the expected
       // solid green patch.
       const bottomLeftSample = ctx.getImageData(
-          0,
-          Math.floor(copy.height - sampleHeight),
-          sampleWidth,
-          sampleHeight,
+        0,
+        Math.floor(copy.height - sampleHeight),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(bottomLeftSample.data, solidOrange)).toEqual(1);
 
       // Lastly, sample a chunk of the middle of the image and compare it to the
       // solid magenta patch.
       const centerSample = ctx.getImageData(
-          Math.floor(copy.width * .5 - sampleWidth * .5),
-          Math.floor(copy.height * .5 - sampleHeight * .5),
-          sampleWidth,
-          sampleHeight,
+        Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+        Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+        sampleWidth,
+        sampleHeight
       );
       expect(compareColorArrays(centerSample.data, solidPurple)).toEqual(1);
 

@@ -21,18 +21,18 @@
  * each turn of the WorkScheduler, only one unit of work can occur.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
-import {WorkScheduler} from '../src/lib/work-scheduler';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
+import { WorkScheduler } from '../src/lib/work-scheduler';
 
-import {Sampler} from './sampler';
-import {createArticle, createSection} from './utils';
+import { Sampler } from './sampler';
+import { createArticle, createSection } from './utils';
 
 // Dimensions of sample of pixels for color value testing.
 const SAMPLE_SIZE = {
   width: 8,
-  height: 8
+  height: 8,
 };
 
 // Set constant fill and border colors.
@@ -63,7 +63,7 @@ document.body.appendChild(article);
 
 describe('constrained selection', () => {
   // Create a <section> for storing visible artifacts.
-  const {section, content} = createSection('constrained selection');
+  const { section, content } = createSection('constrained selection');
   article.appendChild(section);
 
   let container: HTMLDivElement;
@@ -94,7 +94,7 @@ describe('constrained selection', () => {
     timingFunctionsShim.totalElapsedTimeMs = 1000;
 
     scene = new Scene({
-      antialiasingFactor: 0,  // Disable antialiasing.
+      antialiasingFactor: 0, // Disable antialiasing.
       container,
       defaultTransitionTimeMs: 0,
       desiredSpriteCapacity: 100,
@@ -156,20 +156,26 @@ describe('constrained selection', () => {
       initRunCount++;
     });
 
-    expect(initRunCount)
-        .toBe(0, 'Init callback should not run immediately when specified');
+    expect(initRunCount).toBe(
+      0,
+      'Init callback should not run immediately when specified'
+    );
 
     selection.bind([{}]);
     expect(workScheduler.queueLength).toBe(1, 'Queued: Binding task');
 
-    expect(initRunCount)
-        .toBe(0, 'Init callback should not run immediately on bind');
+    expect(initRunCount).toBe(
+      0,
+      'Init callback should not run immediately on bind'
+    );
 
     // Binding task.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.queueLength).toBe(1, 'Queued: Run callbacks');
-    expect(initRunCount)
-        .toBe(0, 'Init callback should not run during binding task');
+    expect(initRunCount).toBe(
+      0,
+      'Init callback should not run during binding task'
+    );
 
     // Run callbacks.
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -191,26 +197,32 @@ describe('constrained selection', () => {
     // Snapshot scene and copy the canvas for sampling.
     await sampler.copySnapshot();
 
-    expect(sampler.compareSample({
-      x: 1,
-      y: 1,
-      ...SAMPLE_SIZE,
-      color: BORDER_COLOR,
-    })).toBe(1, 'Top left sample should match border color');
+    expect(
+      sampler.compareSample({
+        x: 1,
+        y: 1,
+        ...SAMPLE_SIZE,
+        color: BORDER_COLOR,
+      })
+    ).toBe(1, 'Top left sample should match border color');
 
-    expect(sampler.compareSample({
-      x: Math.floor(scene.canvas.width - SAMPLE_SIZE.width - 1),
-      y: Math.floor(scene.canvas.height - SAMPLE_SIZE.height - 1),
-      ...SAMPLE_SIZE,
-      color: BORDER_COLOR,
-    })).toBe(1, 'Bottom right sample should match border color');
+    expect(
+      sampler.compareSample({
+        x: Math.floor(scene.canvas.width - SAMPLE_SIZE.width - 1),
+        y: Math.floor(scene.canvas.height - SAMPLE_SIZE.height - 1),
+        ...SAMPLE_SIZE,
+        color: BORDER_COLOR,
+      })
+    ).toBe(1, 'Bottom right sample should match border color');
 
-    expect(sampler.compareSample({
-      x: Math.floor(scene.canvas.width * .5 - SAMPLE_SIZE.width * .5),
-      y: Math.floor(scene.canvas.height * .5 - SAMPLE_SIZE.height * .5),
-      ...SAMPLE_SIZE,
-      color: FILL_COLOR,
-    })).toBe(1, 'Center sample should match fill color');
+    expect(
+      sampler.compareSample({
+        x: Math.floor(scene.canvas.width * 0.5 - SAMPLE_SIZE.width * 0.5),
+        y: Math.floor(scene.canvas.height * 0.5 - SAMPLE_SIZE.height * 0.5),
+        ...SAMPLE_SIZE,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Center sample should match fill color');
 
     // Advance time.
     timingFunctionsShim.totalElapsedTimeMs += 1;
@@ -232,26 +244,34 @@ describe('constrained selection', () => {
       }
 
       s.TransitionTimeMs = 1;
-      s.FillColor = EXIT_COLOR;  // Changing fill only, not border.
+      s.FillColor = EXIT_COLOR; // Changing fill only, not border.
 
       // Mark that the exit callback has run.
       exitRunCount++;
     });
 
-    expect(exitRunCount)
-        .toBe(0, 'Exit callback should not run immediately when specified');
+    expect(exitRunCount).toBe(
+      0,
+      'Exit callback should not run immediately when specified'
+    );
 
-    selection.bind([/* Empty. */]);
+    selection.bind([
+      /* Empty. */
+    ]);
     expect(workScheduler.queueLength).toBe(1, 'Queued: Binding task');
 
-    expect(exitRunCount)
-        .toBe(0, 'Exit callback should not run immediately on bind');
+    expect(exitRunCount).toBe(
+      0,
+      'Exit callback should not run immediately on bind'
+    );
 
     // Binding task.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.queueLength).toBe(1, 'Queued: Run callbacks');
-    expect(exitRunCount)
-        .toBe(0, 'Exit callback should not run during binding task');
+    expect(exitRunCount).toBe(
+      0,
+      'Exit callback should not run during binding task'
+    );
 
     // Run callbacks.
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -302,26 +322,32 @@ describe('constrained selection', () => {
     // Snapshot scene and copy the canvas for sampling.
     await sampler.copySnapshot();
 
-    expect(sampler.compareSample({
-      x: 1,
-      y: 1,
-      ...SAMPLE_SIZE,
-      color: BORDER_COLOR,
-    })).toBe(1, 'Top left sample should match border color');
+    expect(
+      sampler.compareSample({
+        x: 1,
+        y: 1,
+        ...SAMPLE_SIZE,
+        color: BORDER_COLOR,
+      })
+    ).toBe(1, 'Top left sample should match border color');
 
-    expect(sampler.compareSample({
-      x: Math.floor(scene.canvas.width - SAMPLE_SIZE.width - 1),
-      y: Math.floor(scene.canvas.height - SAMPLE_SIZE.height - 1),
-      ...SAMPLE_SIZE,
-      color: BORDER_COLOR,
-    })).toBe(1, 'Bottom right sample should match border color');
+    expect(
+      sampler.compareSample({
+        x: Math.floor(scene.canvas.width - SAMPLE_SIZE.width - 1),
+        y: Math.floor(scene.canvas.height - SAMPLE_SIZE.height - 1),
+        ...SAMPLE_SIZE,
+        color: BORDER_COLOR,
+      })
+    ).toBe(1, 'Bottom right sample should match border color');
 
-    expect(sampler.compareSample({
-      x: Math.floor(scene.canvas.width * .5 - SAMPLE_SIZE.width * .5),
-      y: Math.floor(scene.canvas.height * .5 - SAMPLE_SIZE.height * .5),
-      ...SAMPLE_SIZE,
-      color: EXIT_COLOR,
-    })).toBe(1, 'Center sample should match exit color');
+    expect(
+      sampler.compareSample({
+        x: Math.floor(scene.canvas.width * 0.5 - SAMPLE_SIZE.width * 0.5),
+        y: Math.floor(scene.canvas.height * 0.5 - SAMPLE_SIZE.height * 0.5),
+        ...SAMPLE_SIZE,
+        color: EXIT_COLOR,
+      })
+    ).toBe(1, 'Center sample should match exit color');
 
     // Texture sync.
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -332,13 +358,15 @@ describe('constrained selection', () => {
     expect(workScheduler.queueLength).toBe(1, 'Queued: Draw');
 
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 1,
-      y: 1,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Canvas should be empty');
+    expect(
+      sampler.compareSample({
+        x: 1,
+        y: 1,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Canvas should be empty');
 
     // Advance time. Otherwise Draw will keep queueing itself.
     timingFunctionsShim.totalElapsedTimeMs += 1;
@@ -362,13 +390,13 @@ describe('constrained selection', () => {
 
     // Parameters for sprites to be rendered and removed.
     const data = [
-      {index: 0, label: 'Top left', x: -.25, y: .25},
-      {index: 1, label: 'Top right', x: .25, y: .25},
-      {index: 2, label: 'Bottom left', x: -.25, y: -.25},
-      {index: 3, label: 'Bottom right', x: .25, y: -.25},
+      { index: 0, label: 'Top left', x: -0.25, y: 0.25 },
+      { index: 1, label: 'Top right', x: 0.25, y: 0.25 },
+      { index: 2, label: 'Bottom left', x: -0.25, y: -0.25 },
+      { index: 3, label: 'Bottom right', x: 0.25, y: -0.25 },
     ];
 
-    const selection = scene.createSelection<typeof data[number]>();
+    const selection = scene.createSelection<(typeof data)[number]>();
 
     let initRunCounts = new Array<number>(data.length).fill(0);
 
@@ -379,7 +407,7 @@ describe('constrained selection', () => {
       }
 
       s.Sides = 2;
-      s.SizeWorld = .5;
+      s.SizeWorld = 0.5;
       s.PositionWorld = datum;
       s.FillColor = FILL_COLOR;
 
@@ -387,74 +415,92 @@ describe('constrained selection', () => {
       initRunCounts[datum.index]++;
     });
 
-    expect(initRunCounts)
-        .toEqual([0, 0, 0, 0], 'Init callbacks should not run immediately');
+    expect(initRunCounts).toEqual(
+      [0, 0, 0, 0],
+      'Init callbacks should not run immediately'
+    );
 
     selection.bind(data);
 
     // Binding task (1/4). Run callbacks (1/4).
     timingFunctionsShim.runAnimationFrameCallbacks(2);
-    expect(initRunCounts)
-        .toEqual([1, 0, 0, 0], 'First init callback should have run');
+    expect(initRunCounts).toEqual(
+      [1, 0, 0, 0],
+      'First init callback should have run'
+    );
 
     // Binding task (2/4). Draw. Texture sync (1/4). Run callbacks (2/4).
     timingFunctionsShim.runAnimationFrameCallbacks(4);
-    expect(initRunCounts)
-        .toEqual([1, 1, 0, 0], 'Second init callback should have run');
+    expect(initRunCounts).toEqual(
+      [1, 1, 0, 0],
+      'Second init callback should have run'
+    );
 
     // Binding task (3/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Top left sample should match fill color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Top left sample should match fill color');
 
     // Texture sync (2/4). Run callbacks (3/4).
     timingFunctionsShim.runAnimationFrameCallbacks(2);
-    expect(initRunCounts)
-        .toEqual([1, 1, 1, 0], 'Third init callback should have run');
+    expect(initRunCounts).toEqual(
+      [1, 1, 1, 0],
+      'Third init callback should have run'
+    );
 
     // Binding task (4/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Top right sample should match fill color');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Top right sample should match fill color');
 
     // Texture sync (3/4). Run callbacks (4/4).
     timingFunctionsShim.runAnimationFrameCallbacks(2);
-    expect(initRunCounts)
-        .toEqual([1, 1, 1, 1], 'Fourth init callback should have run');
+    expect(initRunCounts).toEqual(
+      [1, 1, 1, 1],
+      'Fourth init callback should have run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Bottom left sample should match fill color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Bottom left sample should match fill color');
 
     // Texture sync (4/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Bottom right sample should match fill color');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Bottom right sample should match fill color');
 
     // Advance time to clear out draw queue.
     timingFunctionsShim.totalElapsedTimeMs += 1;
@@ -476,32 +522,42 @@ describe('constrained selection', () => {
       exitRunCounts[datum.index]++;
     });
 
-    expect(exitRunCounts)
-        .toEqual([0, 0, 0, 0], 'Exit callbacks should not run immediately');
+    expect(exitRunCounts).toEqual(
+      [0, 0, 0, 0],
+      'Exit callbacks should not run immediately'
+    );
 
     selection.bind([]);
 
     // Binding task (1/4). Run callbacks (1/4).
     timingFunctionsShim.runAnimationFrameCallbacks(2);
-    expect(exitRunCounts)
-        .toEqual([1, 0, 0, 0], 'First exit callback should have run');
+    expect(exitRunCounts).toEqual(
+      [1, 0, 0, 0],
+      'First exit callback should have run'
+    );
 
     // Binding task (2/4). Draw. Rebase (1/4). Run callbacks (2/4).
     timingFunctionsShim.runAnimationFrameCallbacks(4);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 0, 0], 'Second exit callback should have run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 0, 0],
+      'Second exit callback should have run'
+    );
 
     // Binding task (3/4). Draw. Texture sync (1/4). Rebase (2/4).
     // Run callbacks (3/4).
     timingFunctionsShim.runAnimationFrameCallbacks(5);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 1, 0], 'Third exit callback should have run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 1, 0],
+      'Third exit callback should have run'
+    );
 
     // Binding task (4/4). Draw. Texture sync (2/4). Rebase (3/4).
     // Run callbacks (4/4).
     timingFunctionsShim.runAnimationFrameCallbacks(5);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 1, 1], 'Fourth exit callback should have run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 1, 1],
+      'Fourth exit callback should have run'
+    );
 
     // Draw. Texture sync (3/4). Rebase (4/4). Draw. Run removal (no-op).
     // Texture sync (4/4).
@@ -513,13 +569,15 @@ describe('constrained selection', () => {
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: MIDPOINT_COLOR,
-    })).toBe(1, 'Whole canvas should be filled with the midpoint color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: MIDPOINT_COLOR,
+      })
+    ).toBe(1, 'Whole canvas should be filled with the midpoint color');
 
     // At this point, Run removal and draw would keep queuing themselves until
     // time advances. So advance time.
@@ -528,61 +586,71 @@ describe('constrained selection', () => {
     // Run removal (1/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: EXIT_COLOR,
-    })).toBe(1, 'Whole canvas should be filled with the exit color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: EXIT_COLOR,
+      })
+    ).toBe(1, 'Whole canvas should be filled with the exit color');
 
     // Texture sync (1/4). Run removal (2/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(3);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top left corner should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top left corner should be empty');
 
     // Texture sync (2/4). Run removal (3/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(3);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top right corner should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top right corner should be empty');
 
     // Texture sync (3/4). Run removal (4/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(3);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom left corner should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom left corner should be empty');
 
     // Texture sync (4/4). Draw.
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom right corner should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom right corner should be empty');
 
     // Advance time to clear Draw queue.
     timingFunctionsShim.totalElapsedTimeMs += 1;
     timingFunctionsShim.runAnimationFrameCallbacks(2);
     expect(workScheduler.queueLength).toBe(0, 'Queue empty');
   });
-})
+});

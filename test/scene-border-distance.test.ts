@@ -19,11 +19,18 @@
  * various Scene conditions.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  createArticle,
+  createSection,
+  filledColorArray,
+} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -43,19 +50,19 @@ const CYAN_PATCH = filledColorArray(SAMPLE_SIZE, [0, 255, 255, 255]);
 // Grid of nine samples to test.
 const SAMPLES = [
   // Top row.
-  {position: [1, 1], expected: CYAN_PATCH},
-  {position: [26, 1], expected: CYAN_PATCH},
-  {position: [51, 1], expected: CYAN_PATCH},
+  { position: [1, 1], expected: CYAN_PATCH },
+  { position: [26, 1], expected: CYAN_PATCH },
+  { position: [51, 1], expected: CYAN_PATCH },
 
   // Middle row.
-  {position: [1, 26], expected: CYAN_PATCH},
-  {position: [26, 26], expected: BLANK_PATCH},
-  {position: [51, 26], expected: CYAN_PATCH},
+  { position: [1, 26], expected: CYAN_PATCH },
+  { position: [26, 26], expected: BLANK_PATCH },
+  { position: [51, 26], expected: CYAN_PATCH },
 
   // Bottom row.
-  {position: [1, 51], expected: CYAN_PATCH},
-  {position: [26, 51], expected: CYAN_PATCH},
-  {position: [51, 51], expected: CYAN_PATCH},
+  { position: [1, 51], expected: CYAN_PATCH },
+  { position: [26, 51], expected: CYAN_PATCH },
+  { position: [51, 51], expected: CYAN_PATCH },
 ];
 
 // Different scale values to apply, which should have no effect on rendering
@@ -78,7 +85,7 @@ const SCALES = [
 ];
 
 describe('borders', () => {
-  const {section, content: sectionContent} = createSection('borders');
+  const { section, content: sectionContent } = createSection('borders');
   article.appendChild(section);
 
   it('should render normally at each scale and devicePixelRatio', async () => {
@@ -103,8 +110,8 @@ describe('borders', () => {
 
     // Create a Sprite and render it.
     const sprite = scene.createSprite();
-    sprite.enter(s => {
-      s.Sides = 2;  // Square.
+    sprite.enter((s) => {
+      s.Sides = 2; // Square.
       s.SizePixel = 60;
       s.BorderRadiusPixel = 10;
       s.BorderColor = [0, 255, 255, 1];
@@ -125,7 +132,7 @@ describe('borders', () => {
         // Now, if we inspect the canvas, its pixels should show that the
         // sprite has been rendered. Start my making a copy of the canvas and
         // for inspection.
-        const {canvas} = scene;
+        const { canvas } = scene;
         const [_, ctx, copyContainer] = copyCanvasAndContainer(canvas);
         sectionContent.appendChild(copyContainer);
 
@@ -135,9 +142,16 @@ describe('borders', () => {
         const img = await blobToImage(blob);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        for (const {position: [x, y], expected} of SAMPLES) {
-          const sample =
-              ctx.getImageData(x * dpr, y * dpr, SAMPLE_WIDTH, SAMPLE_HEIGHT);
+        for (const {
+          position: [x, y],
+          expected,
+        } of SAMPLES) {
+          const sample = ctx.getImageData(
+            x * dpr,
+            y * dpr,
+            SAMPLE_WIDTH,
+            SAMPLE_HEIGHT
+          );
           expect(compareColorArrays(sample.data, expected)).toEqual(1);
         }
       }

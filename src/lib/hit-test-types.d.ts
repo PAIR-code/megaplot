@@ -18,7 +18,7 @@
  * @fileoverview Types that contribute to running a hit test.
  */
 
-import {Sprite} from './sprite';
+import { Sprite } from './sprite';
 
 /**
  * Parameters used in specifying a hit test.

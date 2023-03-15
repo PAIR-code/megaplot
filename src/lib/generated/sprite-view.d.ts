@@ -53,15 +53,21 @@ export interface SpriteView {
   FillColorG: number;
   FillColorB: number;
   FillColorOpacity: number;
-  PositionWorld: (number[] | {x?: number; y?: number;});
-  SizeWorld: (number[] | {width?: number; height?: number;} | number);
-  GeometricZoom: (number[] | {x?: number; y?: number;} | number);
-  PositionPixel: (number[] | {x?: number; y?: number;});
-  SizePixel: (number[] | {width?: number; height?: number;} | number);
-  MaxSizePixel: (number[] | {width?: number; height?: number;} | number);
-  MinSizePixel: (number[] | {width?: number; height?: number;} | number);
-  PositionRelative: (number[] | {x?: number; y?: number;});
-  ShapeTexture: (number[] | {u?: number; v?: number; width?: number; height?: number;});
-  BorderColor: (number[] | {r?: number; g?: number; b?: number; opacity?: number;});
-  FillColor: (number[] | {r?: number; g?: number; b?: number; opacity?: number;});
+  PositionWorld: number[] | { x?: number; y?: number };
+  SizeWorld: number[] | { width?: number; height?: number } | number;
+  GeometricZoom: number[] | { x?: number; y?: number } | number;
+  PositionPixel: number[] | { x?: number; y?: number };
+  SizePixel: number[] | { width?: number; height?: number } | number;
+  MaxSizePixel: number[] | { width?: number; height?: number } | number;
+  MinSizePixel: number[] | { width?: number; height?: number } | number;
+  PositionRelative: number[] | { x?: number; y?: number };
+  ShapeTexture:
+    | number[]
+    | { u?: number; v?: number; width?: number; height?: number };
+  BorderColor:
+    | number[]
+    | { r?: number; g?: number; b?: number; opacity?: number };
+  FillColor:
+    | number[]
+    | { r?: number; g?: number; b?: number; opacity?: number };
 }

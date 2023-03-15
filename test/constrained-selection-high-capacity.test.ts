@@ -25,13 +25,13 @@
  * not ready for the operation and short-circuit the task.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
-import {WorkScheduler} from '../src/lib/work-scheduler';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
+import { WorkScheduler } from '../src/lib/work-scheduler';
 
-import {Sampler} from './sampler';
-import {createArticle, createSection} from './utils';
+import { Sampler } from './sampler';
+import { createArticle, createSection } from './utils';
 
 // Set constant fill color.
 // NOTE: Opacity value is a floating point number in the range 0-1.
@@ -59,8 +59,9 @@ document.body.appendChild(article);
 
 describe('constrained selection - high capacity', () => {
   // Create a <section> for storing visible artifacts.
-  const {section, content} =
-      createSection('constrained selection - high capacity');
+  const { section, content } = createSection(
+    'constrained selection - high capacity'
+  );
   article.appendChild(section);
 
   let container: HTMLDivElement;
@@ -91,10 +92,10 @@ describe('constrained selection - high capacity', () => {
     timingFunctionsShim.totalElapsedTimeMs = 1000;
 
     scene = new Scene({
-      antialiasingFactor: 0,  // Disable antialiasing for pixel-perfect tests.
+      antialiasingFactor: 0, // Disable antialiasing for pixel-perfect tests.
       container,
       defaultTransitionTimeMs: 0,
-      desiredSpriteCapacity: 100000,  // High capacity tests range operations.
+      desiredSpriteCapacity: 100000, // High capacity tests range operations.
       timingFunctions: timingFunctionsShim,
     });
 
@@ -131,47 +132,47 @@ describe('constrained selection - high capacity', () => {
 
     // Parameters for sprites to be rendered and removed.
     const data = [
-      {index: 0, label: 'Top left', x: -.25, y: .25},
-      {index: 1, label: 'Top right', x: .25, y: .25},
-      {index: 2, label: 'Bottom left', x: -.25, y: -.25},
-      {index: 3, label: 'Bottom right', x: .25, y: -.25},
+      { index: 0, label: 'Top left', x: -0.25, y: 0.25 },
+      { index: 1, label: 'Top right', x: 0.25, y: 0.25 },
+      { index: 2, label: 'Bottom left', x: -0.25, y: -0.25 },
+      { index: 3, label: 'Bottom right', x: 0.25, y: -0.25 },
     ];
 
     let initRunCounts = new Array<number>(data.length).fill(0);
     let exitRunCounts = new Array<number>(data.length).fill(0);
 
     // Setup selection with onInit()/onExit() callbacks and bind to data.
-    const selection =
-        scene.createSelection<typeof data[number]>()
-            .onInit((s, datum) => {
-              if (initRunCounts[datum.index] > 0) {
-                throw new Error('Init should not run more than once per datum');
-              }
+    const selection = scene
+      .createSelection<(typeof data)[number]>()
+      .onInit((s, datum) => {
+        if (initRunCounts[datum.index] > 0) {
+          throw new Error('Init should not run more than once per datum');
+        }
 
-              s.Sides = 2;
-              s.SizeWorld = .5;
-              s.PositionWorld = datum;
-              s.FillColor = FILL_COLOR;
+        s.Sides = 2;
+        s.SizeWorld = 0.5;
+        s.PositionWorld = datum;
+        s.FillColor = FILL_COLOR;
 
-              // Mark that the init callback has run.
-              initRunCounts[datum.index]++;
-            })
-            .onExit((s, datum) => {
-              if (exitRunCounts[datum.index] > 0) {
-                throw new Error('Exit should not run more than once per datum');
-              }
+        // Mark that the init callback has run.
+        initRunCounts[datum.index]++;
+      })
+      .onExit((s, datum) => {
+        if (exitRunCounts[datum.index] > 0) {
+          throw new Error('Exit should not run more than once per datum');
+        }
 
-              s.TransitionTimeMs = 1;  // Shorter transition than frame time.
-              s.FillColor = EXIT_COLOR;
+        s.TransitionTimeMs = 1; // Shorter transition than frame time.
+        s.FillColor = EXIT_COLOR;
 
-              // Mark that the exit callback has run.
-              exitRunCounts[datum.index]++;
-            })
-            .bind(data);
+        // Mark that the exit callback has run.
+        exitRunCounts[datum.index]++;
+      })
+      .bind(data);
 
     // Utility function to advance one frame. Returns the task ran or undefined.
     function advance() {
-      const {taskIds} = workScheduler;
+      const { taskIds } = workScheduler;
       if (!taskIds.length) {
         return undefined;
       }
@@ -185,62 +186,72 @@ describe('constrained selection - high capacity', () => {
     expect(advance()).toEqual(BINDING_TASK_ID, '2/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Canvas should still be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Canvas should still be empty');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '1/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '2/4');
     expect(advance()).toEqual(BINDING_TASK_ID, '3/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Top left should be fill color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Top left should be fill color');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '2/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '3/4');
     expect(advance()).toEqual(BINDING_TASK_ID, '4/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Top right should be fill color');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Top right should be fill color');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '3/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '4/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Bottom left should be fill color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Bottom left should be fill color');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '4/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: FILL_COLOR,
-    })).toBe(1, 'Bottom right should be fill color');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Bottom right should be fill color');
 
     expect(workScheduler.taskIds).toEqual([]);
 
@@ -250,86 +261,96 @@ describe('constrained selection - high capacity', () => {
     expect(advance()).toEqual(BINDING_TASK_ID, '1/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '1/4');
     expect(advance()).toEqual(BINDING_TASK_ID, '2/4');
-    expect(advance()).toEqual(DRAW_TASK_ID);  // No change (no Texture sync).
+    expect(advance()).toEqual(DRAW_TASK_ID); // No change (no Texture sync).
 
     expect(advance()).toEqual(REBASE_TASK_ID, '1/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '2/4');
     expect(advance()).toEqual(BINDING_TASK_ID, '3/4');
-    expect(advance()).toEqual(DRAW_TASK_ID);  // No change (no Texture sync).
+    expect(advance()).toEqual(DRAW_TASK_ID); // No change (no Texture sync).
 
-    expect(advance()).toEqual(TEXTURE_SYNC_ID);  // No-op (rebase overlap).
+    expect(advance()).toEqual(TEXTURE_SYNC_ID); // No-op (rebase overlap).
     expect(advance()).toEqual(REBASE_TASK_ID, '2/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '3/4');
     expect(advance()).toEqual(BINDING_TASK_ID, '4/4');
-    expect(advance()).toEqual(DRAW_TASK_ID);  // No change (Texture sync no-op).
+    expect(advance()).toEqual(DRAW_TASK_ID); // No change (Texture sync no-op).
 
-    expect(advance()).toEqual(TEXTURE_SYNC_ID);  // No-op (rebase overlap).
+    expect(advance()).toEqual(TEXTURE_SYNC_ID); // No-op (rebase overlap).
     expect(advance()).toEqual(REBASE_TASK_ID, '3/4');
     expect(advance()).toEqual(RUN_CALLBACKS_TASK_ID, '4/4');
-    expect(advance()).toEqual(DRAW_TASK_ID);  // No change (Texture sync no-op).
+    expect(advance()).toEqual(DRAW_TASK_ID); // No change (Texture sync no-op).
 
-    expect(advance()).toEqual(TEXTURE_SYNC_ID);  // No-op (rebase overlap).
-    expect(advance()).toEqual(REBASE_TASK_ID, '4/4');  // Overlaps resolved!
-    expect(advance()).toEqual(DRAW_TASK_ID);  // No change (Texture sync no-op).
+    expect(advance()).toEqual(TEXTURE_SYNC_ID); // No-op (rebase overlap).
+    expect(advance()).toEqual(REBASE_TASK_ID, '4/4'); // Overlaps resolved!
+    expect(advance()).toEqual(DRAW_TASK_ID); // No change (Texture sync no-op).
 
-    expect(advance()).toEqual(TEXTURE_SYNC_ID);  // Sync exit values.
+    expect(advance()).toEqual(TEXTURE_SYNC_ID); // Sync exit values.
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: EXIT_COLOR,
-    })).toBe(1, 'Canvas should be filled with the exit color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: EXIT_COLOR,
+      })
+    ).toBe(1, 'Canvas should be filled with the exit color');
 
     expect(advance()).toEqual(RUN_REMOVAL_ID, '1/4');
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '1/4');
     expect(advance()).toEqual(RUN_REMOVAL_ID, '2/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top left should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top left should be empty');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '2/4');
     expect(advance()).toEqual(RUN_REMOVAL_ID, '3/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top right should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top right should be empty');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '3/4');
     expect(advance()).toEqual(RUN_REMOVAL_ID, '4/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom left should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom left should be empty');
 
     expect(advance()).toEqual(TEXTURE_SYNC_ID, '4/4');
     expect(advance()).toEqual(DRAW_TASK_ID);
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom right should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom right should be empty');
 
     expect(advance()).toEqual(undefined);
   });

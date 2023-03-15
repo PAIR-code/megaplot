@@ -18,11 +18,18 @@
  * @fileoverview Integration test for rendering glyphs of text.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, createArticle, createSection, filledColorArray} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  createArticle,
+  createSection,
+  filledColorArray,
+} from './utils';
 
 /**
  * Tests produce visible artifacts for debugging.
@@ -33,7 +40,7 @@ document.body.appendChild(article);
 describe('glyph', () => {
   it('should render a glyph of text', async () => {
     // Create a <section> for storing visible artifacts.
-    const {section, content} = createSection('glyph');
+    const { section, content } = createSection('glyph');
     article.appendChild(section);
 
     // Create a container <div> of fixed size for the Scene to render into.
@@ -51,7 +58,7 @@ describe('glyph', () => {
       container,
       defaultTransitionTimeMs: 0,
       desiredSpriteCapacity: 1,
-      glyphs: `\u25a0`,  // Black Square.
+      glyphs: `\u25a0`, // Black Square.
       timingFunctions: timingFunctionsShim,
     });
 
@@ -69,7 +76,7 @@ describe('glyph', () => {
 
     // Give the Sprite an enter() callback to invoke.
     sprite.enter((s) => {
-      s.PositionWorld = [.15, 0];
+      s.PositionWorld = [0.15, 0];
       s.SizeWorld = 1;
 
       // Shape should sample from SDF.
@@ -90,7 +97,7 @@ describe('glyph', () => {
     // Now, if we inspect the canvas, its pixels should show that the sprite
     // has been rendered. Start my making a copy of the canvas and for
     // inspection.
-    const {canvas} = scene;
+    const { canvas } = scene;
     const [copy, ctx, copyContainer] = copyCanvasAndContainer(canvas);
     content.appendChild(copyContainer);
 
@@ -104,8 +111,8 @@ describe('glyph', () => {
     // the width and height of the canvas size. This patch is a middle-ground
     // between testing the whole image for pixel-perfect rendering and testing
     // a single pixel.
-    const sampleWidth = Math.ceil(copy.width * .1);
-    const sampleHeight = Math.ceil(copy.width * .1);
+    const sampleWidth = Math.ceil(copy.width * 0.1);
+    const sampleHeight = Math.ceil(copy.width * 0.1);
     const pixelCount = sampleWidth * sampleHeight;
 
     // Generate patches of solid green and magenta to compare to the rendered
@@ -115,31 +122,26 @@ describe('glyph', () => {
 
     // Take a sample of the top left corner and compare it to the expected
     // solid green patch.
-    const topLeftSample = ctx.getImageData(
-        0,
-        0,
-        sampleWidth,
-        sampleHeight,
-    );
+    const topLeftSample = ctx.getImageData(0, 0, sampleWidth, sampleHeight);
     expect(compareColorArrays(topLeftSample.data, solidBlue)).toEqual(1);
 
     // Take a sample of the bottom right corner and compare it to the expected
     // solid green patch.
     const bottomRightSample = ctx.getImageData(
-        Math.floor(copy.width - sampleWidth),
-        Math.floor(copy.height - sampleHeight),
-        sampleWidth,
-        sampleHeight,
+      Math.floor(copy.width - sampleWidth),
+      Math.floor(copy.height - sampleHeight),
+      sampleWidth,
+      sampleHeight
     );
     expect(compareColorArrays(bottomRightSample.data, solidBlue)).toEqual(1);
 
     // Lastly, sample a chunk of the middle of the image and compare it to the
     // solid magenta patch.
     const centerSample = ctx.getImageData(
-        Math.floor(copy.width * .5 - sampleWidth * .5),
-        Math.floor(copy.height * .5 - sampleHeight * .5),
-        sampleWidth,
-        sampleHeight,
+      Math.floor(copy.width * 0.5 - sampleWidth * 0.5),
+      Math.floor(copy.height * 0.5 - sampleHeight * 0.5),
+      sampleWidth,
+      sampleHeight
     );
     expect(compareColorArrays(centerSample.data, solidYellow)).toEqual(1);
 
