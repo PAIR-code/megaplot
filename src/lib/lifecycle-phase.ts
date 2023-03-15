@@ -20,7 +20,7 @@
  * of phases, which are defined here.
  */
 
-import {InternalError} from './internal-error';
+import { InternalError } from './internal-error';
 
 export enum LifecyclePhase {
   /**
@@ -79,12 +79,12 @@ export enum LifecyclePhase {
  * transition is valid.
  */
 export function transitionToFlag(
-    fromPhase: LifecyclePhase,
-    toPhase: LifecyclePhase,
-    ): number {
-  return fromPhase === toPhase ?
-      NaN :
-      1 << (5 * fromPhase + toPhase - +(toPhase > fromPhase));
+  fromPhase: LifecyclePhase,
+  toPhase: LifecyclePhase
+): number {
+  return fromPhase === toPhase
+    ? NaN
+    : 1 << (5 * fromPhase + toPhase - +(toPhase > fromPhase));
 }
 
 /**
@@ -93,14 +93,8 @@ export function transitionToFlag(
  * for whether the transition is allowed.
  */
 export function createAllowedTransitionMask(): number {
-  const {
-    Created,
-    Rest,
-    HasCallback,
-    NeedsRebase,
-    NeedsTextureSync,
-    Removed,
-  } = LifecyclePhase;
+  const { Created, Rest, HasCallback, NeedsRebase, NeedsTextureSync, Removed } =
+    LifecyclePhase;
 
   let mask = 0;
 
@@ -152,8 +146,8 @@ export const ALLOWED_TRANSITION_MASK = createAllowedTransitionMask();
  * Check whether a given LifecyclePhase is allowed. If not, throw an error.
  */
 export function checkLifecyclePhaseTransition(
-    fromPhase: LifecyclePhase,
-    toPhase: LifecyclePhase,
+  fromPhase: LifecyclePhase,
+  toPhase: LifecyclePhase
 ) {
   if (!(transitionToFlag(fromPhase, toPhase) & ALLOWED_TRANSITION_MASK)) {
     throw new InternalError('Illegal sprite lifecycle phase transition');

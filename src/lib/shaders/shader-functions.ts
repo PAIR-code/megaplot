@@ -19,7 +19,7 @@
  * return GLSL code fragments when called.
  */
 
-import {glsl} from './glsl-template-tag';
+import { glsl } from './glsl-template-tag';
 
 /**
  * List of types for creating vectorized versions of functions.
@@ -65,12 +65,9 @@ float cubicEaseInOut(float t) {
  * @param easeT Name of the GLSL vairable containing the result of cubic easing
  * having been applied to the rangeT variable.
  */
-export function computeCurrentValue(
-    rangeT = 't',
-    easeT = 'varyingT',
-) {
-  return GEN_TYPES
-      .map(genType => glsl`
+export function computeCurrentValue(rangeT = 't', easeT = 'varyingT') {
+  return GEN_TYPES.map(
+    (genType) => glsl`
 ${genType} computeCurrentValue(
     ${genType} startingValue,
     ${genType} startingVelocity,
@@ -81,7 +78,8 @@ ${genType} computeCurrentValue(
   return currentValue + projectedValue *
     ${rangeT} * (1. - ${rangeT}) * (1. - ${rangeT}) * (1. - ${rangeT});
 }
-  `).join('\n');
+  `
+  ).join('\n');
 }
 
 /**

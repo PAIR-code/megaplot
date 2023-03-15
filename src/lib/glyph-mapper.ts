@@ -18,7 +18,7 @@
  * @fileoverview The GlyphMapper class is responsible for rendering glyphs to a
  * texture by using TinySDF.
  */
-import {canvasToSDFData, TinySDF} from '../third_party/tiny-sdf/index';
+import { canvasToSDFData, TinySDF } from '../third_party/tiny-sdf/index';
 
 /**
  * Where in the SDF texture to find a particular glyph. The u and v values
@@ -57,18 +57,19 @@ const DEFAULT_GLYPH_FONT_SIZE_PX = 32;
 /**
  * Default settings for a GlyphMapper instance.
  */
-export const DEFAULT_GLYPH_MAPPER_SETTINGS: GlyphMapperSettings =
-    Object.freeze({
-      maxTextureSize: 2048,
-      fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
-      buffer: DEFAULT_GLYPH_FONT_SIZE_PX,
-      radius: DEFAULT_GLYPH_FONT_SIZE_PX,
-      // This default value ensures that a distance of zero coincides with the
-      // edge of the glyph.
-      cutoff: 1,
-      fontFamily: 'monospace',
-      fontWeight: 'normal',
-    });
+export const DEFAULT_GLYPH_MAPPER_SETTINGS: GlyphMapperSettings = Object.freeze(
+  {
+    maxTextureSize: 2048,
+    fontSize: DEFAULT_GLYPH_FONT_SIZE_PX,
+    buffer: DEFAULT_GLYPH_FONT_SIZE_PX,
+    radius: DEFAULT_GLYPH_FONT_SIZE_PX,
+    // This default value ensures that a distance of zero coincides with the
+    // edge of the glyph.
+    cutoff: 1,
+    fontFamily: 'monospace',
+    fontWeight: 'normal',
+  }
+);
 
 /**
  * The GlyphMapper creates and manages a signed distance field (SDF) for
@@ -121,21 +122,24 @@ export class GlyphMapper {
   private readonly glyphToCoordinates = new Map<string, GlyphCoordinates>();
 
   constructor(
-      options: Partial<typeof DEFAULT_GLYPH_MAPPER_SETTINGS> =
-          DEFAULT_GLYPH_MAPPER_SETTINGS,
-
+    options: Partial<
+      typeof DEFAULT_GLYPH_MAPPER_SETTINGS
+    > = DEFAULT_GLYPH_MAPPER_SETTINGS
   ) {
     // Copy default settings plus any provided settings.
-    const settings =
-        Object.assign({}, DEFAULT_GLYPH_MAPPER_SETTINGS, options || {});
+    const settings = Object.assign(
+      {},
+      DEFAULT_GLYPH_MAPPER_SETTINGS,
+      options || {}
+    );
     this.maxTextureSize = settings.maxTextureSize;
     this.tinySDF = new TinySDF(
-        settings.fontSize,
-        settings.buffer,
-        settings.radius,
-        settings.cutoff,
-        settings.fontFamily,
-        settings.fontWeight,
+      settings.fontSize,
+      settings.buffer,
+      settings.radius,
+      settings.cutoff,
+      settings.fontFamily,
+      settings.fontWeight
     );
     this.glyphSize = this.tinySDF.size;
     this.glyphsPerRow = Math.floor(this.maxTextureSize / this.glyphSize);
@@ -154,7 +158,7 @@ export class GlyphMapper {
   /**
    * Return a glyph if it's already been added to the glyph map.
    */
-  getGlyph(glyph: string): GlyphCoordinates|undefined {
+  getGlyph(glyph: string): GlyphCoordinates | undefined {
     return this.glyphToCoordinates.get(glyph);
   }
 
@@ -179,17 +183,9 @@ export class GlyphMapper {
 
     // The index of the first texel of this glyph.
     const textureDataOffsetIndex =
-        row * this.glyphSize * this.textureSize + col * this.glyphSize;
+      row * this.glyphSize * this.textureSize + col * this.glyphSize;
 
-    const {
-      canvas,
-      ctx,
-      size,
-      buffer,
-      middle,
-      radius,
-      cutoff,
-    } = this.tinySDF;
+    const { canvas, ctx, size, buffer, middle, radius, cutoff } = this.tinySDF;
 
     ctx.clearRect(0, 0, size, size);
     ctx.fillText(glyph, buffer, middle);
@@ -211,7 +207,7 @@ export class GlyphMapper {
         // textureDataOffsetIndex, and then skips one full width per row, plus
         // the offset for the current column.
         const textureDataIndex =
-            textureDataOffsetIndex + i * this.textureSize + j;
+          textureDataOffsetIndex + i * this.textureSize + j;
 
         this.textureData[textureDataIndex] = sdfData[sdfDataIndex];
       }

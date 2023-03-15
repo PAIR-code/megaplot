@@ -18,7 +18,7 @@
  * @fileoverview Tests for NumericRange class.
  */
 
-import {NumericRange} from '../src/lib/numeric-range';
+import { NumericRange } from '../src/lib/numeric-range';
 
 describe('NumericRange', () => {
   it('should exist', () => {

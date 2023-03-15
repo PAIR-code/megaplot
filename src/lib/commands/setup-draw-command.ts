@@ -20,10 +20,10 @@
  */
 import REGL from 'regl';
 
-import {AttributeMapper} from '../attribute-mapper';
-import {ReglContext} from '../regl-types';
-import {fragmentShader} from '../shaders/scene-fragment-shader';
-import {vertexShader} from '../shaders/scene-vertex-shader';
+import { AttributeMapper } from '../attribute-mapper';
+import { ReglContext } from '../regl-types';
+import { fragmentShader } from '../shaders/scene-fragment-shader';
+import { vertexShader } from '../shaders/scene-vertex-shader';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -53,82 +53,80 @@ interface CoordinatorAPI {
  * Setup the draw command which reads from both the previous Sprite state
  * texture and the target state texture.
  */
-export function setupDrawCommand(
-    coordinator: CoordinatorAPI,
-    ): () => void {
+export function setupDrawCommand(coordinator: CoordinatorAPI): () => void {
   // Calling regl() requires a DrawConfig and returns a DrawCommand. The
   // property names are used in dynamically compiled code using the native
   // Function constructor, and therefore need to remain unchanged by JavaScript
   // minifiers/uglifiers.
   const drawConfig: REGL.DrawConfig = {
     // TODO(jimbo): Expose a mechanism to allow the API user to override these.
-    'blend': {
-      'enable': true,
-      'func': {
-        'srcRGB': 'src alpha',
-        'srcAlpha': 1,
-        'dstRGB': 'one minus src alpha',
-        'dstAlpha': 1
+    blend: {
+      enable: true,
+      func: {
+        srcRGB: 'src alpha',
+        srcAlpha: 1,
+        dstRGB: 'one minus src alpha',
+        dstAlpha: 1,
       },
-      'equation': {
-        'rgb': 'add',
-        'alpha': 'add',
+      equation: {
+        rgb: 'add',
+        alpha: 'add',
       },
-      'color': [0, 0, 0, 0]
+      color: [0, 0, 0, 0],
     },
 
-    'viewport': () => ({
-      'x': 0,
-      'y': 0,
-      'width': coordinator.canvas.width,
-      'height': coordinator.canvas.height,
+    viewport: () => ({
+      x: 0,
+      y: 0,
+      width: coordinator.canvas.width,
+      height: coordinator.canvas.height,
     }),
 
-    'frag': fragmentShader(),
+    frag: fragmentShader(),
 
-    'vert': vertexShader(coordinator.attributeMapper),
+    vert: vertexShader(coordinator.attributeMapper),
 
-    'attributes': {
+    attributes: {
       // Corners of the rectangle, same for each sprite.
-      'vertexCoordinates': [
-        [-0.5, -0.5],  // UV: [0, 1].
-        [0.5, -0.5],   // UV: [1, 1].
-        [-0.5, 0.5],   // UV: [0, 0].
-        [0.5, 0.5],    // UV: [1, 0].
+      vertexCoordinates: [
+        [-0.5, -0.5], // UV: [0, 1].
+        [0.5, -0.5], // UV: [1, 1].
+        [-0.5, 0.5], // UV: [0, 0].
+        [0.5, 0.5], // UV: [1, 0].
       ],
 
       // Swatch uv coordinates for retrieving data texture values.
-      'instanceSwatchUv': {
-        'buffer': coordinator.instanceSwatchUvBuffer,
-        'divisor': 1,
+      instanceSwatchUv: {
+        buffer: coordinator.instanceSwatchUvBuffer,
+        divisor: 1,
       },
 
       // Instance indices for computing default z-ordering.
-      'instanceIndex': {
-        'buffer': coordinator.instanceIndexBuffer,
-        'divisor': 1,
+      instanceIndex: {
+        buffer: coordinator.instanceIndexBuffer,
+        divisor: 1,
       },
     },
 
-    'uniforms': {
-      'ts': () => coordinator.elapsedTimeMs(),
-      'antialiasingFactor': () => coordinator.antialiasingFactor,
-      'devicePixelRatio': () => coordinator.getDevicePixelRatio(),
-      'instanceCount': () => coordinator.instanceCount,
-      'orderZGranularity': () => coordinator.orderZGranularity,
-      'viewMatrix': () => coordinator.getViewMatrix(),
-      'viewMatrixScale': () => coordinator.getViewMatrixScale(),
-      'projectionMatrix': (context: REGL.DefaultContext) => {
+    uniforms: {
+      ts: () => coordinator.elapsedTimeMs(),
+      antialiasingFactor: () => coordinator.antialiasingFactor,
+      devicePixelRatio: () => coordinator.getDevicePixelRatio(),
+      instanceCount: () => coordinator.instanceCount,
+      orderZGranularity: () => coordinator.orderZGranularity,
+      viewMatrix: () => coordinator.getViewMatrix(),
+      viewMatrixScale: () => coordinator.getViewMatrixScale(),
+      projectionMatrix: (context: REGL.DefaultContext) => {
         return coordinator.getProjectionMatrix(context);
       },
-      'sdfTexture': coordinator.sdfTexture,
-      'previousValuesTexture': coordinator.previousValuesFramebuffer,
-      'targetValuesTexture': coordinator.targetValuesTexture,
+      sdfTexture: coordinator.sdfTexture,
+      previousValuesTexture: coordinator.previousValuesFramebuffer,
+      targetValuesTexture: coordinator.targetValuesTexture,
     },
 
-    'primitive': 'triangle strip',
-    'count': 4,                                    // Only four vertices.
-    'instances': () => coordinator.instanceCount,  // Many sprite instances.
+    primitive: 'triangle strip',
+    count: 4, // Only four vertices.
+    instances: () => coordinator.instanceCount, // Many sprite instances.
   };
 
   const drawCommand = coordinator.regl(drawConfig);
@@ -136,10 +134,10 @@ export function setupDrawCommand(
   return () => {
     // Explicitly clear the drawing buffer before rendering.
     coordinator.regl.clear({
-      'color': [0, 0, 0, 0],
-      'depth': 1,
-      'framebuffer': null,
-      'stencil': 0,
+      color: [0, 0, 0, 0],
+      depth: 1,
+      framebuffer: null,
+      stencil: 0,
     });
     drawCommand.apply(null);
   };

@@ -18,24 +18,28 @@
  * @fileoverview Implements the TextSelection API for SceneImpl.
  */
 
-import {SpriteView} from './generated/sprite-view';
-import {GlyphCoordinates, GlyphMapper} from './glyph-mapper';
-import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
-import {TextSelection} from './text-selection-types';
-import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
-import {WorkTaskWithId} from './work-task';
+import { SpriteView } from './generated/sprite-view';
+import { GlyphCoordinates, GlyphMapper } from './glyph-mapper';
+import { Renderer } from './renderer-types';
+import {
+  Selection,
+  SelectionCallback,
+  SelectionHitTestParameters,
+} from './selection-types';
+import { TextSelection } from './text-selection-types';
+import { RemainingTimeFn, WorkScheduler } from './work-scheduler';
+import { WorkTaskWithId } from './work-task';
 
 /**
  * Text can be horizontally aligned left, right or center. Default is center.
  */
-type AlignValue = 'left'|'center'|'right';
+type AlignValue = 'left' | 'center' | 'right';
 const DEFAULT_ALIGN_VALUE = 'center';
 
 /**
  * Text can be vertically aligned top, bottom or middle. Default is middle.
  */
-type VerticalAlignValue = 'top'|'middle'|'bottom';
+type VerticalAlignValue = 'top' | 'middle' | 'bottom';
 const DEFAULT_VERTICAL_ALIGN_VALUE = 'middle';
 
 /**
@@ -49,7 +53,7 @@ interface TextGlyph<T> {
   coords: GlyphCoordinates;
 
   // Relative position for this glyph, accounting for alignment.
-  position: {x: number; y: number;};
+  position: { x: number; y: number };
 }
 
 /**
@@ -74,27 +78,26 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
   private bindingTask?: WorkTaskWithId;
   private clearingTask?: WorkTaskWithId;
 
-  private textCallback?:
-      ((datum: T) => string) = ((datum: T) => `${datum as unknown as string}`);
+  private textCallback?: (datum: T) => string = (datum: T) =>
+    `${datum as unknown as string}`;
 
   private initCallback?: SelectionCallback<T>;
   private enterCallback?: SelectionCallback<T>;
   private updateCallback?: SelectionCallback<T>;
   private exitCallback?: SelectionCallback<T>;
 
-  private alignCallback?:
-      ((datum: T) => AlignValue) = (() => DEFAULT_ALIGN_VALUE);
-  private verticalAlignCallback?:
-      ((datum: T) => VerticalAlignValue) = (() => DEFAULT_VERTICAL_ALIGN_VALUE);
+  private alignCallback?: (datum: T) => AlignValue = () => DEFAULT_ALIGN_VALUE;
+  private verticalAlignCallback?: (datum: T) => VerticalAlignValue = () =>
+    DEFAULT_VERTICAL_ALIGN_VALUE;
 
   /**
    * Create a new selection in the associated Scene.
    */
   constructor(
-      private readonly stepsBetweenChecks: number,
-      private readonly renderer: Renderer,
-      private readonly workScheduler: WorkScheduler,
-      private readonly glyphMapper: GlyphMapper,
+    private readonly stepsBetweenChecks: number,
+    private readonly renderer: Renderer,
+    private readonly workScheduler: WorkScheduler,
+    private readonly glyphMapper: GlyphMapper
   ) {}
 
   text(textCallback: (datum: T) => string) {
@@ -157,30 +160,30 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
     let lastEnterIndex = this.boundData.length;
 
     // Capture properties immediately.
-    const {textCallback, alignCallback, verticalAlignCallback} = this;
+    const { textCallback, alignCallback, verticalAlignCallback } = this;
 
     // Utility function to convert a datum into a sequence of glyphs for
     // binding.
     const datumToGlyphs = (datum: T): Array<TextGlyph<T>> => {
-      const text =
-          (textCallback ? textCallback(datum) : `${datum as unknown as string}`)
-              .trim();
+      const text = (
+        textCallback ? textCallback(datum) : `${datum as unknown as string}`
+      ).trim();
       const align =
-          (alignCallback && alignCallback(datum)) || DEFAULT_ALIGN_VALUE;
+        (alignCallback && alignCallback(datum)) || DEFAULT_ALIGN_VALUE;
       const verticalAlign =
-          (verticalAlignCallback && verticalAlignCallback(datum)) ||
-          DEFAULT_VERTICAL_ALIGN_VALUE;
+        (verticalAlignCallback && verticalAlignCallback(datum)) ||
+        DEFAULT_VERTICAL_ALIGN_VALUE;
 
       const glyphs: Array<TextGlyph<T>> = [];
 
       for (let i = 0; i < text.length; i++) {
         let x: number;
         if (align === 'left') {
-          x = (i + 1) * .5;
+          x = (i + 1) * 0.5;
         } else if (align === 'right') {
           x = (i + 1 - text.length) * 0.5;
         } else {
-          x = (i + .75 - text.length * 0.5) * 0.5;
+          x = (i + 0.75 - text.length * 0.5) * 0.5;
         }
 
         let y: number;
@@ -194,14 +197,14 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
         const coords = this.glyphMapper.getGlyph(text.charAt(i));
         if (coords) {
-          glyphs.push({datum, coords, position: {x, y}});
+          glyphs.push({ datum, coords, position: { x, y } });
         }
       }
       return glyphs;
     };
 
     // Capture callback functions immediately.
-    const {initCallback, enterCallback, updateCallback, exitCallback} = this;
+    const { initCallback, enterCallback, updateCallback, exitCallback } = this;
 
     // Given a selection, set all of its callbacks based on the captured
     // callback functions. Needs to be invoked for entering, updating and
@@ -209,30 +212,30 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
     // bind() invocation.
     const setCallbacks = (selection: Selection<TextGlyph<T>>) => {
       selection
-          .onInit((spriteView, glyph) => {
-            setGlyphAttributes(spriteView, glyph);
-            if (initCallback) {
-              initCallback(spriteView, glyph.datum);
-            }
-          })
-          .onEnter((spriteView, glyph) => {
-            setGlyphAttributes(spriteView, glyph);
-            if (enterCallback) {
-              enterCallback(spriteView, glyph.datum);
-            }
-          })
-          .onUpdate((spriteView, glyph) => {
-            setGlyphAttributes(spriteView, glyph);
-            if (updateCallback) {
-              updateCallback(spriteView, glyph.datum);
-            }
-          })
-          .onExit((spriteView, glyph) => {
-            setGlyphAttributes(spriteView, glyph);
-            if (exitCallback) {
-              exitCallback(spriteView, glyph.datum);
-            }
-          });
+        .onInit((spriteView, glyph) => {
+          setGlyphAttributes(spriteView, glyph);
+          if (initCallback) {
+            initCallback(spriteView, glyph.datum);
+          }
+        })
+        .onEnter((spriteView, glyph) => {
+          setGlyphAttributes(spriteView, glyph);
+          if (enterCallback) {
+            enterCallback(spriteView, glyph.datum);
+          }
+        })
+        .onUpdate((spriteView, glyph) => {
+          setGlyphAttributes(spriteView, glyph);
+          if (updateCallback) {
+            updateCallback(spriteView, glyph.datum);
+          }
+        })
+        .onExit((spriteView, glyph) => {
+          setGlyphAttributes(spriteView, glyph);
+          if (exitCallback) {
+            exitCallback(spriteView, glyph.datum);
+          }
+        });
     };
 
     // Performs enter data binding while there's time remaining, then returns
@@ -320,8 +323,9 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
       id: this,
       callback: (remaining: RemainingTimeFn) => {
         step = 0;
-        return exitTask(remaining) && updateTask(remaining) &&
-            enterTask(remaining);
+        return (
+          exitTask(remaining) && updateTask(remaining) && enterTask(remaining)
+        );
       },
       runUntilDone: true,
     };
@@ -365,7 +369,6 @@ export class TextSelectionImpl<T> implements TextSelection<T> {
 
       return !this.boundData.length;
     };
-
 
     // Define a clearing task which will be invoked by the WorkScheduler to
     // incrementally clear all data.

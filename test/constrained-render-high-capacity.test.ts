@@ -26,14 +26,14 @@
  * not ready for the operation and short-circuit the task.
  */
 
-import {Scene} from '../src/lib/scene';
-import {Sprite} from '../src/lib/sprite';
-import {SceneInternalSymbol} from '../src/lib/symbols';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
-import {WorkScheduler} from '../src/lib/work-scheduler';
+import { Scene } from '../src/lib/scene';
+import { Sprite } from '../src/lib/sprite';
+import { SceneInternalSymbol } from '../src/lib/symbols';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
+import { WorkScheduler } from '../src/lib/work-scheduler';
 
-import {Sampler} from './sampler';
-import {createArticle, createSection} from './utils';
+import { Sampler } from './sampler';
+import { createArticle, createSection } from './utils';
 
 // Set constant fill color.
 // NOTE: Opacity value is a floating point number in the range 0-1.
@@ -69,8 +69,9 @@ document.body.appendChild(article);
 
 describe('constrained render - high capacity', () => {
   // Create a <section> for storing visible artifacts.
-  const {section, content} =
-      createSection('constrained render - high capacity');
+  const { section, content } = createSection(
+    'constrained render - high capacity'
+  );
   article.appendChild(section);
 
   // Create a container <div> of fixed size for the Scene to render into.
@@ -91,7 +92,7 @@ describe('constrained render - high capacity', () => {
     scene = new Scene({
       container,
       defaultTransitionTimeMs: 0,
-      desiredSpriteCapacity: 100000,  // High capacity tests range operations.
+      desiredSpriteCapacity: 100000, // High capacity tests range operations.
       timingFunctions: timingFunctionsShim,
     });
 
@@ -124,10 +125,10 @@ describe('constrained render - high capacity', () => {
 
     // Parameters for sprites to be rendered and removed.
     const params = [
-      {label: 'Top left', x: -.25, y: .25},
-      {label: 'Top right', x: .25, y: .25},
-      {label: 'Bottom left', x: -.25, y: -.25},
-      {label: 'Bottom right', x: .25, y: -.25},
+      { label: 'Top left', x: -0.25, y: 0.25 },
+      { label: 'Top right', x: 0.25, y: 0.25 },
+      { label: 'Bottom left', x: -0.25, y: -0.25 },
+      { label: 'Bottom right', x: 0.25, y: -0.25 },
     ];
 
     expect(workScheduler.taskIds).toEqual([DRAW_TASK_ID]);
@@ -141,13 +142,13 @@ describe('constrained render - high capacity', () => {
     const sprites: Sprite[] = new Array<Sprite>(params.length);
     const enterRunCounts = new Array<number>(params.length).fill(0);
     for (let i = 0; i < params.length; i++) {
-      const sprite = sprites[i] = scene.createSprite();
+      const sprite = (sprites[i] = scene.createSprite());
       sprite.enter((s) => {
         if (enterRunCounts[i] > 0) {
           throw new Error(`${params[i].label} enter callback has already run`);
         }
         s.Sides = 2;
-        s.SizeWorld = .5;
+        s.SizeWorld = 0.5;
         s.FillColor = FILL_COLOR;
         s.PositionWorld = params[i];
         enterRunCounts[i]++;
@@ -155,75 +156,100 @@ describe('constrained render - high capacity', () => {
     }
 
     expect(workScheduler.taskIds).toEqual([RUN_CALLBACKS_TASK_ID]);
-    expect(enterRunCounts)
-        .toEqual([0, 0, 0, 0], 'No enter callbacks should have been run yet');
+    expect(enterRunCounts).toEqual(
+      [0, 0, 0, 0],
+      'No enter callbacks should have been run yet'
+    );
 
     // Run callbacks.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(enterRunCounts)
-        .toEqual([1, 0, 0, 0], 'First enter callback should have been run');
+    expect(enterRunCounts).toEqual(
+      [1, 0, 0, 0],
+      'First enter callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Run callbacks.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(enterRunCounts)
-        .toEqual([1, 1, 0, 0], 'Second enter callback should have been run');
+    expect(enterRunCounts).toEqual(
+      [1, 1, 0, 0],
+      'Second enter callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Run callbacks.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(enterRunCounts)
-        .toEqual([1, 1, 1, 0], 'Third enter callback should have been run');
+    expect(enterRunCounts).toEqual(
+      [1, 1, 1, 0],
+      'Third enter callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Run callbacks. All callbacks have been run, so another task to run
     // callbacks will NOT be queued.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([DRAW_TASK_ID, TEXTURE_SYNC_ID]);
-    expect(enterRunCounts)
-        .toEqual([1, 1, 1, 1], 'Fourth enter callback should have been run');
+    expect(enterRunCounts).toEqual(
+      [1, 1, 1, 1],
+      'Fourth enter callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -243,13 +269,15 @@ describe('constrained render - high capacity', () => {
 
     // The whole canvas should be filled with the fill color.
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: FILL_COLOR,
-    })).toBe(1, 'Canvas should be entirely filled');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Canvas should be entirely filled');
 
     // Set exit callbacks for all sprites.
     const exitRunCounts = new Array<number>(params.length).fill(0);
@@ -266,15 +294,19 @@ describe('constrained render - high capacity', () => {
     }
 
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(exitRunCounts)
-        .toEqual([0, 0, 0, 0], 'No exit callbacks should have been run yet');
+    expect(exitRunCounts).toEqual(
+      [0, 0, 0, 0],
+      'No exit callbacks should have been run yet'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Run callbacks (1/4).
@@ -283,22 +315,30 @@ describe('constrained render - high capacity', () => {
     // This queues another Run callbacks operation because there are more
     // callbacks to run.
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(exitRunCounts)
-        .toEqual([1, 0, 0, 0], 'First exit callback should have been run');
+    expect(exitRunCounts).toEqual(
+      [1, 0, 0, 0],
+      'First exit callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Rebase (1/4).
     // Always queues a Texture sync.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Run callbacks (2/4).
@@ -306,15 +346,23 @@ describe('constrained render - high capacity', () => {
     // followup Run callbacks task to pick up where it left off.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 0, 0], 'Second exit callback should have been run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 0, 0],
+      'Second exit callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
@@ -338,28 +386,41 @@ describe('constrained render - high capacity', () => {
     // the queue, so all that happens is another call to Texture sync is tacked
     // onto the end.
     expect(workScheduler.taskIds).toEqual([
-      REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Rebase (2/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Run callbacks (3/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
     // Queue a Rebase followed by another Run callbacks.
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
     ]);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 1, 0], 'Third exit callback should have been run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 1, 0],
+      'Third exit callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
@@ -374,27 +435,38 @@ describe('constrained render - high capacity', () => {
     // needing rebase causes this to queue a Rebase operation and a follow-up
     // Texture sync to try again.
     expect(workScheduler.taskIds).toEqual([
-      REBASE_TASK_ID, RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      REBASE_TASK_ID,
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Rebase (3/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      RUN_CALLBACKS_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      RUN_CALLBACKS_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Run callbacks (4/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, REBASE_TASK_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
     ]);
-    expect(exitRunCounts)
-        .toEqual([1, 1, 1, 1], 'Fourth exit callback should have been run');
+    expect(exitRunCounts).toEqual(
+      [1, 1, 1, 1],
+      'Fourth exit callback should have been run'
+    );
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, REBASE_TASK_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      REBASE_TASK_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Texture sync.
@@ -407,7 +479,9 @@ describe('constrained render - high capacity', () => {
     timingFunctionsShim.runAnimationFrameCallbacks();
     // Short circuit, queuing Rebase and a follow-up Texture sync.
     expect(workScheduler.taskIds).toEqual([
-      REBASE_TASK_ID, DRAW_TASK_ID, TEXTURE_SYNC_ID
+      REBASE_TASK_ID,
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
     ]);
 
     // Rebase.
@@ -443,13 +517,15 @@ describe('constrained render - high capacity', () => {
     // However, since time has not advanced, the canvas still looks the same as
     // last time, filled with the fill color.
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: FILL_COLOR,
-    })).toBe(1, 'Canvas should be entirely filled');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: FILL_COLOR,
+      })
+    ).toBe(1, 'Canvas should be entirely filled');
 
     // Run removal.
     // Visits each sprite, but does not flash zeros because none of their
@@ -467,13 +543,15 @@ describe('constrained render - high capacity', () => {
     // Now that time has advanced, all four sprites, and thus the whole canvas,
     // should be halfway transitioned to the exit color.
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: MIDPOINT_COLOR,
-    })).toBe(1, 'Canvas should be halfway between fill and exit colors');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: MIDPOINT_COLOR,
+      })
+    ).toBe(1, 'Canvas should be halfway between fill and exit colors');
 
     // Advance time to transition finish time.
     timingFunctionsShim.totalElapsedTimeMs += 5;
@@ -484,25 +562,31 @@ describe('constrained render - high capacity', () => {
     // Texture sync. Also queues a follow-up Run removal task to pick up where
     // it left off.
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_REMOVAL_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
     ]);
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_REMOVAL_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
+      DRAW_TASK_ID,
     ]);
 
     // Now that time has advanced to the finish time, all four sprites, and thus
     // the whole canvas, should be halfway transitioned to the exit color.
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width,
-      height: scene.canvas.height,
-      color: EXIT_COLOR,
-    })).toBe(1, 'Canvas should be filled with exit color');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width,
+        height: scene.canvas.height,
+        color: EXIT_COLOR,
+      })
+    ).toBe(1, 'Canvas should be filled with exit color');
 
     // Texture sync (1/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -515,23 +599,29 @@ describe('constrained render - high capacity', () => {
     // Succeeds in flashing zeros to second sprite's attributes, queues Texture
     // sync. Queues a follow-up Run removal.
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_REMOVAL_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
     ]);
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_REMOVAL_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
+      DRAW_TASK_ID,
     ]);
 
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top left patch of canvas should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top left patch of canvas should be empty');
 
     // Texture sync (2/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -543,23 +633,29 @@ describe('constrained render - high capacity', () => {
     // Third sprite's attributes set to zero. Queues Texture sync and Run
     // removal.
     expect(workScheduler.taskIds).toEqual([
-      DRAW_TASK_ID, TEXTURE_SYNC_ID, RUN_REMOVAL_ID
+      DRAW_TASK_ID,
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
     ]);
 
     // Draw.
     timingFunctionsShim.runAnimationFrameCallbacks();
     expect(workScheduler.taskIds).toEqual([
-      TEXTURE_SYNC_ID, RUN_REMOVAL_ID, DRAW_TASK_ID
+      TEXTURE_SYNC_ID,
+      RUN_REMOVAL_ID,
+      DRAW_TASK_ID,
     ]);
 
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: 0,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Top right patch of canvas should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: 0,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Top right patch of canvas should be empty');
 
     // Texture sync (3/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -576,13 +672,15 @@ describe('constrained render - high capacity', () => {
     expect(workScheduler.taskIds).toEqual([TEXTURE_SYNC_ID, DRAW_TASK_ID]);
 
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: 0,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom left patch of canvas should be empty');
+    expect(
+      sampler.compareSample({
+        x: 0,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom left patch of canvas should be empty');
 
     // Texture sync (4/4).
     timingFunctionsShim.runAnimationFrameCallbacks();
@@ -593,13 +691,15 @@ describe('constrained render - high capacity', () => {
     expect(workScheduler.taskIds).toEqual([DRAW_TASK_ID]);
 
     await sampler.copySnapshot();
-    expect(sampler.compareSample({
-      x: scene.canvas.width / 2,
-      y: scene.canvas.height / 2,
-      width: scene.canvas.width / 2,
-      height: scene.canvas.height / 2,
-      color: EMPTY_COLOR,
-    })).toBe(1, 'Bottom right patch of canvas should be empty');
+    expect(
+      sampler.compareSample({
+        x: scene.canvas.width / 2,
+        y: scene.canvas.height / 2,
+        width: scene.canvas.width / 2,
+        height: scene.canvas.height / 2,
+        color: EMPTY_COLOR,
+      })
+    ).toBe(1, 'Bottom right patch of canvas should be empty');
 
     // Advance time to clear Draw queue.
     timingFunctionsShim.totalElapsedTimeMs += 1;

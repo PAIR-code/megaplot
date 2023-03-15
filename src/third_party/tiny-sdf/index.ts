@@ -66,14 +66,14 @@ export class TinySDF {
    * @param fontWeight string Weight of the font to draw.
    */
   constructor(
-      public fontSize = 24,
-      public buffer = 3,
-      public radius = 8,
-      public cutoff = 0.25,
-      public fontFamily = 'sans-serif',
-      public fontWeight = 'normal',
+    public fontSize = 24,
+    public buffer = 3,
+    public radius = 8,
+    public cutoff = 0.25,
+    public fontFamily = 'sans-serif',
+    public fontWeight = 'normal'
   ) {
-    const size = this.size = this.fontSize + this.buffer * 2;
+    const size = (this.size = this.fontSize + this.buffer * 2);
 
     this.canvas = document.createElement('canvas');
     this.canvas.width = this.canvas.height = size;
@@ -98,7 +98,8 @@ export class TinySDF {
 
     // hack around https://bugzilla.mozilla.org/show_bug.cgi?id=737852
     this.middle = Math.round(
-        (size / 2) * (navigator.userAgent.indexOf('Gecko/') >= 0 ? 1.2 : 1));
+      (size / 2) * (navigator.userAgent.indexOf('Gecko/') >= 0 ? 1.2 : 1)
+    );
   }
 
   draw(chr: string) {
@@ -107,7 +108,7 @@ export class TinySDF {
 
     const imgData = this.ctx.getImageData(0, 0, this.size, this.size);
 
-    return imgDataToAlphaChannel({...this, imgData});
+    return imgDataToAlphaChannel({ ...this, imgData });
   }
 }
 
@@ -126,26 +127,24 @@ function imgDataToAlphaChannel({
   v,
   z,
 }: {
-  imgData: ImageData,
-  size: number,
-  radius: number,
-  cutoff: number,
-  gridOuter: Float64Array,
-  gridInner: Float64Array,
-  f: Float64Array,
-  v: Uint16Array,
-  z: Float64Array,
+  imgData: ImageData;
+  size: number;
+  radius: number;
+  cutoff: number;
+  gridOuter: Float64Array;
+  gridInner: Float64Array;
+  f: Float64Array;
+  v: Uint16Array;
+  z: Float64Array;
 }) {
   const alphaChannel = new Uint8ClampedArray(size * size);
 
   for (let i = 0; i < size * size; i++) {
-    const a = imgData.data[i * 4 + 3] / 255;  // alpha value
-    gridOuter[i] = a === 1 ? 0 :
-        a === 0            ? INF :
-                             Math.pow(Math.max(0, 0.5 - a), 2);
-    gridInner[i] = a === 1 ? INF :
-        a === 0            ? 0 :
-                             Math.pow(Math.max(0, a - 0.5), 2);
+    const a = imgData.data[i * 4 + 3] / 255; // alpha value
+    gridOuter[i] =
+      a === 1 ? 0 : a === 0 ? INF : Math.pow(Math.max(0, 0.5 - a), 2);
+    gridInner[i] =
+      a === 1 ? INF : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
   }
 
   edt(gridOuter, size, size, f, v, z);
@@ -164,24 +163,24 @@ function imgDataToAlphaChannel({
  * @see https://cs.brown.edu/~pff/papers/dt-final.pdf
  */
 function edt(
-    data: Float64Array,
-    width: number,
-    height: number,
-    f: Float64Array,
-    v: Uint16Array,
-    z: Float64Array,
+  data: Float64Array,
+  width: number,
+  height: number,
+  f: Float64Array,
+  v: Uint16Array,
+  z: Float64Array
 ) {
   edtY(data, width, height, f, v, z);
   edtX(data, width, height, f, v, z);
 }
 
 function edtX(
-    data: Float64Array,
-    width: number,
-    height: number,
-    f: Float64Array,
-    v: Uint16Array,
-    z: Float64Array,
+  data: Float64Array,
+  width: number,
+  height: number,
+  f: Float64Array,
+  v: Uint16Array,
+  z: Float64Array
 ) {
   for (let y = 0; y < height; y++) {
     edt1d(data, y * width, 1, width, f, v, z);
@@ -189,12 +188,12 @@ function edtX(
 }
 
 function edtY(
-    data: Float64Array,
-    width: number,
-    height: number,
-    f: Float64Array,
-    v: Uint16Array,
-    z: Float64Array,
+  data: Float64Array,
+  width: number,
+  height: number,
+  f: Float64Array,
+  v: Uint16Array,
+  z: Float64Array
 ) {
   for (let x = 0; x < width; x++) {
     edt1d(data, x, width, height, f, v, z);
@@ -205,13 +204,13 @@ function edtY(
  * 1D squared distance transform.
  */
 function edt1d(
-    grid: Float64Array,
-    offset: number,
-    stride: number,
-    length: number,
-    f: Float64Array,
-    v: Uint16Array,
-    z: Float64Array,
+  grid: Float64Array,
+  offset: number,
+  stride: number,
+  length: number,
+  f: Float64Array,
+  v: Uint16Array,
+  z: Float64Array
 ) {
   let q, k, s, r;
   v[0] = 0;
@@ -252,11 +251,11 @@ function edt1d(
  * the Euclidian 2D distance allows for estimation when the field is stretched.
  */
 export function canvasToSDFData(
-    canvas: HTMLCanvasElement,
-    radius: number,
-    cutoff = 0.5,
+  canvas: HTMLCanvasElement,
+  radius: number,
+  cutoff = 0.5
 ) {
-  const {width, height} = canvas;
+  const { width, height } = canvas;
 
   const ctx = canvas.getContext('2d');
 
@@ -277,13 +276,15 @@ export function canvasToSDFData(
   const v = new Uint16Array(width);
 
   for (let i = 0; i < width * height; i++) {
-    const a = imgData.data[i * 4 + 3] / 255;  // alpha value
-    gridOuter[i] = gridOuterY[i] = gridOuterX[i] = a === 1 ? 0 :
-        a === 0                                            ? INF :
-                  Math.pow(Math.max(0, 0.5 - a), 2);
-    gridInner[i] = gridInnerY[i] = gridInnerX[i] = a === 1 ? INF :
-        a === 0                                            ? 0 :
-                  Math.pow(Math.max(0, a - 0.5), 2);
+    const a = imgData.data[i * 4 + 3] / 255; // alpha value
+    gridOuter[i] =
+      gridOuterY[i] =
+      gridOuterX[i] =
+        a === 1 ? 0 : a === 0 ? INF : Math.pow(Math.max(0, 0.5 - a), 2);
+    gridInner[i] =
+      gridInnerY[i] =
+      gridInnerX[i] =
+        a === 1 ? INF : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
   }
 
   edt(gridOuter, width, height, f, v, z);
@@ -297,19 +298,20 @@ export function canvasToSDFData(
 
   for (let i = 0; i < width * height; i++) {
     finalData[i * 3] = Math.max(
-        0,
-        1 -
-            ((Math.sqrt(gridOuterX[i]) - Math.sqrt(gridInnerX[i])) / radius +
-             cutoff),
+      0,
+      1 -
+        ((Math.sqrt(gridOuterX[i]) - Math.sqrt(gridInnerX[i])) / radius +
+          cutoff)
     );
     finalData[i * 3 + 1] = Math.max(
-        0,
-        1 -
-            ((Math.sqrt(gridOuterY[i]) - Math.sqrt(gridInnerY[i])) / radius +
-             cutoff),
+      0,
+      1 -
+        ((Math.sqrt(gridOuterY[i]) - Math.sqrt(gridInnerY[i])) / radius +
+          cutoff)
     );
-    finalData[i * 3 + 2] = 1 -
-        ((Math.sqrt(gridOuter[i]) - Math.sqrt(gridInner[i])) / radius + cutoff);
+    finalData[i * 3 + 2] =
+      1 -
+      ((Math.sqrt(gridOuter[i]) - Math.sqrt(gridInner[i])) / radius + cutoff);
   }
 
   return finalData;

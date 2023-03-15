@@ -18,11 +18,15 @@
  * @fileoverview Implements the Selection API.
  */
 
-import {Renderer} from './renderer-types';
-import {Selection, SelectionCallback, SelectionHitTestParameters} from './selection-types';
-import {Sprite} from './sprite';
-import {RemainingTimeFn, WorkScheduler} from './work-scheduler';
-import {WorkTaskWithId} from './work-task';
+import { Renderer } from './renderer-types';
+import {
+  Selection,
+  SelectionCallback,
+  SelectionHitTestParameters,
+} from './selection-types';
+import { Sprite } from './sprite';
+import { RemainingTimeFn, WorkScheduler } from './work-scheduler';
+import { WorkTaskWithId } from './work-task';
 
 /**
  * Since binding may take some time, this enum lists the various states the
@@ -88,8 +92,8 @@ export class SelectionImpl<T> implements Selection<T> {
    * and schedules tasks via the provided WorkScheduler.
    */
   constructor(
-      private readonly stepsBetweenChecks: number,
-      private readonly coordinator: CoordinatorAPI,
+    private readonly stepsBetweenChecks: number,
+    private readonly coordinator: CoordinatorAPI
   ) {}
 
   onInit(onInitCallback: SelectionCallback<T>) {
@@ -171,8 +175,12 @@ export class SelectionImpl<T> implements Selection<T> {
     let lastEnterIndex = this.boundData.length;
 
     // Capture callback functions immediately.
-    const {onInitCallback, onEnterCallback, onUpdateCallback, onExitCallback} =
-        this;
+    const {
+      onInitCallback,
+      onEnterCallback,
+      onUpdateCallback,
+      onExitCallback,
+    } = this;
 
     // Performs data binding for entering data while there's time remaining,
     // then returns whether there's more work to do.
@@ -198,7 +206,7 @@ export class SelectionImpl<T> implements Selection<T> {
         // onInitCallback since that has highest priority.
         if (onInitCallback) {
           // Use Sprite's enter() to invoke onInitCallback.
-          sprite.enter(spriteView => {
+          sprite.enter((spriteView) => {
             onInitCallback(spriteView, datum);
             // NOTE: Because init() applies to the first frame of an entering
             // data point, it should never have a transition time.
@@ -212,7 +220,7 @@ export class SelectionImpl<T> implements Selection<T> {
         // Sprite's .update() method to schedule the onEnterCallback.
         if (onEnterCallback) {
           // Use Sprite's update() to invoke onEnterCallback.
-          sprite.update(spriteView => {
+          sprite.update((spriteView) => {
             onEnterCallback(spriteView, datum);
           });
         }
@@ -241,7 +249,7 @@ export class SelectionImpl<T> implements Selection<T> {
 
         if (onUpdateCallback) {
           // Use the Sprite's update() to invoke the onUpdateCallback.
-          sprite.update(spriteView => {
+          sprite.update((spriteView) => {
             onUpdateCallback(spriteView, datum);
           });
         }
@@ -275,10 +283,9 @@ export class SelectionImpl<T> implements Selection<T> {
           // earlier call to bind() created it. In such a case, the appropriate
           // thing to do is to just abandon it.
           sprite.abandon();
-
         } else {
           // Use the Sprite's exit() to invoke the onExitCallback.
-          sprite.exit(spriteView => {
+          sprite.exit((spriteView) => {
             if (onExitCallback) {
               onExitCallback(spriteView, datum);
             }
@@ -319,8 +326,8 @@ export class SelectionImpl<T> implements Selection<T> {
       callback: (remaining: RemainingTimeFn) => {
         this.bindingState = BindingState.Started;
         step = 0;
-        const result = exitTask(remaining) && updateTask(remaining) &&
-            enterTask(remaining);
+        const result =
+          exitTask(remaining) && updateTask(remaining) && enterTask(remaining);
         if (result) {
           delete this.bindingTask;
           this.bindingState = BindingState.None;
@@ -356,7 +363,7 @@ export class SelectionImpl<T> implements Selection<T> {
     // Get a reference to the currently specified onExitCallback, if any. We do
     // this now to ensure that later changes do not affect the way that the
     // previously bound sprites leave.
-    const {onExitCallback} = this;
+    const { onExitCallback } = this;
 
     // Performs exit data binding while there's time remaining, then returns
     // whether there's more work to do.
@@ -382,7 +389,7 @@ export class SelectionImpl<T> implements Selection<T> {
         } else {
           // Schedule the Sprite's exit() callback to run. This will invoke
           // the onExitCallback, if any.
-          sprite.exit(spriteView => {
+          sprite.exit((spriteView) => {
             if (onExitCallback) {
               onExitCallback(spriteView, datum);
             }
@@ -455,8 +462,10 @@ export class SelectionImpl<T> implements Selection<T> {
    * @return CancellablePromise Yielding a hit test result including the data.
    */
   hitTest(hitTestParameters: SelectionHitTestParameters): T[] {
-    const hitTestResults =
-        this.coordinator.hitTest({...hitTestParameters, sprites: this.sprites});
+    const hitTestResults = this.coordinator.hitTest({
+      ...hitTestParameters,
+      sprites: this.sprites,
+    });
 
     // Collect the indices of hitTestResults whose values indicate that the
     // sprite was hit.
@@ -474,15 +483,18 @@ export class SelectionImpl<T> implements Selection<T> {
       return [];
     }
 
-    if (hitTestParameters.sortResults === undefined ||
-        hitTestParameters.sortResults) {
+    if (
+      hitTestParameters.sortResults === undefined ||
+      hitTestParameters.sortResults
+    ) {
       // Sort the hitIndices by the hitTestResult values for them. In most
       // cases, they'll already be mostly or entirely in order, but after
       // thrashing (creating and removing sprites aggressively) it could be that
       // later sprites use earlier swatches and would appear out-of-order in the
       // hitTestResults.
-      hitIndices.subarray(0, hitCount)
-          .sort((a, b) => hitTestResults[a] - hitTestResults[b]);
+      hitIndices
+        .subarray(0, hitCount)
+        .sort((a, b) => hitTestResults[a] - hitTestResults[b]);
     }
 
     // Collect bound data for hit sprites.

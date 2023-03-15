@@ -18,7 +18,7 @@
  * @fileoverview Tests for the CallbackTriggerPoint.
  */
 
-import {CallbackTriggerPoint} from '../src/lib/callback-trigger-point';
+import { CallbackTriggerPoint } from '../src/lib/callback-trigger-point';
 
 describe('CallbackTriggerPoint', () => {
   it('should exist', () => {
@@ -44,7 +44,7 @@ describe('CallbackTriggerPoint', () => {
 
       const point = new CallbackTriggerPoint(callbackFn);
 
-      expect(() => point.x = +'banana').toThrowError(RangeError);
+      expect(() => (point.x = +'banana')).toThrowError(RangeError);
 
       expect(triggerCount).toBe(0);
       expect(point.x).toBe(0);
@@ -70,7 +70,7 @@ describe('CallbackTriggerPoint', () => {
 
       const point = new CallbackTriggerPoint(callbackFn);
 
-      expect(() => point.y = +'clover').toThrowError(RangeError);
+      expect(() => (point.y = +'clover')).toThrowError(RangeError);
 
       expect(triggerCount).toBe(0);
       expect(point.x).toBe(0);

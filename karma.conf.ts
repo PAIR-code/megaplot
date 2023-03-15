@@ -18,6 +18,10 @@
  * @fileoverview Karma configuration.
  */
 
+// @see https://github.com/karma-runner/karma/issues/3329#issuecomment-772089662
+// @ts-nocheck
+process[Symbol.for('ts-node.register.instance')]?.enabled(false);
+
 module.exports = (config) => {
   config.set({
     // Base path that will be used to resolve all patterns (eg. files, exclude).
@@ -44,9 +48,7 @@ module.exports = (config) => {
     webpack: {
       mode: 'development',
       module: {
-        rules: [
-          {test: /\.ts$/, use: 'ts-loader'},
-        ],
+        rules: [{ test: /\.ts$/, use: 'ts-loader' }],
       },
       resolve: {
         extensions: ['.ts'],
@@ -76,5 +78,5 @@ module.exports = (config) => {
 
     // Concurrency level (max simultaneous browser instances).
     concurrency: Infinity,
-  })
-}
+  });
+};

@@ -18,16 +18,22 @@
  * @fileoverview Defines the default settings for the Scene constructor.
  */
 
-import {DEFAULT_TIMING_FUNCTIONS, TimingFunctions} from './default-timing-functions';
-import {DEFAULT_GLYPH_MAPPER_SETTINGS, GlyphMapperSettings} from './glyph-mapper';
+import {
+  DEFAULT_TIMING_FUNCTIONS,
+  TimingFunctions,
+} from './default-timing-functions';
+import {
+  DEFAULT_GLYPH_MAPPER_SETTINGS,
+  GlyphMapperSettings,
+} from './glyph-mapper';
 
 /**
  * Default glyph set is the printable ASCII characters from 33 to 126 (decimal).
  */
 export const DEFAULT_GLYPHS =
-    '!"#$%&\'()*+,-./0123456789:;<=>?' +   // ASCII 33 - 63.
-    '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_' +  // ASCII 63 - 95.
-    '`abcdefghijklmnopqrstuvwxyz{|}';      // ASCII 96 - 126.
+  '!"#$%&\'()*+,-./0123456789:;<=>?' + // ASCII 33 - 63.
+  '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_' + // ASCII 63 - 95.
+  '`abcdefghijklmnopqrstuvwxyz{|}'; // ASCII 96 - 126.
 
 /**
  * Parameters to configure the Scene.
@@ -75,7 +81,7 @@ export interface SceneSettings {
   container: HTMLElement;
   defaultTransitionTimeMs: number;
   desiredSpriteCapacity: number;
-  devicePixelRatio?: number|(() => number);
+  devicePixelRatio?: number | (() => number);
   glyphs: string;
   glyphMapper: GlyphMapperSettings;
   orderZGranularity: number;

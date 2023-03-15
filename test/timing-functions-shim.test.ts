@@ -18,8 +18,8 @@
  * @fileoverview Tests for the TimingFunctionsShim.
  */
 
-import {DEFAULT_TIMING_FUNCTIONS} from '../src/lib/default-timing-functions';
-import {TimingFunctionsShim} from '../src/lib/timing-functions-shim';
+import { DEFAULT_TIMING_FUNCTIONS } from '../src/lib/default-timing-functions';
+import { TimingFunctionsShim } from '../src/lib/timing-functions-shim';
 
 describe('TimingFunctionsShim', () => {
   it('should exist', () => {
@@ -27,10 +27,11 @@ describe('TimingFunctionsShim', () => {
   });
 
   it('should have methods for all timing functions', () => {
-    const timingFunctionsShim =
-        new TimingFunctionsShim() as {} as {[fnName: string]: Function};
+    const timingFunctionsShim = new TimingFunctionsShim() as {} as {
+      [fnName: string]: Function;
+    };
 
-    Object.keys(DEFAULT_TIMING_FUNCTIONS).forEach(fnName => {
+    Object.keys(DEFAULT_TIMING_FUNCTIONS).forEach((fnName) => {
       expect(timingFunctionsShim[fnName] instanceof Function).toBe(true);
     });
   });
@@ -38,7 +39,7 @@ describe('TimingFunctionsShim', () => {
   describe('requestAnimationFrame', () => {
     it('should queue and execute a single animation frame callback', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       let counter = 0;
       const incrementCounter = () => ++counter;
@@ -64,9 +65,9 @@ describe('TimingFunctionsShim', () => {
 
     it('should invoke animation frame callback with a timestamp', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
-      let savedTimestamp: number|undefined;
+      let savedTimestamp: number | undefined;
       function saveTimestamp(providedTimestamp: number) {
         savedTimestamp = providedTimestamp;
       }
@@ -94,7 +95,7 @@ describe('TimingFunctionsShim', () => {
 
     it('should queue and execute multiple animation frame callbacks', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       let counterA = 0;
       const incrementCounterA = () => ++counterA;
@@ -127,7 +128,7 @@ describe('TimingFunctionsShim', () => {
 
     it('should not cause an infinite loop when queuing on run', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       let counter = 0;
       const incrementAndQueue = () => {
@@ -149,7 +150,7 @@ describe('TimingFunctionsShim', () => {
     });
 
     it('should fail to queue a non-function', () => {
-      const {requestAnimationFrame} = new TimingFunctionsShim();
+      const { requestAnimationFrame } = new TimingFunctionsShim();
 
       expect(() => {
         // Call with no arguments.
@@ -164,7 +165,9 @@ describe('TimingFunctionsShim', () => {
       expect(() => {
         // Call with a string argument.
         requestAnimationFrame.call(
-            null, '() => {}' as unknown as FrameRequestCallback);
+          null,
+          '() => {}' as unknown as FrameRequestCallback
+        );
       }).toThrow();
     });
   });
@@ -172,7 +175,7 @@ describe('TimingFunctionsShim', () => {
   describe('runAnimationFrameCallbacks', () => {
     it('should advance multiple frames when frameCount is provided', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       let counter = 0;
       const incrementAndQueue = () => {
@@ -189,7 +192,7 @@ describe('TimingFunctionsShim', () => {
 
     it('should throw when frameCount is invalid', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       let counter = 0;
       const incrementAndQueue = () => {
@@ -218,7 +221,7 @@ describe('TimingFunctionsShim', () => {
 
     it('should not allow an error to prevent other callbacks', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame } = timingFunctionsShim;
 
       const EXPECTED_ERROR = new Error('Always fails');
       const errorCallback = () => {
@@ -254,7 +257,8 @@ describe('TimingFunctionsShim', () => {
   describe('cancelAnimationFrame', () => {
     it('should remove an animation frame callback from the queue', () => {
       const timingFunctionsShim = new TimingFunctionsShim();
-      const {requestAnimationFrame, cancelAnimationFrame} = timingFunctionsShim;
+      const { requestAnimationFrame, cancelAnimationFrame } =
+        timingFunctionsShim;
 
       let counterA = 0;
       const incrementCounterA = () => ++counterA;

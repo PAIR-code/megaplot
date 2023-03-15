@@ -21,9 +21,12 @@
  * symbol accessor (InternalPropertiesSymbol).
  */
 
-import {SpriteViewImpl} from './generated/sprite-view-impl';
-import {checkLifecyclePhaseTransition, LifecyclePhase} from './lifecycle-phase';
-import {SpriteViewCallback} from './sprite';
+import { SpriteViewImpl } from './generated/sprite-view-impl';
+import {
+  checkLifecyclePhaseTransition,
+  LifecyclePhase,
+} from './lifecycle-phase';
+import { SpriteViewCallback } from './sprite';
 
 /**
  * Internal properties of a SpriteImpl that are available to the Scene

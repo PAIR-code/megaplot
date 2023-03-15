@@ -22,8 +22,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {AttributeMapper} from '../src/lib/attribute-mapper';
-import {SpriteAttribute} from '../src/lib/sprite-attributes';
+import { AttributeMapper } from '../src/lib/attribute-mapper';
+import { SpriteAttribute } from '../src/lib/sprite-attributes';
 
 /**
  * Utility function for whitespace formatting an array of lines of code.
@@ -101,9 +101,13 @@ export interface SpriteView {
   const output: string[] = [];
 
   const accessibleComponents = attributeMapper.attributeComponentNames.filter(
-      attributeComponentName => !attributeComponentName.endsWith('Delta'));
-  output.push(...accessibleComponents.map(
-      (attributeComponentName) => `  ${attributeComponentName}: number;`));
+    (attributeComponentName) => !attributeComponentName.endsWith('Delta')
+  );
+  output.push(
+    ...accessibleComponents.map(
+      (attributeComponentName) => `  ${attributeComponentName}: number;`
+    )
+  );
 
   for (const attribute of attributeMapper.attributes) {
     if (!attribute.components) {
@@ -156,7 +160,7 @@ export class SpriteViewImpl implements SpriteView {
     }
 
     const attribute =
-        attributeMapper.componentToAttributeMap[attributeComponentName];
+      attributeMapper.componentToAttributeMap[attributeComponentName];
 
     output.push(`
   get ${attributeComponentName}(): number {
@@ -171,16 +175,14 @@ export class SpriteViewImpl implements SpriteView {
     if (attribute.minValue !== undefined) {
       output.push(`
     if (attributeValue < ${attribute.minValue}) {
-      throw new RangeError('${attributeComponentName} cannot be less than ${
-          attribute.minValue}');
+      throw new RangeError('${attributeComponentName} cannot be less than ${attribute.minValue}');
     }`);
     }
 
     if (attribute.maxValue !== undefined) {
       output.push(`
     if (attributeValue > ${attribute.maxValue}) {
-      throw new RangeError('${attributeComponentName} cannot be greater than ${
-          attribute.maxValue}');
+      throw new RangeError('${attributeComponentName} cannot be greater than ${attribute.maxValue}');
     }`);
     }
 
@@ -195,33 +197,44 @@ export class SpriteViewImpl implements SpriteView {
       continue;
     }
 
-    const {attributeName} = attribute;
+    const { attributeName } = attribute;
 
     const components = attribute.components.map((component, i) => {
-      return {component, lower: component.toLowerCase(), i};
+      return { component, lower: component.toLowerCase(), i };
     });
 
-    const setComponentsByIndex = codeFormat(components.map(({component, i}) => `
+    const setComponentsByIndex = codeFormat(
+      components.map(
+        ({ component, i }) => `
       if ('${i}' in value) {
         this.${attributeName}${component} = value[${i}]${AS_NUM};
         anyComponentSet = true;
-      }`));
+      }`
+      )
+    );
 
-    const setComponentsByName =
-        codeFormat(components.map(({component, lower}) => `
+    const setComponentsByName = codeFormat(
+      components.map(
+        ({ component, lower }) => `
       if ('${lower}' in value) {
         this.${attributeName}${component} = value['${lower}']${AS_NUM};
         anyComponentSet = true;
-      }`));
+      }`
+      )
+    );
 
-    const broadcastClause = codeFormat(components.map(({component}) => `
-    this.${attributeName}${component} = value;`));
+    const broadcastClause = codeFormat(
+      components.map(
+        ({ component }) => `
+    this.${attributeName}${component} = value;`
+      )
+    );
 
-    const typeErrorClause = `throw new TypeError('${
-        attributeName} setter argument must be an array or object');`;
+    const typeErrorClause = `throw new TypeError('${attributeName} setter argument must be an array or object');`;
 
-    const broadcastOrTypeError =
-        attribute.isBroadcastable ? broadcastClause : typeErrorClause;
+    const broadcastOrTypeError = attribute.isBroadcastable
+      ? broadcastClause
+      : typeErrorClause;
 
     output.push(`
   set ${attributeName}(value: ${generateSetterType(attribute)}) {
@@ -260,12 +273,12 @@ export class SpriteViewImpl implements SpriteView {
 
 // Generate SpriteView.
 fs.writeFileSync(
-    path.join(outputDir, 'sprite-view.d.ts'),
-    generateSpriteViewCode(),
+  path.join(outputDir, 'sprite-view.d.ts'),
+  generateSpriteViewCode()
 );
 
 // Generate SpriteViewImpl.
 fs.writeFileSync(
-    path.join(outputDir, 'sprite-view-impl.ts'),
-    generateSpriteViewImplCode(),
+  path.join(outputDir, 'sprite-view-impl.ts'),
+  generateSpriteViewImplCode()
 );

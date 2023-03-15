@@ -20,9 +20,9 @@
  * be done in response to a mouse click for example.
  */
 
-import {AttributeMapper} from '../attribute-mapper';
+import { AttributeMapper } from '../attribute-mapper';
 
-import {glsl} from './glsl-template-tag';
+import { glsl } from './glsl-template-tag';
 import * as ShaderFunctions from './shader-functions';
 
 /**
@@ -74,8 +74,8 @@ void main () {
  * @param attributeMapper Mapper for sprite state attributes.
  */
 export function vertexShader(
-    hitTestAttributeMapper: AttributeMapper,
-    attributeMapper: AttributeMapper,
+  hitTestAttributeMapper: AttributeMapper,
+  attributeMapper: AttributeMapper
 ) {
   return glsl`
 precision lowp float;
@@ -135,16 +135,11 @@ varying float varyingHitTestResult;
 vec4 previousTexelValues[${attributeMapper.texelsPerSwatch}];
 vec4 targetTexelValues[${attributeMapper.texelsPerSwatch}];
 
-${
-      attributeMapper.generateAttributeDefinesGLSL(
-          'previous',
-          'previousTexelValues',
-          )}
-${
-      attributeMapper.generateAttributeDefinesGLSL(
-          'target',
-          'targetTexelValues',
-          )}
+${attributeMapper.generateAttributeDefinesGLSL(
+  'previous',
+  'previousTexelValues'
+)}
+${attributeMapper.generateAttributeDefinesGLSL('target', 'targetTexelValues')}
 
 float rangeT;
 float easeT;
@@ -159,18 +154,16 @@ ${ShaderFunctions.computeSize()}
 ${ShaderFunctions.computeViewVertexPosition()}
 
 void readInputTexels() {
-${
-      attributeMapper.generateTexelReaderGLSL(
-          'previousTexelValues',
-          'previousValuesTexture',
-          'inputUv',
-          )}
-${
-      attributeMapper.generateTexelReaderGLSL(
-          'targetTexelValues',
-          'targetValuesTexture',
-          'inputUv',
-          )}
+${attributeMapper.generateTexelReaderGLSL(
+  'previousTexelValues',
+  'previousValuesTexture',
+  'inputUv'
+)}
+${attributeMapper.generateTexelReaderGLSL(
+  'targetTexelValues',
+  'targetValuesTexture',
+  'inputUv'
+)}
 }
 
 const vec2 swatchSize =

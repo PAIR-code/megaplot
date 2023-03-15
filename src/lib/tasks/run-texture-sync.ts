@@ -22,12 +22,12 @@
 
 import REGL from 'regl';
 
-import {AttributeMapper} from '../attribute-mapper';
-import {InternalError} from '../internal-error';
-import {LifecyclePhase} from '../lifecycle-phase';
-import {NumericRange} from '../numeric-range';
-import {SpriteImpl} from '../sprite-impl';
-import {InternalPropertiesSymbol} from '../symbols';
+import { AttributeMapper } from '../attribute-mapper';
+import { InternalError } from '../internal-error';
+import { LifecyclePhase } from '../lifecycle-phase';
+import { NumericRange } from '../numeric-range';
+import { SpriteImpl } from '../sprite-impl';
+import { InternalPropertiesSymbol } from '../symbols';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -61,14 +61,14 @@ interface CoordinatorAPI {
  * swatch row on both sides.
  */
 function getSwatchRowExpandedRange(
-    inputRange: NumericRange,
-    swatchesPerRow: number,
-    ): NumericRange {
+  inputRange: NumericRange,
+  swatchesPerRow: number
+): NumericRange {
   const expandedRange = new NumericRange();
   if (!inputRange.isDefined) {
     return expandedRange;
   }
-  const {lowBound, highBound} = inputRange;
+  const { lowBound, highBound } = inputRange;
   const lowRow = Math.floor(lowBound / swatchesPerRow);
   const highRow = Math.floor(highBound / swatchesPerRow) + 1;
   expandedRange.expandToInclude(lowRow * swatchesPerRow);
@@ -85,20 +85,20 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     throw new InternalError('No sprites are in need of texture sync');
   }
 
-  const {swatchesPerRow, textureWidth, valuesPerRow} =
-      coordinator.attributeMapper;
+  const { swatchesPerRow, textureWidth, valuesPerRow } =
+    coordinator.attributeMapper;
 
   // Check to see if there's a collision between the block of sprites whose
   // texture data would be sync'd and sprites that are waiting for a rebase
   // operation.
   if (coordinator.needsRebaseIndexRange.isDefined) {
     const rebaseRowRange = getSwatchRowExpandedRange(
-        coordinator.needsRebaseIndexRange,
-        swatchesPerRow,
+      coordinator.needsRebaseIndexRange,
+      swatchesPerRow
     );
     const syncRowRange = getSwatchRowExpandedRange(
-        coordinator.needsTextureSyncIndexRange,
-        swatchesPerRow,
+      coordinator.needsTextureSyncIndexRange,
+      swatchesPerRow
     );
 
     if (syncRowRange.overlaps(rebaseRowRange)) {
@@ -110,14 +110,16 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     }
   }
 
-  const {lowBound, highBound} = coordinator.needsTextureSyncIndexRange;
+  const { lowBound, highBound } = coordinator.needsTextureSyncIndexRange;
 
   const lowRow = Math.floor(lowBound / swatchesPerRow);
   const highRow = Math.floor(highBound / swatchesPerRow) + 1;
   const rowHeight = highRow - lowRow;
 
   const dataView = coordinator.targetValuesArray.subarray(
-      lowRow * valuesPerRow, highRow * valuesPerRow);
+    lowRow * valuesPerRow,
+    highRow * valuesPerRow
+  );
 
   // Keep track of whether any sprites have a callback to invoke.
   let anyHasCallback = false;
@@ -131,8 +133,10 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
   // Since we're performing on whole rows, the bounds of this loop have to
   // cover them.
   const lowIndex = lowRow * swatchesPerRow;
-  const highIndex =
-      Math.min(highRow * swatchesPerRow - 1, coordinator.sprites.length - 1);
+  const highIndex = Math.min(
+    highRow * swatchesPerRow - 1,
+    coordinator.sprites.length - 1
+  );
 
   for (let index = lowIndex; index <= highIndex; index++) {
     const sprite = coordinator.sprites[index];
@@ -144,7 +148,8 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
       // doing so would destroy the information that the rebase command needs
       // to determine the intermediate attribute values and deltas.
       throw new InternalError(
-          'Sprite is in the wrong lifecycle phase for sync');
+        'Sprite is in the wrong lifecycle phase for sync'
+      );
     }
 
     if (properties.lifecyclePhase !== LifecyclePhase.NeedsTextureSync) {
@@ -158,7 +163,8 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
       // lifecycle phase ought to have been allocated a swatch and thus a
       // SpriteView to update it.
       throw new InternalError(
-          'Sprite queued for texture sync lacks a SpriteView');
+        'Sprite queued for texture sync lacks a SpriteView'
+      );
     }
 
     if (properties.hasCallback) {
@@ -180,8 +186,10 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     // The sprite was slated for removal. How to proceed depends on
     // whether it has more time left before its target arrival time.
 
-    if (properties.zeroed &&
-        properties.spriteView.TransitionTimeMs <= currentTimeMs) {
+    if (
+      properties.zeroed &&
+      properties.spriteView.TransitionTimeMs <= currentTimeMs
+    ) {
       // The sprite was slated for removal, has had its values reset to zero,
       // and its time has expired. Return its swatch for future reuse.
       coordinator.removeSprite(sprite);
@@ -195,11 +203,14 @@ export function runTextureSync(coordinator: CoordinatorAPI): void {
     properties.lifecyclePhase = LifecyclePhase.Rest;
     coordinator.toBeRemovedIndexRange.expandToInclude(index);
     coordinator.toBeRemovedTsRange.expandToInclude(
-        properties.spriteView.TransitionTimeMs);
+      properties.spriteView.TransitionTimeMs
+    );
   }
 
-  if (coordinator.waitingSprites.length &&
-      coordinator.removedIndexRange.isDefined) {
+  if (
+    coordinator.waitingSprites.length &&
+    coordinator.removedIndexRange.isDefined
+  ) {
     coordinator.queueAssignWaiting();
   }
 

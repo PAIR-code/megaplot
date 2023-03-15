@@ -21,8 +21,8 @@
  * requestAnimationFrame().
  */
 
-import {TimingFunctions} from './default-timing-functions';
-import {InternalError} from './internal-error';
+import { TimingFunctions } from './default-timing-functions';
+import { InternalError } from './internal-error';
 
 /**
  * Object for storing information about an animation frame callback.
@@ -91,14 +91,18 @@ export class TimingFunctionsShim implements TimingFunctions {
   constructor() {
     const boundRequestAnimationFrame = this.requestAnimationFrame.bind(this);
     this.requestAnimationFrame = function requestAnimationFrame(
-        this: unknown, callback: FrameRequestCallback): number {
+      this: unknown,
+      callback: FrameRequestCallback
+    ): number {
       checkThis(this);
       return boundRequestAnimationFrame(callback);
     };
 
     const boundCancelAnimationFrame = this.cancelAnimationFrame.bind(this);
     this.cancelAnimationFrame = function cancelAnimationFrame(
-        this: unknown, id: number): void {
+      this: unknown,
+      id: number
+    ): void {
       checkThis(this);
       boundCancelAnimationFrame(id);
     };
@@ -117,8 +121,9 @@ export class TimingFunctionsShim implements TimingFunctions {
     if (!(callback instanceof Function)) {
       // Emulate the error produced by upstream requestAnimationFrame().
       throw new TypeError(
-          'Failed to execute \'requestAnimationFrame\' on \'Window\': ' +
-          'The callback provided as parameter 1 is not a function');
+        "Failed to execute 'requestAnimationFrame' on 'Window': " +
+          'The callback provided as parameter 1 is not a function'
+      );
     }
 
     const id = this.nextAnimationFrameId;
@@ -129,7 +134,7 @@ export class TimingFunctionsShim implements TimingFunctions {
     }
 
     this.nextAnimationFrameId += 2;
-    const callbackObject = {id, callback};
+    const callbackObject = { id, callback };
     this.animationFrameCallbackQueue.push(callbackObject);
     return id;
   }
@@ -178,7 +183,9 @@ export class TimingFunctionsShim implements TimingFunctions {
       // don't accidentally start executing future queued callbacks (those put
       // onto the canonical queue as a side effect of this run).
       const presentCallbackQueue = this.animationFrameCallbackQueue.splice(
-          0, this.animationFrameCallbackQueue.length);
+        0,
+        this.animationFrameCallbackQueue.length
+      );
 
       // Each callback run in the same frame will be provided the same timestamp
       // even though time may have elapsed during execution.
@@ -195,18 +202,19 @@ export class TimingFunctionsShim implements TimingFunctions {
 
           item.callback.call(null, currentTimestamp);
         }
-
       } finally {
         // Collect any callbacks that were added to the canonical queue during
         // the running of present callbacks.
         const futureCallbackQueue = this.animationFrameCallbackQueue.splice(
-            0, this.animationFrameCallbackQueue.length);
+          0,
+          this.animationFrameCallbackQueue.length
+        );
 
         // Update the canonical queue to include, in order, any remaining
         // present callbacks, then any newly added callbacks.
         this.animationFrameCallbackQueue.push(
-            ...presentCallbackQueue,
-            ...futureCallbackQueue,
+          ...presentCallbackQueue,
+          ...futureCallbackQueue
         );
       }
     }

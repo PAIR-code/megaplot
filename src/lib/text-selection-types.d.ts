@@ -18,11 +18,11 @@
  * @fileoverview Types relating to text selections.
  */
 
-import {Selection, SelectionCallback} from './selection-types';
+import { Selection, SelectionCallback } from './selection-types';
 
-export type AlignmentOption = 'left'|'center'|'right';
+export type AlignmentOption = 'left' | 'center' | 'right';
 
-export type VerticalAlignmentOption = 'top'|'middle'|'bottom';
+export type VerticalAlignmentOption = 'top' | 'middle' | 'bottom';
 
 /**
  * A TextSelection maps data points to sequences of sprites displaying glyphs of
@@ -85,7 +85,7 @@ export interface TextSelection<T> extends Selection<T> {
    * Set the callback for determining the vertical alignment for the given
    * datum.
    */
-  verticalAlign:
-      (verticalAlignCallback:
-           (datum: T) => VerticalAlignmentOption) => TextSelection<T>;
+  verticalAlign: (
+    verticalAlignCallback: (datum: T) => VerticalAlignmentOption
+  ) => TextSelection<T>;
 }

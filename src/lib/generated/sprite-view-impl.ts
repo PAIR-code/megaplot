@@ -18,12 +18,12 @@
  * @fileoverview GENERATED CODE FOR SETTING SPRITE ATTRIBUTES.
  */
 
-import {DataViewSymbol} from '../symbols';
+import { DataViewSymbol } from '../symbols';
 
-import {SpriteView} from './sprite-view';
+import { SpriteView } from './sprite-view';
 
 export class SpriteViewImpl implements SpriteView {
-  public[DataViewSymbol]: Float32Array;
+  public [DataViewSymbol]: Float32Array;
 
   constructor(dataView: Float32Array) {
     this[DataViewSymbol] = dataView;
@@ -445,7 +445,7 @@ export class SpriteViewImpl implements SpriteView {
     this[DataViewSymbol][33] = attributeValue;
   }
 
-  set PositionWorld(value: (number[] | {x?: number; y?: number;})) {
+  set PositionWorld(value: number[] | { x?: number; y?: number }) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -458,7 +458,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionWorld component index values were found');
+          'No PositionWorld component index values were found'
+        );
       }
       return;
     }
@@ -474,16 +475,19 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No PositionWorld component key values were found');
+        throw new TypeError('No PositionWorld component key values were found');
       }
       return;
     }
 
-    throw new TypeError('PositionWorld setter argument must be an array or object');
+    throw new TypeError(
+      'PositionWorld setter argument must be an array or object'
+    );
   }
 
-  set SizeWorld(value: (number[] | {width?: number; height?: number;} | number)) {
+  set SizeWorld(
+    value: number[] | { width?: number; height?: number } | number
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -495,8 +499,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No SizeWorld component index values were found');
+        throw new TypeError('No SizeWorld component index values were found');
       }
       return;
     }
@@ -512,8 +515,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No SizeWorld component key values were found');
+        throw new TypeError('No SizeWorld component key values were found');
       }
       return;
     }
@@ -522,7 +524,7 @@ export class SpriteViewImpl implements SpriteView {
     this.SizeWorldHeight = value;
   }
 
-  set GeometricZoom(value: (number[] | {x?: number; y?: number;} | number)) {
+  set GeometricZoom(value: number[] | { x?: number; y?: number } | number) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -535,7 +537,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No GeometricZoom component index values were found');
+          'No GeometricZoom component index values were found'
+        );
       }
       return;
     }
@@ -551,8 +554,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No GeometricZoom component key values were found');
+        throw new TypeError('No GeometricZoom component key values were found');
       }
       return;
     }
@@ -561,7 +563,7 @@ export class SpriteViewImpl implements SpriteView {
     this.GeometricZoomY = value;
   }
 
-  set PositionPixel(value: (number[] | {x?: number; y?: number;})) {
+  set PositionPixel(value: number[] | { x?: number; y?: number }) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -574,7 +576,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionPixel component index values were found');
+          'No PositionPixel component index values were found'
+        );
       }
       return;
     }
@@ -590,16 +593,19 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No PositionPixel component key values were found');
+        throw new TypeError('No PositionPixel component key values were found');
       }
       return;
     }
 
-    throw new TypeError('PositionPixel setter argument must be an array or object');
+    throw new TypeError(
+      'PositionPixel setter argument must be an array or object'
+    );
   }
 
-  set SizePixel(value: (number[] | {width?: number; height?: number;} | number)) {
+  set SizePixel(
+    value: number[] | { width?: number; height?: number } | number
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -611,8 +617,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No SizePixel component index values were found');
+        throw new TypeError('No SizePixel component index values were found');
       }
       return;
     }
@@ -628,8 +633,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No SizePixel component key values were found');
+        throw new TypeError('No SizePixel component key values were found');
       }
       return;
     }
@@ -638,7 +642,9 @@ export class SpriteViewImpl implements SpriteView {
     this.SizePixelHeight = value;
   }
 
-  set MaxSizePixel(value: (number[] | {width?: number; height?: number;} | number)) {
+  set MaxSizePixel(
+    value: number[] | { width?: number; height?: number } | number
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -651,7 +657,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MaxSizePixel component index values were found');
+          'No MaxSizePixel component index values were found'
+        );
       }
       return;
     }
@@ -667,8 +674,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No MaxSizePixel component key values were found');
+        throw new TypeError('No MaxSizePixel component key values were found');
       }
       return;
     }
@@ -677,7 +683,9 @@ export class SpriteViewImpl implements SpriteView {
     this.MaxSizePixelHeight = value;
   }
 
-  set MinSizePixel(value: (number[] | {width?: number; height?: number;} | number)) {
+  set MinSizePixel(
+    value: number[] | { width?: number; height?: number } | number
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -690,7 +698,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No MinSizePixel component index values were found');
+          'No MinSizePixel component index values were found'
+        );
       }
       return;
     }
@@ -706,8 +715,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No MinSizePixel component key values were found');
+        throw new TypeError('No MinSizePixel component key values were found');
       }
       return;
     }
@@ -716,7 +724,7 @@ export class SpriteViewImpl implements SpriteView {
     this.MinSizePixelHeight = value;
   }
 
-  set PositionRelative(value: (number[] | {x?: number; y?: number;})) {
+  set PositionRelative(value: number[] | { x?: number; y?: number }) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -729,7 +737,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionRelative component index values were found');
+          'No PositionRelative component index values were found'
+        );
       }
       return;
     }
@@ -746,15 +755,22 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No PositionRelative component key values were found');
+          'No PositionRelative component key values were found'
+        );
       }
       return;
     }
 
-    throw new TypeError('PositionRelative setter argument must be an array or object');
+    throw new TypeError(
+      'PositionRelative setter argument must be an array or object'
+    );
   }
 
-  set ShapeTexture(value: (number[] | {u?: number; v?: number; width?: number; height?: number;})) {
+  set ShapeTexture(
+    value:
+      | number[]
+      | { u?: number; v?: number; width?: number; height?: number }
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -775,7 +791,8 @@ export class SpriteViewImpl implements SpriteView {
       }
       if (!anyComponentSet) {
         throw new TypeError(
-            'No ShapeTexture component index values were found');
+          'No ShapeTexture component index values were found'
+        );
       }
       return;
     }
@@ -799,16 +816,19 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No ShapeTexture component key values were found');
+        throw new TypeError('No ShapeTexture component key values were found');
       }
       return;
     }
 
-    throw new TypeError('ShapeTexture setter argument must be an array or object');
+    throw new TypeError(
+      'ShapeTexture setter argument must be an array or object'
+    );
   }
 
-  set BorderColor(value: (number[] | {r?: number; g?: number; b?: number; opacity?: number;})) {
+  set BorderColor(
+    value: number[] | { r?: number; g?: number; b?: number; opacity?: number }
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -828,8 +848,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No BorderColor component index values were found');
+        throw new TypeError('No BorderColor component index values were found');
       }
       return;
     }
@@ -853,16 +872,19 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No BorderColor component key values were found');
+        throw new TypeError('No BorderColor component key values were found');
       }
       return;
     }
 
-    throw new TypeError('BorderColor setter argument must be an array or object');
+    throw new TypeError(
+      'BorderColor setter argument must be an array or object'
+    );
   }
 
-  set FillColor(value: (number[] | {r?: number; g?: number; b?: number; opacity?: number;})) {
+  set FillColor(
+    value: number[] | { r?: number; g?: number; b?: number; opacity?: number }
+  ) {
     if (Array.isArray(value)) {
       let anyComponentSet = false;
       if ('0' in value) {
@@ -882,8 +904,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No FillColor component index values were found');
+        throw new TypeError('No FillColor component index values were found');
       }
       return;
     }
@@ -907,8 +928,7 @@ export class SpriteViewImpl implements SpriteView {
         anyComponentSet = true;
       }
       if (!anyComponentSet) {
-        throw new TypeError(
-            'No FillColor component key values were found');
+        throw new TypeError('No FillColor component key values were found');
       }
       return;
     }

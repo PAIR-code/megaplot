@@ -19,14 +19,14 @@
  * to a data texture.
  */
 
-import {SPRITE_ATTRIBUTES, SpriteAttribute} from './sprite-attributes';
+import { SPRITE_ATTRIBUTES, SpriteAttribute } from './sprite-attributes';
 
 const RGBA = Object.freeze(['r', 'g', 'b', 'a']);
 
 /**
  * How many data channels to use per texel. 1=monochrome, 3=RGB, 4=RGBA.
  */
-export type DataChannelCount = 1|3|4;
+export type DataChannelCount = 1 | 3 | 4;
 
 /**
  * Default values for settings to the AttributeMapper constructor.
@@ -51,14 +51,14 @@ const DEFAULT_ATTRIBUTE_MAPPER_SETTINGS = Object.freeze({
 /**
  * Additional settings for the AttributeMapper constructor.
  */
-interface AttributeMapperSettings extends
-    Partial<typeof DEFAULT_ATTRIBUTE_MAPPER_SETTINGS> {
+interface AttributeMapperSettings
+  extends Partial<typeof DEFAULT_ATTRIBUTE_MAPPER_SETTINGS> {
   /**
    * Maximum width/height that AttributeMapper will try to use for mapping
    * sprite attributes. The caller should ensure that this value does not exceed
    * the device's limits.
    */
-  maxTextureSize: number,
+  maxTextureSize: number;
 }
 
 // 4 bytes in a 32 bit Float.
@@ -94,15 +94,17 @@ export class AttributeMapper {
    * Object, frozen on construction, that maps attribute component names to
    * their indices.
    */
-  public readonly attributeComponentIndices:
-      {[attributeComponentName: string]: number};
+  public readonly attributeComponentIndices: {
+    [attributeComponentName: string]: number;
+  };
 
   /**
    * Object, frozen on construction, that maps each full attribute component
    * name back to the attribute that created it.
    */
-  public readonly componentToAttributeMap:
-      {[attributeComponentName: string]: SpriteAttribute};
+  public readonly componentToAttributeMap: {
+    [attributeComponentName: string]: SpriteAttribute;
+  };
 
   /**
    * Number of texels in one swatch of the data texture. A swatch has enough
@@ -180,11 +182,16 @@ export class AttributeMapper {
   public readonly isAttributeTimestamp: boolean[];
 
   constructor(options: AttributeMapperSettings) {
-    const settings =
-        Object.assign({}, DEFAULT_ATTRIBUTE_MAPPER_SETTINGS, options || {});
+    const settings = Object.assign(
+      {},
+      DEFAULT_ATTRIBUTE_MAPPER_SETTINGS,
+      options || {}
+    );
 
-    if (!isFinite(settings.maxTextureSize) &&
-        !isFinite(settings.desiredSwatchCapacity)) {
+    if (
+      !isFinite(settings.maxTextureSize) &&
+      !isFinite(settings.desiredSwatchCapacity)
+    ) {
       throw new RangeError('Cannot map attributes to texture of infinite size');
     }
 
@@ -200,12 +207,13 @@ export class AttributeMapper {
 
     // Copy attribute component names into local array and create lookup index.
     for (const attribute of this.attributes) {
-      const {attributeName, components} = attribute;
-      for (const component of (components || [''])) {
+      const { attributeName, components } = attribute;
+      for (const component of components || ['']) {
         const attributeComponentName = `${attributeName}${component}`;
         if (attributeComponentName in this.attributeComponentIndices) {
-          throw new Error(`Duplicate attribute component name detected: ${
-              attributeComponentName}`);
+          throw new Error(
+            `Duplicate attribute component name detected: ${attributeComponentName}`
+          );
         }
         const index = this.attributeComponentNames.length;
         this.attributeComponentNames[index] = attributeComponentName;
@@ -218,12 +226,13 @@ export class AttributeMapper {
       if (!attribute.isInterpolable) {
         continue;
       }
-      const {attributeName, components} = attribute;
-      for (const component of (components || [''])) {
+      const { attributeName, components } = attribute;
+      for (const component of components || ['']) {
         const attributeComponentName = `${attributeName}${component}Delta`;
         if (attributeComponentName in this.attributeComponentIndices) {
-          throw new Error(`Duplicate attribute component name detected: ${
-              attributeComponentName}`);
+          throw new Error(
+            `Duplicate attribute component name detected: ${attributeComponentName}`
+          );
         }
         const index = this.attributeComponentNames.length;
         this.attributeComponentNames[index] = attributeComponentName;
@@ -237,13 +246,15 @@ export class AttributeMapper {
     Object.freeze(this.isAttributeTimestamp);
 
     // Calculate constants.
-    this.texelsPerSwatch =
-        Math.ceil(this.attributeComponentNames.length / this.dataChannelCount);
+    this.texelsPerSwatch = Math.ceil(
+      this.attributeComponentNames.length / this.dataChannelCount
+    );
     this.valuesPerSwatch = this.texelsPerSwatch * this.dataChannelCount;
     this.bytesPerSwatch = this.valuesPerSwatch * BYTES_PER_FLOAT;
 
-    this.swatchesPerRow =
-        Math.floor(this.maxTextureSize / this.texelsPerSwatch);
+    this.swatchesPerRow = Math.floor(
+      this.maxTextureSize / this.texelsPerSwatch
+    );
     this.textureWidth = this.texelsPerSwatch * this.swatchesPerRow;
     this.textureHeight = this.maxTextureSize;
     this.totalSwatches = this.swatchesPerRow * this.textureHeight;
@@ -251,13 +262,14 @@ export class AttributeMapper {
     // Apply desired capacity constraint.
     if (this.totalSwatches > this.desiredSwatchCapacity) {
       this.swatchesPerRow = Math.min(
-          this.swatchesPerRow,
-          Math.ceil(
-              Math.sqrt(this.desiredSwatchCapacity / this.texelsPerSwatch)));
+        this.swatchesPerRow,
+        Math.ceil(Math.sqrt(this.desiredSwatchCapacity / this.texelsPerSwatch))
+      );
       this.textureWidth = this.texelsPerSwatch * this.swatchesPerRow;
       this.textureHeight = Math.min(
-          this.textureHeight,
-          Math.ceil(this.desiredSwatchCapacity / this.swatchesPerRow));
+        this.textureHeight,
+        Math.ceil(this.desiredSwatchCapacity / this.swatchesPerRow)
+      );
       this.totalSwatches = this.swatchesPerRow * this.textureHeight;
     }
 
@@ -279,19 +291,24 @@ export class AttributeMapper {
    *  texelValues[1] = texture2D(dataTexture, swatchUv + vec2(0.15, 0.05));
    */
   generateTexelReaderGLSL(
-      texelValuesVarName = 'texelValues', dataTextureVarName = 'dataTexture',
-      swatchUvVarName = 'instanceSwatchUv') {
+    texelValuesVarName = 'texelValues',
+    dataTextureVarName = 'dataTexture',
+    swatchUvVarName = 'instanceSwatchUv'
+  ) {
     const setters: string[] = [];
     const texelCount = this.texelsPerSwatch;
     for (let texelIndex = 0; texelIndex < texelCount; texelIndex++) {
-      const x = ((texelIndex % this.texelsPerSwatch) + 0.5) /
-          this.texelsPerSwatch / this.swatchesPerRow;
-      const y = (Math.floor(texelIndex / this.texelsPerSwatch) + 0.5) /
-          this.textureHeight;
+      const x =
+        ((texelIndex % this.texelsPerSwatch) + 0.5) /
+        this.texelsPerSwatch /
+        this.swatchesPerRow;
+      const y =
+        (Math.floor(texelIndex / this.texelsPerSwatch) + 0.5) /
+        this.textureHeight;
       setters.push(
-          `${texelValuesVarName}[${texelIndex}] = ` +
-          `texture2D(${dataTextureVarName}, ${swatchUvVarName} + vec2(${x}, ${
-              y}));`);
+        `${texelValuesVarName}[${texelIndex}] = ` +
+          `texture2D(${dataTextureVarName}, ${swatchUvVarName} + vec2(${x}, ${y}));`
+      );
     }
     return setters.join('\n');
   }
@@ -316,52 +333,53 @@ export class AttributeMapper {
    * accomplishes that is produced by the `generateTexelReaderGLSL()` method.
    */
   generateAttributeDefinesGLSL(
-      attributePrefix: string, texelValuesVarName = 'texelValues') {
+    attributePrefix: string,
+    texelValuesVarName = 'texelValues'
+  ) {
     // Create a #define macro for each attribute.
-    const attributeValueDefines = this.attributes.map(attribute => {
-      const {attributeName} = attribute;
-      const components =
-          (attribute.components || [''])
-              .map(component => {
-                const index = this.attributeComponentIndices[`${attributeName}${
-                    component}`];
-                const texel = Math.floor(index / this.dataChannelCount);
-                const channel = RGBA[index % this.dataChannelCount];
-                return `${texelValuesVarName}[${texel}].${channel}`;
-              })
-              .join(', ');
-      const value = attribute.components ?
-          `vec${attribute.components.length}(${components})` :
-          components;
+    const attributeValueDefines = this.attributes.map((attribute) => {
+      const { attributeName } = attribute;
+      const components = (attribute.components || [''])
+        .map((component) => {
+          const index =
+            this.attributeComponentIndices[`${attributeName}${component}`];
+          const texel = Math.floor(index / this.dataChannelCount);
+          const channel = RGBA[index % this.dataChannelCount];
+          return `${texelValuesVarName}[${texel}].${channel}`;
+        })
+        .join(', ');
+      const value = attribute.components
+        ? `vec${attribute.components.length}(${components})`
+        : components;
       return `#define ${attributePrefix}${attributeName}() ${value}`;
     });
 
     // Create #define macros for the *Delta attributes of interpolable
     // attributes.
-    const attributeDeltaDefines =
-        this.attributes.filter(attribute => attribute.isInterpolable)
-            .map(attribute => {
-              const {attributeName} = attribute;
-              const components =
-                  (attribute.components || [''])
-                      .map(component => {
-                        const index = this.attributeComponentIndices[`${
-                            attributeName}${component}Delta`];
-                        const texel = Math.floor(index / this.dataChannelCount);
-                        const channel =
-                            ['r', 'g', 'b', 'a'][index % this.dataChannelCount];
-                        return `${texelValuesVarName}[${texel}].${channel}`;
-                      })
-                      .join(', ');
-              const value = attribute.components ?
-                  `vec${attribute.components.length}(${components})` :
-                  components;
-              return `#define ${attributePrefix}${attributeName}Delta() ${
-                  value}`;
-            });
+    const attributeDeltaDefines = this.attributes
+      .filter((attribute) => attribute.isInterpolable)
+      .map((attribute) => {
+        const { attributeName } = attribute;
+        const components = (attribute.components || [''])
+          .map((component) => {
+            const index =
+              this.attributeComponentIndices[
+                `${attributeName}${component}Delta`
+              ];
+            const texel = Math.floor(index / this.dataChannelCount);
+            const channel = ['r', 'g', 'b', 'a'][index % this.dataChannelCount];
+            return `${texelValuesVarName}[${texel}].${channel}`;
+          })
+          .join(', ');
+        const value = attribute.components
+          ? `vec${attribute.components.length}(${components})`
+          : components;
+        return `#define ${attributePrefix}${attributeName}Delta() ${value}`;
+      });
 
-    const glsl =
-        [...attributeValueDefines, ...attributeDeltaDefines].join('\n');
+    const glsl = [...attributeValueDefines, ...attributeDeltaDefines].join(
+      '\n'
+    );
 
     return glsl;
   }
@@ -371,25 +389,23 @@ export class AttributeMapper {
    * during a rebase operation.
    */
   generateRebaseFragmentGLSL(
-      previousTexelValuesVarName = 'previousTexelValues',
-      targetTexelValuesVarName = 'targetTexelValues',
-      texelIndexVarName = 'texelIndex',
-      rebaseTsVarName = 'rebaseTs',
+    previousTexelValuesVarName = 'previousTexelValues',
+    targetTexelValuesVarName = 'targetTexelValues',
+    texelIndexVarName = 'texelIndex',
+    rebaseTsVarName = 'rebaseTs'
   ) {
-    const codes: {[texelIndex: number]: {[channel: string]: string}} = {};
+    const codes: { [texelIndex: number]: { [channel: string]: string } } = {};
 
     for (const attribute of this.attributes) {
-      const {attributeName} = attribute;
-      for (const component of (attribute.components || [''])) {
+      const { attributeName } = attribute;
+      for (const component of attribute.components || ['']) {
         const attributeComponentName = `${attributeName}${component}`;
         const index = this.attributeComponentIndices[attributeComponentName];
         const texelIndex = Math.floor(index / this.dataChannelCount);
         const channel = RGBA[index % this.dataChannelCount];
 
-        const previousValueCode =
-            `${previousTexelValuesVarName}[${texelIndex}].${channel}`;
-        const targetValueCode =
-            `${targetTexelValuesVarName}[${texelIndex}].${channel}`;
+        const previousValueCode = `${previousTexelValuesVarName}[${texelIndex}].${channel}`;
+        const targetValueCode = `${targetTexelValuesVarName}[${texelIndex}].${channel}`;
 
         if (!(texelIndex in codes)) {
           codes[texelIndex] = {};
@@ -406,29 +422,30 @@ export class AttributeMapper {
           // value and current delta.
           const attributeComponentDeltaName = `${attributeComponentName}Delta`;
           const deltaIndex =
-              this.attributeComponentIndices[attributeComponentDeltaName];
-          const deltaTexelIndex =
-              Math.floor(deltaIndex / this.dataChannelCount);
+            this.attributeComponentIndices[attributeComponentDeltaName];
+          const deltaTexelIndex = Math.floor(
+            deltaIndex / this.dataChannelCount
+          );
           const deltaChannel = RGBA[deltaIndex % this.dataChannelCount];
 
           if (!(deltaTexelIndex in codes)) {
             codes[deltaTexelIndex] = {};
           }
 
-          const previousDeltaCode = `${previousTexelValuesVarName}[${
-              deltaTexelIndex}].${deltaChannel}`;
+          const previousDeltaCode = `${previousTexelValuesVarName}[${deltaTexelIndex}].${deltaChannel}`;
 
-          codes[texelIndex][channel] =
-              `computeValueAtTime(${previousValueCode}, ${previousDeltaCode}, ${
-                  targetValueCode}, ${rebaseTsVarName});`;
-          codes[deltaTexelIndex][deltaChannel] =
-              `computeDeltaAtTime(${previousValueCode}, ${previousDeltaCode}, ${
-                  targetValueCode}, ${rebaseTsVarName});`;
+          codes[texelIndex][
+            channel
+          ] = `computeValueAtTime(${previousValueCode}, ${previousDeltaCode}, ${targetValueCode}, ${rebaseTsVarName});`;
+          codes[deltaTexelIndex][
+            deltaChannel
+          ] = `computeDeltaAtTime(${previousValueCode}, ${previousDeltaCode}, ${targetValueCode}, ${rebaseTsVarName});`;
         } else {
           // If the attribute is neither a timestamp, nor interpolable, then the
           // code to compute its value is a simple threshold operation.
-          codes[texelIndex][channel] = `computeThresholdValue(${
-              previousValueCode}, ${targetValueCode}, ${rebaseTsVarName});`;
+          codes[texelIndex][
+            channel
+          ] = `computeThresholdValue(${previousValueCode}, ${targetValueCode}, ${rebaseTsVarName});`;
         }
       }
     }

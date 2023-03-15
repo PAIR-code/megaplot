@@ -31,7 +31,7 @@
  * another smoothly over time.
  */
 
-import {glsl} from './glsl-template-tag';
+import { glsl } from './glsl-template-tag';
 
 /**
  * Returns the code for the Scene's main rendering fragment shader program.

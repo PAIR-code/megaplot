@@ -19,7 +19,12 @@
  * objects.
  */
 
-import {ensureOrCreateWorkTask, getWorkTaskId, isWorkTaskOrFunction, WorkTask} from '../src/lib/work-task';
+import {
+  ensureOrCreateWorkTask,
+  getWorkTaskId,
+  isWorkTaskOrFunction,
+  WorkTask,
+} from '../src/lib/work-task';
 
 describe('isWorkTaskOrFunction', () => {
   it('should exist', () => {
@@ -27,15 +32,15 @@ describe('isWorkTaskOrFunction', () => {
   });
 
   it('should return true for Functions.', () => {
-    expect(isWorkTaskOrFunction(function() {})).toBe(true);
+    expect(isWorkTaskOrFunction(function () {})).toBe(true);
     expect(isWorkTaskOrFunction(() => {})).toBe(true);
     expect(isWorkTaskOrFunction(async () => {})).toBe(true);
   });
 
   it('should return true for objects with callback functions.', () => {
-    expect(isWorkTaskOrFunction({callback: function() {}})).toBe(true);
-    expect(isWorkTaskOrFunction({callback: () => {}})).toBe(true);
-    expect(isWorkTaskOrFunction({callback: async () => {}})).toBe(true);
+    expect(isWorkTaskOrFunction({ callback: function () {} })).toBe(true);
+    expect(isWorkTaskOrFunction({ callback: () => {} })).toBe(true);
+    expect(isWorkTaskOrFunction({ callback: async () => {} })).toBe(true);
   });
 
   it('should return false for falsey arguments.', () => {
@@ -45,18 +50,21 @@ describe('isWorkTaskOrFunction', () => {
   it('should return false for objects without a callback.', () => {
     expect(isWorkTaskOrFunction({} as WorkTask)).toBe(false);
 
-    const objectWithId = {id: () => {}} as unknown as WorkTask;
+    const objectWithId = { id: () => {} } as unknown as WorkTask;
     expect(isWorkTaskOrFunction(objectWithId)).toBe(false);
   });
 
   it('should return false for objects with a non-function callback.', () => {
-    const callbackObject = {callback: {}} as unknown as WorkTask;
+    const callbackObject = { callback: {} } as unknown as WorkTask;
     expect(isWorkTaskOrFunction(callbackObject)).toBe(false);
 
-    const callbackNull = {callback: null} as unknown as WorkTask
+    const callbackNull = { callback: null } as unknown as WorkTask;
     expect(isWorkTaskOrFunction(callbackNull)).toBe(false);
 
-    const callbackPlusId = {callback: {}, id: () => {}} as unknown as WorkTask;
+    const callbackPlusId = {
+      callback: {},
+      id: () => {},
+    } as unknown as WorkTask;
     expect(isWorkTaskOrFunction(callbackPlusId)).toBe(false);
   });
 });
@@ -76,7 +84,7 @@ describe('getWorkTaskId', () => {
     }).toThrow();
 
     expect(() => {
-      getWorkTaskId({callback: {}} as unknown as WorkTask);
+      getWorkTaskId({ callback: {} } as unknown as WorkTask);
     }).toThrow();
   });
 
@@ -93,13 +101,13 @@ describe('getWorkTaskId', () => {
 
   it('should return callback for objects with callback functions.', () => {
     function regularFn() {}
-    expect(getWorkTaskId({callback: regularFn})).toBe(regularFn);
+    expect(getWorkTaskId({ callback: regularFn })).toBe(regularFn);
 
     const arrowFn = () => {};
-    expect(getWorkTaskId({callback: arrowFn})).toBe(arrowFn);
+    expect(getWorkTaskId({ callback: arrowFn })).toBe(arrowFn);
 
     const asyncFn = async () => {};
-    expect(getWorkTaskId({callback: asyncFn})).toBe(asyncFn);
+    expect(getWorkTaskId({ callback: asyncFn })).toBe(asyncFn);
   });
 
   it('should return id object for tasks with ids.', () => {
@@ -133,7 +141,7 @@ describe('ensureOrCreateWorkTask', () => {
     }).toThrow();
 
     expect(() => {
-      ensureOrCreateWorkTask({callback: {}} as unknown as WorkTask);
+      ensureOrCreateWorkTask({ callback: {} } as unknown as WorkTask);
     }).toThrow();
   });
 
@@ -169,11 +177,12 @@ describe('ensureOrCreateWorkTask', () => {
     expect(regularFnTask.callback).toBe(regularFn);
     expect(regularFnTask.id).toBe(regularFn);
     // Even non-task properties should be copied.
-    expect((regularFnTask as unknown as typeof regularFnInput).extraProperty)
-        .toBe('extraValue');
+    expect(
+      (regularFnTask as unknown as typeof regularFnInput).extraProperty
+    ).toBe('extraValue');
 
     const arrowFn = () => {};
-    const arrowFnInput = {callback: arrowFn};
+    const arrowFnInput = { callback: arrowFn };
     const arrowFnTask = ensureOrCreateWorkTask(arrowFnInput);
     expect(typeof arrowFnTask).toBe('object');
     expect(arrowFnTask as WorkTask).not.toBe(arrowFnInput);

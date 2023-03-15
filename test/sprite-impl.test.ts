@@ -18,9 +18,9 @@
  * @fileoverview Unit tests for the SpriteImpl implementation of the Sprite API.
  */
 
-import {LifecyclePhase} from '../src/lib/lifecycle-phase';
-import {SpriteImpl} from '../src/lib/sprite-impl';
-import {InternalPropertiesSymbol} from '../src/lib/symbols';
+import { LifecyclePhase } from '../src/lib/lifecycle-phase';
+import { SpriteImpl } from '../src/lib/sprite-impl';
+import { InternalPropertiesSymbol } from '../src/lib/symbols';
 
 describe('SpriteImpl', () => {
   it('should exist and have expected methods.', () => {

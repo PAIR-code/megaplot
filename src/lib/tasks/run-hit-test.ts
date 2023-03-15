@@ -19,10 +19,10 @@
  */
 import REGL from 'regl';
 
-import {AttributeMapper} from '../attribute-mapper';
-import {HitTestParameters} from '../hit-test-types';
-import {SpriteImpl} from '../sprite-impl';
-import {InternalPropertiesSymbol} from '../symbols';
+import { AttributeMapper } from '../attribute-mapper';
+import { HitTestParameters } from '../hit-test-types';
+import { SpriteImpl } from '../sprite-impl';
+import { InternalPropertiesSymbol } from '../symbols';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -54,12 +54,14 @@ interface CoordinatorAPI {
 export function runHitTest(coordinator: CoordinatorAPI): void {
   // These values are API-user provided, but are already be checked for
   // correctness upstream in SceneInternal.
-  const {sprites, width, height, inclusive} = coordinator.hitTestParameters;
+  const { sprites, width, height, inclusive } = coordinator.hitTestParameters;
 
   coordinator.hitTestCount = sprites.length;
 
-  const results =
-      coordinator.hitTestOutputResults.subarray(0, coordinator.hitTestCount);
+  const results = coordinator.hitTestOutputResults.subarray(
+    0,
+    coordinator.hitTestCount
+  );
 
   // Short-circuit if the parameters guarantee there will be no hits.
   if (!inclusive && (!width || !height)) {
@@ -88,16 +90,18 @@ export function runHitTest(coordinator: CoordinatorAPI): void {
 
   // Re-bind the UV and Index/Active values to their buffers.
   coordinator.instanceHitTestInputUvBuffer(
-      inputUv.subarray(0, coordinator.hitTestCount * 2));
+    inputUv.subarray(0, coordinator.hitTestCount * 2)
+  );
   coordinator.instanceHitTestInputIndexActiveBuffer(
-      indexActive.subarray(0, coordinator.hitTestCount * 2));
+    indexActive.subarray(0, coordinator.hitTestCount * 2)
+  );
 
   // Invoke the hit test command.
   coordinator.hitTestCommand();
 
   const readHeight = Math.ceil(
-      coordinator.hitTestCount /
-      coordinator.hitTestAttributeMapper.swatchesPerRow);
+    coordinator.hitTestCount / coordinator.hitTestAttributeMapper.swatchesPerRow
+  );
 
   // Read values back from framebuffer. This is SLOW! Upwards of 50ms-200ms
   // depending on the amount of data being read back. It's a blocking and
@@ -113,7 +117,7 @@ export function runHitTest(coordinator: CoordinatorAPI): void {
   });
 
   // Unpack results.
-  const {totalSwatches} = coordinator.hitTestAttributeMapper;
+  const { totalSwatches } = coordinator.hitTestAttributeMapper;
   const outputValues = coordinator.hitTestOutputValues;
   for (let i = 0; i < coordinator.hitTestCount; i++) {
     // Read RGBA Uint8 color channels.

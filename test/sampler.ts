@@ -18,10 +18,15 @@
  * @fileoverview Utility class for sampling rendered scenes.
  */
 
-import {Scene} from '../src/lib/scene';
-import {SceneInternalSymbol} from '../src/lib/symbols';
+import { Scene } from '../src/lib/scene';
+import { SceneInternalSymbol } from '../src/lib/symbols';
 
-import {blobToImage, compareColorArrays, copyCanvasAndContainer, filledColorArray} from './utils';
+import {
+  blobToImage,
+  compareColorArrays,
+  copyCanvasAndContainer,
+  filledColorArray,
+} from './utils';
 
 export class Sampler {
   /**
@@ -36,7 +41,7 @@ export class Sampler {
    */
   async copySnapshot() {
     // Copy the scene's canvas and its container. Append to content div.
-    const {canvas} = this.scene;
+    const { canvas } = this.scene;
     const [_, context, copyContainer] = copyCanvasAndContainer(canvas);
     this.contentDiv.appendChild(copyContainer);
     this.lastContext = context;
@@ -54,15 +59,16 @@ export class Sampler {
    * match and 1 if all of them match.
    */
   compareSample(params: {
-    x: number,
-    y: number,
-    width?: number,
-    height?: number, color: number[],
+    x: number;
+    y: number;
+    width?: number;
+    height?: number;
+    color: number[];
   }) {
     if (!this.lastContext) {
       throw new Error('Must copy snapshot before comparing samples');
     }
-    const {x, y, color} = params;
+    const { x, y, color } = params;
     const width = params.width || 1;
     const height = params.height || 1;
     const sample = this.lastContext.getImageData(x, y, width, height);

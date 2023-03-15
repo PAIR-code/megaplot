@@ -18,16 +18,16 @@
  * @fileoverview Scene is the leading interface for API consumers.
  */
 
-import {SceneSettings} from './default-scene-settings';
-import {HitTestParameters} from './hit-test-types';
-import {Renderer} from './renderer-types';
-import {SceneInternal} from './scene-internal';
-import {Selection} from './selection-types';
-import {SceneInternalSymbol} from './symbols';
-import {TextSelection} from './text-selection-types';
+import { SceneSettings } from './default-scene-settings';
+import { HitTestParameters } from './hit-test-types';
+import { Renderer } from './renderer-types';
+import { SceneInternal } from './scene-internal';
+import { Selection } from './selection-types';
+import { SceneInternalSymbol } from './symbols';
+import { TextSelection } from './text-selection-types';
 
 export class Scene implements Renderer {
-  private[SceneInternalSymbol]: SceneInternal;
+  private [SceneInternalSymbol]: SceneInternal;
 
   constructor(params: Partial<SceneSettings> = {}) {
     this[SceneInternalSymbol] = new SceneInternal(params);
@@ -38,7 +38,7 @@ export class Scene implements Renderer {
    * rendered world. These numbers define how many pixel units there are to a
    * world unit in the X and Y directions to implement zooming.
    */
-  get scale(): {x: number; y: number;} {
+  get scale(): { x: number; y: number } {
     return this[SceneInternalSymbol].scale;
   }
 
@@ -64,7 +64,7 @@ export class Scene implements Renderer {
    * @param fixedWorldPoint Optional world point to preserve relative to the
    * canvas frame. Defaults to the world origin (0,0).
    */
-  resize(fixedWorldPoint?: {x: number, y: number}) {
+  resize(fixedWorldPoint?: { x: number; y: number }) {
     this[SceneInternalSymbol].resize(fixedWorldPoint);
   }
 

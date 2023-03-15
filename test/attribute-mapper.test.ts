@@ -20,7 +20,7 @@
 
 import REGL from 'regl';
 
-import {AttributeMapper} from '../src/lib/attribute-mapper';
+import { AttributeMapper } from '../src/lib/attribute-mapper';
 
 const DEFAULT_MAX_TEXTURE_SIZE = 4096;
 
@@ -90,7 +90,7 @@ describe('AttributeMapper', () => {
       },
     ];
 
-    const {attributeComponentIndices} = new AttributeMapper({
+    const { attributeComponentIndices } = new AttributeMapper({
       maxTextureSize: DEFAULT_MAX_TEXTURE_SIZE,
       attributes,
     });
@@ -118,7 +118,7 @@ describe('AttributeMapper', () => {
       },
     ];
 
-    const {componentToAttributeMap} = new AttributeMapper({
+    const { componentToAttributeMap } = new AttributeMapper({
       maxTextureSize: DEFAULT_MAX_TEXTURE_SIZE,
       attributes,
     });
@@ -144,15 +144,19 @@ describe('AttributeMapper', () => {
         },
       ];
 
-      const attributeMapper =
-          new AttributeMapper({maxTextureSize: 10, attributes});
+      const attributeMapper = new AttributeMapper({
+        maxTextureSize: 10,
+        attributes,
+      });
 
       const glsl = attributeMapper.generateTexelReaderGLSL();
 
       expect(glsl).toContain(
-          'texelValues[0] = texture2D(dataTexture, instanceSwatchUv + vec2(0.05, 0.05));');
+        'texelValues[0] = texture2D(dataTexture, instanceSwatchUv + vec2(0.05, 0.05));'
+      );
       expect(glsl).toContain(
-          'texelValues[1] = texture2D(dataTexture, instanceSwatchUv + vec2(0.15, 0.05));');
+        'texelValues[1] = texture2D(dataTexture, instanceSwatchUv + vec2(0.15, 0.05));'
+      );
     });
   });
 
@@ -169,58 +173,64 @@ describe('AttributeMapper', () => {
         },
       ];
 
-      const attributeMapper =
-          new AttributeMapper({maxTextureSize: 11, attributes});
+      const attributeMapper = new AttributeMapper({
+        maxTextureSize: 11,
+        attributes,
+      });
 
       const glsl = attributeMapper.generateAttributeDefinesGLSL('target');
 
       expect(glsl).toContain(
-          '#define targetTransitionTimeMs() texelValues[0].r');
+        '#define targetTransitionTimeMs() texelValues[0].r'
+      );
       expect(glsl).toContain(
-          '#define targetPosition() vec3(texelValues[0].g, texelValues[0].b, texelValues[0].a)');
+        '#define targetPosition() vec3(texelValues[0].g, texelValues[0].b, texelValues[0].a)'
+      );
       expect(glsl).toContain(
-          '#define targetPositionDelta() vec3(texelValues[1].r, texelValues[1].g, texelValues[1].b)');
+        '#define targetPositionDelta() vec3(texelValues[1].r, texelValues[1].g, texelValues[1].b)'
+      );
     });
   });
 
   describe('generateRebaseFragmentGLSL', () => {
-    it('should generate GLSL code for a fragment shader to update attributes',
-       () => {
-         const attributes = [
-           {
-             attributeName: 'TransitionTimeMs',
-             isTimestamp: true,
-           },
-           {
-             attributeName: 'Position',
-             isInterpolable: true,
-             components: ['X', 'Y', 'Z'],
-           },
-           {
-             attributeName: 'Shape',
-           },
-         ];
+    it('should generate GLSL code for a fragment shader to update attributes', () => {
+      const attributes = [
+        {
+          attributeName: 'TransitionTimeMs',
+          isTimestamp: true,
+        },
+        {
+          attributeName: 'Position',
+          isInterpolable: true,
+          components: ['X', 'Y', 'Z'],
+        },
+        {
+          attributeName: 'Shape',
+        },
+      ];
 
-         const attributeMapper =
-             new AttributeMapper({maxTextureSize: 11, attributes});
+      const attributeMapper = new AttributeMapper({
+        maxTextureSize: 11,
+        attributes,
+      });
 
-         const glsl = attributeMapper.generateRebaseFragmentGLSL();
-         const lines = glsl.split('\n');
+      const glsl = attributeMapper.generateRebaseFragmentGLSL();
+      const lines = glsl.split('\n');
 
-         expect(lines.length).toBe(14);
-         expect(lines[0]).toContain('if (texelIndex < 0.5) {');
-         expect(lines[1]).toContain('gl_FragColor.r = rebaseTs');
-         expect(lines[2]).toContain('gl_FragColor.g = computeValueAtTime');
-         expect(lines[3]).toContain('gl_FragColor.b = computeValueAtTime');
-         expect(lines[4]).toContain('gl_FragColor.a = computeValueAtTime');
-         expect(lines[5]).toContain('return;');
-         expect(lines[6]).toContain('}');
-         expect(lines[7]).toContain('if (texelIndex < 1.5) {');
-         expect(lines[8]).toContain('gl_FragColor.r = computeThresholdValue');
-         expect(lines[9]).toContain('gl_FragColor.g = computeDeltaAtTime');
-         expect(lines[10]).toContain('gl_FragColor.b = computeDeltaAtTime');
-         expect(lines[11]).toContain('gl_FragColor.a = computeDeltaAtTime');
-       });
+      expect(lines.length).toBe(14);
+      expect(lines[0]).toContain('if (texelIndex < 0.5) {');
+      expect(lines[1]).toContain('gl_FragColor.r = rebaseTs');
+      expect(lines[2]).toContain('gl_FragColor.g = computeValueAtTime');
+      expect(lines[3]).toContain('gl_FragColor.b = computeValueAtTime');
+      expect(lines[4]).toContain('gl_FragColor.a = computeValueAtTime');
+      expect(lines[5]).toContain('return;');
+      expect(lines[6]).toContain('}');
+      expect(lines[7]).toContain('if (texelIndex < 1.5) {');
+      expect(lines[8]).toContain('gl_FragColor.r = computeThresholdValue');
+      expect(lines[9]).toContain('gl_FragColor.g = computeDeltaAtTime');
+      expect(lines[10]).toContain('gl_FragColor.b = computeDeltaAtTime');
+      expect(lines[11]).toContain('gl_FragColor.a = computeDeltaAtTime');
+    });
   });
 
   describe('generateInstanceSwatchUvValues', () => {
@@ -247,7 +257,7 @@ describe('AttributeMapper', () => {
       });
 
       const instanceSwatchUvValues =
-          attributeMapper.generateInstanceSwatchUvValues();
+        attributeMapper.generateInstanceSwatchUvValues();
 
       expect(instanceSwatchUvValues.length).toBe(8);
       expect(instanceSwatchUvValues[0]).toBe(0);
@@ -286,49 +296,46 @@ describe('AttributeMapper rebase integration test', () => {
     });
 
     const regl = REGL({
-      extensions: [
-        'ANGLE_instanced_arrays',
-        'OES_texture_float',
-      ],
+      extensions: ['ANGLE_instanced_arrays', 'OES_texture_float'],
     });
 
     const previousValues = Float32Array.from([
       // Sprite Index 0.
-      0,   // TransitionTimeMs
-      10,  // PositionX
-      15,  // PositionY
-      0,   // PositionZ
-      0,   // Shape
-      0,   // PositionXDelta
-      0,   // PositionYDelta
-      0,   // PositionZDelta
+      0, // TransitionTimeMs
+      10, // PositionX
+      15, // PositionY
+      0, // PositionZ
+      0, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 1.
-      0,    // TransitionTimeMs
-      -10,  // PositionX
-      -15,  // PositionY
-      0,    // PositionZ
-      1,    // Shape
-      0,    // PositionXDelta
-      0,    // PositionYDelta
-      0,    // PositionZDelta
+      0, // TransitionTimeMs
+      -10, // PositionX
+      -15, // PositionY
+      0, // PositionZ
+      1, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 2.
-      500,  // TransitionTimeMs
-      100,  // PositionX
-      150,  // PositionY
-      0,    // PositionZ
-      0,    // Shape
-      0,    // PositionXDelta
-      0,    // PositionYDelta
-      0,    // PositionZDelta
+      500, // TransitionTimeMs
+      100, // PositionX
+      150, // PositionY
+      0, // PositionZ
+      0, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 3.
-      500,   // TransitionTimeMs
-      -100,  // PositionX
-      -150,  // PositionY
-      0,     // PositionZ
-      1,     // Shape
-      0,     // PositionXDelta
-      0,     // PositionYDelta
-      0,     // PositionZDelta
+      500, // TransitionTimeMs
+      -100, // PositionX
+      -150, // PositionY
+      0, // PositionZ
+      1, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
     ]);
 
     const previousValuesTexture = regl.texture({
@@ -343,41 +350,41 @@ describe('AttributeMapper rebase integration test', () => {
 
     const targetValues = Float32Array.from([
       // Sprite Index 0.
-      2000,  // TransitionTimeMs
-      20,    // PositionX
-      35,    // PositionY
-      0,     // PositionZ
-      2,     // Shape
-      0,     // PositionXDelta
-      0,     // PositionYDelta
-      0,     // PositionZDelta
+      2000, // TransitionTimeMs
+      20, // PositionX
+      35, // PositionY
+      0, // PositionZ
+      2, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 1.
-      4000,  // TransitionTimeMs
-      -20,   // PositionX
-      -15,   // PositionY
-      0,     // PositionZ
-      3,     // Shape
-      0,     // PositionXDelta
-      0,     // PositionYDelta
-      0,     // PositionZDelta
+      4000, // TransitionTimeMs
+      -20, // PositionX
+      -15, // PositionY
+      0, // PositionZ
+      3, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 2.
-      600,  // TransitionTimeMs
-      200,  // PositionX
-      350,  // PositionY
-      0,    // PositionZ
-      2,    // Shape
-      0,    // PositionXDelta
-      0,    // PositionYDelta
-      0,    // PositionZDelta
+      600, // TransitionTimeMs
+      200, // PositionX
+      350, // PositionY
+      0, // PositionZ
+      2, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
       // Sprite Index 3.
-      600,   // TransitionTimeMs
-      -200,  // PositionX
-      -150,  // PositionY
-      0,     // PositionZ
-      3,     // Shape
-      0,     // PositionXDelta
-      0,     // PositionYDelta
-      0,     // PositionZDelta
+      600, // TransitionTimeMs
+      -200, // PositionX
+      -150, // PositionY
+      0, // PositionZ
+      3, // Shape
+      0, // PositionXDelta
+      0, // PositionYDelta
+      0, // PositionZDelta
     ]);
 
     const targetValuesTexture = regl.texture({
@@ -407,24 +414,28 @@ describe('AttributeMapper rebase integration test', () => {
 
     // Bottom-left coordinates for the instances.
     const instanceSwatchUvValues =
-        attributeMapper.generateInstanceSwatchUvValues();
+      attributeMapper.generateInstanceSwatchUvValues();
 
     const instanceSwatchUvBuffer = regl.buffer(instanceSwatchUvValues);
 
     const instanceRebaseFlagValues = Float32Array.from([
-      1,  // Sprite 0. Rebase.
-      1,  // Sprite 1. Rebase.
-      0,  // Sprite 2. Copy.
-      0,  // Sprite 3. Copy.
+      1, // Sprite 0. Rebase.
+      1, // Sprite 1. Rebase.
+      0, // Sprite 2. Copy.
+      0, // Sprite 3. Copy.
     ]);
 
     const instanceRebaseFlagBuffer = regl.buffer(instanceRebaseFlagValues);
 
     const previousAttributeDefines =
-        attributeMapper.generateAttributeDefinesGLSL(
-            'previous', 'previousTexelValues');
+      attributeMapper.generateAttributeDefinesGLSL(
+        'previous',
+        'previousTexelValues'
+      );
     const targetAttributeDefines = attributeMapper.generateAttributeDefinesGLSL(
-        'target', 'targetTexelValues');
+      'target',
+      'targetTexelValues'
+    );
 
     const fragmentShader = `
       precision mediump float;
@@ -495,20 +506,26 @@ describe('AttributeMapper rebase integration test', () => {
       }
 
       void readInputTexels() {
-        ${
-        attributeMapper.generateTexelReaderGLSL(
-            'previousTexelValues', 'previousValuesTexture', 'varyingSwatchUv')}
-        ${
-        attributeMapper.generateTexelReaderGLSL(
-            'targetTexelValues', 'targetValuesTexture', 'varyingSwatchUv')}
+        ${attributeMapper.generateTexelReaderGLSL(
+          'previousTexelValues',
+          'previousValuesTexture',
+          'varyingSwatchUv'
+        )}
+        ${attributeMapper.generateTexelReaderGLSL(
+          'targetTexelValues',
+          'targetValuesTexture',
+          'varyingSwatchUv'
+        )}
         }
 
       void setOutputTexel() {
         float rebaseTs = varyingRebaseFlag > 0. ? ts : previousTransitionTimeMs();
-        ${
-        attributeMapper.generateRebaseFragmentGLSL(
-            'previousTexelValues', 'targetTexelValues', 'varyingTexelIndex',
-            'rebaseTs')}
+        ${attributeMapper.generateRebaseFragmentGLSL(
+          'previousTexelValues',
+          'targetTexelValues',
+          'varyingTexelIndex',
+          'rebaseTs'
+        )}
       }
 
       void main () {
@@ -586,14 +603,14 @@ describe('AttributeMapper rebase integration test', () => {
       },
 
       primitive: 'triangle strip',
-      count: 4,      // 4 vertices.
-      instances: 4,  // 4 Sprites.
+      count: 4, // 4 vertices.
+      instances: 4, // 4 Sprites.
 
       framebuffer: rebaseValuesFramebuffer,
     });
 
     drawCommand(() => {
-      regl.clear({color: [0, 0, 0, 0]});
+      regl.clear({ color: [0, 0, 0, 0] });
     });
 
     drawCommand();
@@ -607,7 +624,7 @@ describe('AttributeMapper rebase integration test', () => {
       height: attributeMapper.textureHeight,
       data: rebaseValues,
       framebuffer: rebaseValuesFramebuffer,
-    })
+    });
 
     // Sprite 0.
     expect(rebaseValues[0]).toBe(ts);

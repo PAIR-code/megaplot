@@ -19,10 +19,10 @@
  * Scene.
  */
 
-import {HitTestParameters} from './hit-test-types';
-import {Selection} from './selection-types';
-import {Sprite} from './sprite';
-import {TextSelection} from './text-selection-types';
+import { HitTestParameters } from './hit-test-types';
+import { Selection } from './selection-types';
+import { Sprite } from './sprite';
+import { TextSelection } from './text-selection-types';
 
 /**
  * Renderer is the public interface for the Scene.
@@ -33,14 +33,14 @@ export interface Renderer {
    * rendered scene. These numbers define how many pixel units there are to a
    * world unit in the X and Y directions to implement zooming.
    */
-  scale: {x: number; y: number;};
+  scale: { x: number; y: number };
 
   /**
    * The offset object offers an interface to set the X and Y offsets of the
    * rendered scene. These numbers define how many pixel units to shift in the X
    * and Y directions to implement panning.
    */
-  offset: {x: number; y: number;};
+  offset: { x: number; y: number };
 
   /**
    * Canvas element that the renderer uses to draw.
@@ -54,7 +54,7 @@ export interface Renderer {
    * @param fixedWorldPoint Optional world point to preserve relative to the
    * canvas frame. Defaults to the world origin (0,0).
    */
-  resize: (fixedWorldPoint?: {x: number, y: number}) => void;
+  resize: (fixedWorldPoint?: { x: number; y: number }) => void;
 
   /**
    * This method returns the total elapsed time in milliseconds since the

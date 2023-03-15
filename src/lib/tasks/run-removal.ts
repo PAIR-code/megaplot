@@ -20,12 +20,12 @@
  * values to zero in CPU memory, and marks them for texture sync.
  */
 
-import {InternalError} from '../internal-error';
-import {LifecyclePhase} from '../lifecycle-phase';
-import {NumericRange} from '../numeric-range';
-import {SpriteImpl} from '../sprite-impl';
-import {DataViewSymbol, InternalPropertiesSymbol} from '../symbols';
-import {RemainingTimeFn} from '../work-scheduler';
+import { InternalError } from '../internal-error';
+import { LifecyclePhase } from '../lifecycle-phase';
+import { NumericRange } from '../numeric-range';
+import { SpriteImpl } from '../sprite-impl';
+import { DataViewSymbol, InternalPropertiesSymbol } from '../symbols';
+import { RemainingTimeFn } from '../work-scheduler';
 
 /**
  * To avoid circular imports, this file cannot depend on scene-internal.ts so
@@ -55,12 +55,14 @@ interface CoordinatorAPI {
  * the remaining time function.
  */
 export function runRemoval(
-    coordinator: CoordinatorAPI,
-    remaining: RemainingTimeFn,
-    stepsBetweenChecks: number,
-    ): void {
-  if (!coordinator.toBeRemovedIndexRange.isDefined ||
-      !coordinator.toBeRemovedTsRange.isDefined) {
+  coordinator: CoordinatorAPI,
+  remaining: RemainingTimeFn,
+  stepsBetweenChecks: number
+): void {
+  if (
+    !coordinator.toBeRemovedIndexRange.isDefined ||
+    !coordinator.toBeRemovedTsRange.isDefined
+  ) {
     // This signals an error in lifecycle phase change logic of the coordinator.
     // This method should not be invoke until there are sprites slated for
     // removal.
@@ -78,8 +80,8 @@ export function runRemoval(
     return;
   }
 
-  const {lowBound: lowIndex, highBound: highIndex} =
-      coordinator.toBeRemovedIndexRange;
+  const { lowBound: lowIndex, highBound: highIndex } =
+    coordinator.toBeRemovedIndexRange;
 
   // Clear the removal index and ts ranges. They will be added to as needed.
   coordinator.toBeRemovedIndexRange.clear();
@@ -104,13 +106,15 @@ export function runRemoval(
 
       // Skip any sprites that are not both in the Rest phase and have had
       // their 'toBeRemoved' property set (had an exit callback).
-      if (!properties.toBeRemoved ||
-          properties.lifecyclePhase !== LifecyclePhase.Rest) {
+      if (
+        !properties.toBeRemoved ||
+        properties.lifecyclePhase !== LifecyclePhase.Rest
+      ) {
         continue;
       }
 
       if (!properties.spriteView || properties.index === undefined) {
-        throw new InternalError('Sprite missing required properties')
+        throw new InternalError('Sprite missing required properties');
       }
 
       // If the sprite's time has not yet finished, then add it back to the
@@ -118,7 +122,8 @@ export function runRemoval(
       if (properties.spriteView.TransitionTimeMs > currentTimeMs) {
         coordinator.toBeRemovedIndexRange.expandToInclude(currentIndex);
         coordinator.toBeRemovedTsRange.expandToInclude(
-            properties.spriteView.TransitionTimeMs);
+          properties.spriteView.TransitionTimeMs
+        );
         continue;
       }
 
@@ -144,8 +149,10 @@ export function runRemoval(
 
       // Ignore any sprites that are not both in the Rest phase and have had
       // their 'toBeRemoved' property set (had an exit callback).
-      if (!properties.toBeRemoved ||
-          properties.lifecyclePhase !== LifecyclePhase.Rest) {
+      if (
+        !properties.toBeRemoved ||
+        properties.lifecyclePhase !== LifecyclePhase.Rest
+      ) {
         continue;
       }
 
@@ -159,7 +166,8 @@ export function runRemoval(
 
       coordinator.toBeRemovedIndexRange.expandToInclude(i);
       coordinator.toBeRemovedTsRange.expandToInclude(
-          properties.spriteView.TransitionTimeMs);
+        properties.spriteView.TransitionTimeMs
+      );
     }
 
     if (coordinator.needsTextureSyncIndexRange.isDefined) {

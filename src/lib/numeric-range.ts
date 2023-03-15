@@ -80,7 +80,8 @@ export class NumericRange {
 
     if (highValue < lowValue) {
       throw new RangeError(
-          'High bound must be greater than or equal to low bound');
+        'High bound must be greater than or equal to low bound'
+      );
     }
 
     if (!this.isDefined) {
@@ -107,8 +108,11 @@ export class NumericRange {
    * method returns true if there exist any numbers which appear in both ranges.
    */
   overlaps(otherRange: NumericRange) {
-    return this.isDefined && otherRange.isDefined &&
-        this.lowBound <= otherRange.highBound &&
-        this.highBound >= otherRange.lowBound;
+    return (
+      this.isDefined &&
+      otherRange.isDefined &&
+      this.lowBound <= otherRange.highBound &&
+      this.highBound >= otherRange.lowBound
+    );
   }
 }

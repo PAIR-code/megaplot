@@ -23,15 +23,18 @@ import * as d3 from 'd3';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {Scene, SpriteView} from '../index';
-import {SceneInternalSymbol} from '../lib/symbols';
-import {AlignmentOption, VerticalAlignmentOption} from '../lib/text-selection-types';
+import { Scene, SpriteView } from '../index';
+import { SceneInternalSymbol } from '../lib/symbols';
+import {
+  AlignmentOption,
+  VerticalAlignmentOption,
+} from '../lib/text-selection-types';
 
-import {TransformEvent} from './transform-event';
+import { TransformEvent } from './transform-event';
 
 require('./styles.css');
 
-import {fragmentShader} from '../lib/shaders/scene-fragment-shader';
+import { fragmentShader } from '../lib/shaders/scene-fragment-shader';
 
 const FRAGMENT_SHADER = fragmentShader();
 
@@ -109,7 +112,7 @@ function main() {
     corpusOffset: 0,
     corpusPercentage: 10,
     borderPlacement: 1,
-    borderRadiusRelative: .1,
+    borderRadiusRelative: 0.1,
     maxBatchTimeMs: 20,
     align: 'left' as AlignmentOption,
     verticalAlign: 'middle' as VerticalAlignmentOption,
@@ -127,7 +130,7 @@ function main() {
 
   let col = 0;
   let row = 0;
-  let word: Word|undefined = undefined;
+  let word: Word | undefined = undefined;
   const corpus: Word[] = [];
 
   for (let index = 0; index < TEXT.length; index++) {
@@ -140,7 +143,7 @@ function main() {
 
     if (!word) {
       if (/\S/.test(ch)) {
-        word = {col, row, start: index, end: NaN};
+        word = { col, row, start: index, end: NaN };
         corpus.push(word);
       }
     } else if (/\s/.test(ch)) {
@@ -163,9 +166,9 @@ function main() {
       textSelection.clear();
     }
 
-    const start = Math.ceil(corpus.length * settings.corpusOffset / 100);
+    const start = Math.ceil((corpus.length * settings.corpusOffset) / 100);
     const end =
-        start + Math.ceil(corpus.length * settings.corpusPercentage / 100);
+      start + Math.ceil((corpus.length * settings.corpusPercentage) / 100);
     const words = corpus.slice(start, end);
 
     const top = words[0].row;
@@ -176,15 +179,15 @@ function main() {
     const borderColor = d3.color(settings.borderColor) as d3.RGBColor;
     const fillColor = d3.color(settings.fillColor) as d3.RGBColor;
     // Specify how text is determined based on data. Map alignment to settings.
-    textSelection.text(({start, end}) => TEXT.substring(start, end));
+    textSelection.text(({ start, end }) => TEXT.substring(start, end));
     textSelection.align(() => settings.align);
     textSelection.verticalAlign(() => settings.verticalAlign);
 
     const placeSprite = (s: SpriteView, word: Word) => {
       s.TransitionTimeMs = settings.transitionTimeMs;
 
-      s.PositionWorldX = word.col * .05;
-      s.PositionWorldY = (word.row - top) * -.075;
+      s.PositionWorldX = word.col * 0.05;
+      s.PositionWorldY = (word.row - top) * -0.075;
 
       s.BorderPlacement = settings.borderPlacement;
       s.BorderRadiusRelative = settings.borderRadiusRelative;
@@ -194,32 +197,32 @@ function main() {
     };
 
     textSelection
-        .onInit((s, word) => {
-          // Initialize static properties.
-          s.SizeWorldWidth = .1;
-          s.SizeWorldHeight = .1;
+      .onInit((s, word) => {
+        // Initialize static properties.
+        s.SizeWorldWidth = 0.1;
+        s.SizeWorldHeight = 0.1;
 
-          // Start in the right place.
-          placeSprite(s, word);
+        // Start in the right place.
+        placeSprite(s, word);
 
-          // Override color. Must be AFTER placeSprite() which also sets the
-          // fill color.
-          s.FillColor = INIT_COLOR;
-        })
-        .onEnter(placeSprite)
-        .onUpdate(placeSprite)
-        .onExit(s => {
-          s.TransitionTimeMs = settings.transitionTimeMs;
-          s.FillColor = EXIT_COLOR;
-        });
+        // Override color. Must be AFTER placeSprite() which also sets the
+        // fill color.
+        s.FillColor = INIT_COLOR;
+      })
+      .onEnter(placeSprite)
+      .onUpdate(placeSprite)
+      .onExit((s) => {
+        s.TransitionTimeMs = settings.transitionTimeMs;
+        s.FillColor = EXIT_COLOR;
+      });
 
     textSelection.bind(words);
   }
 
-  const {workScheduler} = scene[SceneInternalSymbol];
+  const { workScheduler } = scene[SceneInternalSymbol];
 
   // Setup dat.GUI for controlling params.
-  const gui = new dat.GUI({autoPlace: false});
+  const gui = new dat.GUI({ autoPlace: false });
   Object.assign(gui.domElement.style, {
     position: 'absolute',
     right: 0,
@@ -231,11 +234,12 @@ function main() {
   gui.add(settings, 'maxBatchTimeMs', 1, 1000, 1).onChange(() => {
     workScheduler.maxWorkTimeMs = settings.maxBatchTimeMs;
   });
-  gui.add(settings, 'borderPlacement', 0, 1, .1);
-  gui.add(settings, 'borderRadiusRelative', 0, 1, .1).onChange(update);
+  gui.add(settings, 'borderPlacement', 0, 1, 0.1);
+  gui.add(settings, 'borderRadiusRelative', 0, 1, 0.1).onChange(update);
   gui.add(settings, 'align', ['left', 'center', 'right']).onChange(update);
-  gui.add(settings, 'verticalAlign', ['top', 'middle', 'bottom'])
-      .onChange(update);
+  gui
+    .add(settings, 'verticalAlign', ['top', 'middle', 'bottom'])
+    .onChange(update);
   gui.addColor(settings, 'borderColor').onChange(update);
   gui.addColor(settings, 'fillColor').onChange(update);
   gui.add(settings, 'clearBeforeUpdate');
@@ -243,21 +247,24 @@ function main() {
   container.appendChild(gui.domElement);
 
   // Setup zoom behavior.
-  const zoom = d3.zoom<HTMLCanvasElement, unknown>()
-                   .scaleExtent([1, 200000])
-                   .on('zoom', (event: TransformEvent) => {
-                     const {x, y, k} = event.transform;
-                     scene.scale.x = k;
-                     scene.scale.y = k;
-                     scene.offset.x = x;
-                     scene.offset.y = y;
-                   });
+  const zoom = d3
+    .zoom<HTMLCanvasElement, unknown>()
+    .scaleExtent([1, 200000])
+    .on('zoom', (event: TransformEvent) => {
+      const { x, y, k } = event.transform;
+      scene.scale.x = k;
+      scene.scale.y = k;
+      scene.offset.x = x;
+      scene.offset.y = y;
+    });
   d3.select(scene.canvas)
-      .call(zoom)
-      .call(
-          zoom.transform.bind(zoom),
-          d3.zoomIdentity.translate(scene.offset.x, scene.offset.y)
-              .scale(scene.scale.x));
+    .call(zoom)
+    .call(
+      zoom.transform.bind(zoom),
+      d3.zoomIdentity
+        .translate(scene.offset.x, scene.offset.y)
+        .scale(scene.scale.x)
+    );
 
   // Setup resize observer.
   const observer = new ResizeObserver(() => {
