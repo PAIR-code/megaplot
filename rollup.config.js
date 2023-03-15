@@ -18,8 +18,8 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import {terser} from 'rollup-plugin-terser';
-import visualizer from 'rollup-plugin-visualizer';
+import terser from '@rollup/plugin-terser';
+import {visualizer} from 'rollup-plugin-visualizer';
 
 import {version} from './package.json';
 
@@ -105,8 +105,8 @@ function config({
 }) {
   if (visualize) {
     const filename = output.file + '.html';
-    plugins.push(visualizer({sourcemap: true, filename}));
-    console.log(`Will output a bundle visualization in ${filename}`);
+    plugins.push(visualizer({filename, sourcemap: true}));
+    console.log(`Will output visualization in ${filename}`);
   }
 
   const defaultTsOptions = {

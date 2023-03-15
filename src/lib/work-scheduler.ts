@@ -34,12 +34,20 @@
  * them as opportunity warrants.
  */
 
-import {DEFAULT_TIMING_FUNCTIONS} from './default-timing-functions';
-import {InternalError} from './internal-error';
-import {WorkQueue} from './work-queue';
-import {ensureOrCreateWorkTask, getWorkTaskId, RemainingTimeFn, WorkTask, WorkTaskCallbackFn, WorkTaskId, WorkTaskWithId} from './work-task';
+import { DEFAULT_TIMING_FUNCTIONS } from './default-timing-functions';
+import { InternalError } from './internal-error';
+import { WorkQueue } from './work-queue';
+import {
+  ensureOrCreateWorkTask,
+  getWorkTaskId,
+  RemainingTimeFn,
+  WorkTask,
+  WorkTaskCallbackFn,
+  WorkTaskId,
+  WorkTaskWithId,
+} from './work-task';
 
-export {RemainingTimeFn} from './work-task';
+export { RemainingTimeFn } from './work-task';
 
 /**
  * Default settings to control the WorkScheduler's behavior. These can be
@@ -55,7 +63,7 @@ const DEFAULT_WORK_SCHEDULER_SETTINGS = Object.freeze({
    * Maximum amount of time in milliseconds to perform work before ceding
    * control back to the caller.
    */
-  maxWorkTimeMs: 20,
+  maxWorkTimeMs: 20 as number,
 });
 
 /**
@@ -83,7 +91,7 @@ export class WorkScheduler {
   /**
    * Timer for the animation frame (number returned by requestAnimationFrame).
    */
-  private animationFrameTimer: number|undefined;
+  private animationFrameTimer: number | undefined;
 
   /**
    * Flag indicating whether the WorkScheduler is currently enabled. When it is
@@ -113,17 +121,25 @@ export class WorkScheduler {
   private readonly futureWorkQueue = new WorkQueue();
 
   constructor(
-      options: Partial<typeof DEFAULT_WORK_SCHEDULER_SETTINGS> =
-          DEFAULT_WORK_SCHEDULER_SETTINGS,
+    options: Partial<
+      typeof DEFAULT_WORK_SCHEDULER_SETTINGS
+    > = DEFAULT_WORK_SCHEDULER_SETTINGS
   ) {
     // Merge provided settings (if any) with defaults.
-    const settings =
-        Object.assign({}, DEFAULT_WORK_SCHEDULER_SETTINGS, options || {});
+    const settings = Object.assign(
+      {},
+      DEFAULT_WORK_SCHEDULER_SETTINGS,
+      options || {}
+    );
 
     // Copy timing functions.
-    this.timingFunctions = Object.freeze(Object.assign(
-        {}, DEFAULT_TIMING_FUNCTIONS,
-        (settings && settings.timingFunctions) || {}));
+    this.timingFunctions = Object.freeze(
+      Object.assign(
+        {},
+        DEFAULT_TIMING_FUNCTIONS,
+        (settings && settings.timingFunctions) || {}
+      )
+    );
 
     // Copy other settings.
     this.maxWorkTimeMs = settings.maxWorkTimeMs;
@@ -146,7 +162,7 @@ export class WorkScheduler {
     return [
       ...this.presentWorkQueue.taskList,
       ...this.futureWorkQueue.taskList,
-    ].map(({id}) => {
+    ].map(({ id }) => {
       return (typeof id === 'symbol' ? id.description : id) as string;
     });
   }
@@ -156,14 +172,17 @@ export class WorkScheduler {
    * full WorkTask object, or just a function. In either case, a full WorkTask
    * object with an id is returned.
    */
-  scheduleTask(workTaskOrFunction: WorkTask|
-               WorkTaskCallbackFn): WorkTaskWithId {
+  scheduleTask(
+    workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+  ): WorkTaskWithId {
     // Construct a WorkTask out of the input.
     const workTask = ensureOrCreateWorkTask(workTaskOrFunction);
 
     // Check to make sure this task has not already been scheduled.
-    if (!this.presentWorkQueue.hasTask(workTask) &&
-        !this.futureWorkQueue.hasTask(workTask)) {
+    if (
+      !this.presentWorkQueue.hasTask(workTask) &&
+      !this.futureWorkQueue.hasTask(workTask)
+    ) {
       if (this.isPerformingWork && !workTask.beginImmediately) {
         // At this point we're performing work but the task is not flagged as
         // being safe to begin immediately. So instead of modifying the
@@ -185,8 +204,9 @@ export class WorkScheduler {
   /**
    * Get the scheduled task that matches the provided workTaskOrFunction input.
    */
-  getTask(workTaskOrFunction: WorkTask|WorkTaskCallbackFn): WorkTaskWithId
-      |undefined {
+  getTask(
+    workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+  ): WorkTaskWithId | undefined {
     const id = getWorkTaskId(workTaskOrFunction);
 
     const presentTask = this.presentWorkQueue.getTaskById(id);
@@ -196,7 +216,8 @@ export class WorkScheduler {
     // the present and future work queues.
     if (presentTask && futureTask) {
       throw new InternalError(
-          'Found two matching tasks when at most one is allowed');
+        'Found two matching tasks when at most one is allowed'
+      );
     }
 
     return presentTask || futureTask || undefined;
@@ -206,8 +227,9 @@ export class WorkScheduler {
    * Cancel any previously scheduled work task. Returns the task, or undefined
    * if no matching task was found.
    */
-  unscheduleTask(workTaskOrFunction: WorkTask|
-                 WorkTaskCallbackFn): WorkTaskWithId|undefined {
+  unscheduleTask(
+    workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+  ): WorkTaskWithId | undefined {
     const id = getWorkTaskId(workTaskOrFunction);
 
     const presentRemovedTask = this.presentWorkQueue.removeTaskById(id);
@@ -217,7 +239,8 @@ export class WorkScheduler {
     // the present and future work queues.
     if (presentRemovedTask && futureRemovedTask) {
       throw new InternalError(
-          'Found two matching tasks when at most one is allowed');
+        'Found two matching tasks when at most one is allowed'
+      );
     }
 
     this.updateTimer();
@@ -229,7 +252,7 @@ export class WorkScheduler {
    * Determine whether there's at least one task already queued that matches the
    * provided work task or function.
    */
-  isScheduledTask(workTaskOrFunction: WorkTask|WorkTaskCallbackFn): boolean {
+  isScheduledTask(workTaskOrFunction: WorkTask | WorkTaskCallbackFn): boolean {
     return this.isScheduledId(getWorkTaskId(workTaskOrFunction));
   }
 
@@ -237,16 +260,18 @@ export class WorkScheduler {
    * Determine whether there's a task already queued with the provided Id.
    */
   isScheduledId(id: WorkTaskId): boolean {
-    return this.presentWorkQueue.hasTaskId(id) ||
-        this.futureWorkQueue.hasTaskId(id);
+    return (
+      this.presentWorkQueue.hasTaskId(id) || this.futureWorkQueue.hasTaskId(id)
+    );
   }
 
   /**
    * Convenience method for unscheduling all matching tasks and then scheduling
    * the specified task.
    */
-  scheduleUniqueTask(workTaskOrFunction: WorkTask|
-                     WorkTaskCallbackFn): WorkTaskWithId {
+  scheduleUniqueTask(
+    workTaskOrFunction: WorkTask | WorkTaskCallbackFn
+  ): WorkTaskWithId {
     const workTask = ensureOrCreateWorkTask(workTaskOrFunction);
     this.unscheduleTask(workTask);
     this.scheduleTask(workTask);
@@ -281,7 +306,7 @@ export class WorkScheduler {
     // Check if scheduler is enabled and there's work to do.
     if (this.isEnabled && this.presentWorkQueue.length) {
       if (this.animationFrameTimer === undefined) {
-        const {requestAnimationFrame} = this.timingFunctions;
+        const { requestAnimationFrame } = this.timingFunctions;
         this.animationFrameTimer = requestAnimationFrame(() => {
           this.animationFrameTimer = undefined;
           this.performWork();
@@ -292,7 +317,7 @@ export class WorkScheduler {
 
     // Scheduler is not enabled, or there's no work to do.
     if (this.animationFrameTimer !== undefined) {
-      const {cancelAnimationFrame} = this.timingFunctions;
+      const { cancelAnimationFrame } = this.timingFunctions;
       cancelAnimationFrame(this.animationFrameTimer);
       this.animationFrameTimer = undefined;
     }
@@ -304,12 +329,13 @@ export class WorkScheduler {
   private performWork() {
     if (this.isPerformingWork) {
       throw new InternalError(
-          'Only one invocation of performWork is allowed at a time');
+        'Only one invocation of performWork is allowed at a time'
+      );
     }
 
     this.isPerformingWork = true;
 
-    const {now} = this.timingFunctions;
+    const { now } = this.timingFunctions;
 
     // Keep track of how many tasks have been performed.
     let tasksRan = 0;
@@ -317,7 +343,7 @@ export class WorkScheduler {
     const startTime = now();
 
     const remaining: RemainingTimeFn = () =>
-        this.maxWorkTimeMs + startTime - now();
+      this.maxWorkTimeMs + startTime - now();
 
     // For performance, the try/catch block encloses the loop that runs through
     // tasks to perform.
@@ -355,7 +381,6 @@ export class WorkScheduler {
           break;
         }
       }
-
     } finally {
       this.isPerformingWork = false;
 
